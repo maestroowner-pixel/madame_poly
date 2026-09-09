@@ -27,10 +27,10 @@ function formatDuration(millis: number): string {
 }
 
 /**
- * Полоса на всю ширину и слева от неё переключатель авторежима. Подсвечен —
- * приложение само ловит паузу; погашен — конец фразы отмечаете вы, и полоса
- * превращается в «Готово». Отдельной строки под режим не выделяем: на
- * маленьком экране место дороже.
+ * Полоса во всю ширину, переключатель авторежима — внутри неё, у левого края.
+ * Подсвечен — приложение само ловит паузу; погашен — конец фразы отмечаете вы,
+ * и полоса превращается в «Готово». Ни отдельной строки, ни соседней кнопки
+ * под режим не выделяем: на маленьком экране место дороже.
  */
 export function RecordButton({
   status,
@@ -72,33 +72,45 @@ export function RecordButton({
           ? `${t.stop} · ${timer}`
           : t.stop;
 
+  // Пока идёт беседа полоса красная — значок режима перекрашивается вместе с ней.
+  const tint = listening ? theme.danger : theme.ctaText;
+  const tintBg = listening ? theme.surface : theme.ctaBg;
+
   return (
     <View style={styles.container}>
-      <View style={styles.row}>
-        <Pressable
-          onPress={onToggleMode}
-          disabled={sessionActive}
-          style={[styles.auto, auto && styles.autoOn, sessionActive && styles.dimmed]}
-        >
-          <Text style={[styles.autoLabel, auto && styles.autoLabelOn]}>{t.auto}</Text>
-        </Pressable>
+      <Pressable
+        onPress={manualTurn ? onEndTurn : manualWait ? onBeginTurn : onToggleSession}
+        onLongPress={manualTurn || manualWait ? onToggleSession : undefined}
+        style={[styles.bar, listening && styles.barListening]}
+      >
+        {/* Осциллограмма живёт фоном под подписью: видно, что микрофон открыт. */}
+        {listening && (
+          <View style={styles.waves} pointerEvents="none">
+            <WaveBars level={inputLevel} active height={26} color={theme.danger} />
+          </View>
+        )}
 
-        <Pressable
-          onPress={manualTurn ? onEndTurn : manualWait ? onBeginTurn : onToggleSession}
-          onLongPress={manualTurn || manualWait ? onToggleSession : undefined}
-          style={[styles.bar, listening && styles.barListening]}
-        >
-          {/* Осциллограмма живёт фоном под подписью: видно, что микрофон открыт. */}
-          {listening && (
-            <View style={styles.waves} pointerEvents="none">
-              <WaveBars level={inputLevel} active height={26} color={theme.danger} />
-            </View>
-          )}
+        {working && <ActivityIndicator size="small" color={theme.danger} />}
+        <Text style={[styles.label, listening && styles.labelListening]} numberOfLines={1}>
+          {label}
+        </Text>
 
-          {working && <ActivityIndicator size="small" color={theme.danger} />}
-          <Text style={[styles.label, listening && styles.labelListening]}>{label}</Text>
+        {/* Обработчик оставлен и на время беседы: иначе нажатие на погашенный
+            значок проваливалось бы в полосу и обрывало реплику. */}
+        <Pressable
+          onPress={() => {
+            if (!sessionActive) onToggleMode();
+          }}
+          style={[
+            styles.auto,
+            { borderColor: tint },
+            auto && { backgroundColor: tint },
+            sessionActive && styles.dimmed,
+          ]}
+        >
+          <Text style={[styles.autoLabel, { color: auto ? tintBg : tint }]}>{t.auto}</Text>
         </Pressable>
-      </View>
+      </Pressable>
 
       {(manualTurn || manualWait) && <Text style={styles.hint}>{t.longPressToFinish}</Text>}
     </View>
@@ -108,31 +120,30 @@ export function RecordButton({
 const createStyles = (theme: Theme) =>
   StyleSheet.create({
     container: { paddingHorizontal: 16, paddingTop: 6, paddingBottom: 10, gap: 4 },
-    row: { flexDirection: 'row', alignItems: 'center', gap: 8 },
 
+    /** Значок режима лежит поверх полосы, чтобы подпись оставалась по центру. */
     auto: {
-      width: 58,
-      height: 50,
-      borderRadius: 14,
+      position: 'absolute',
+      left: 7,
+      top: 7,
+      bottom: 7,
+      width: 50,
+      borderRadius: 10,
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: theme.surface,
-      borderWidth: 2,
-      borderColor: theme.border,
+      borderWidth: 1.5,
     },
-    /** Подсветка включённого авторежима — тот же кант, что у главной кнопки. */
-    autoOn: { backgroundColor: theme.ctaBg, borderColor: theme.ctaBorder },
-    autoLabel: { color: theme.textMuted, fontSize: 11, fontWeight: '800', letterSpacing: 0.5 },
-    autoLabelOn: { color: theme.ctaText },
-    dimmed: { opacity: 0.5 },
+    autoLabel: { fontSize: 11, fontWeight: '800', letterSpacing: 0.5 },
+    dimmed: { opacity: 0.45 },
 
     bar: {
-      flex: 1,
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
       gap: 8,
       height: 50,
+      // Поля под значок режима и симметричные им справа — подпись не наезжает.
+      paddingHorizontal: 64,
       borderRadius: 14,
       borderWidth: 2,
       backgroundColor: theme.ctaBg,
@@ -142,8 +153,8 @@ const createStyles = (theme: Theme) =>
     waves: {
       position: 'absolute',
       top: 0,
-      left: 10,
-      right: 10,
+      left: 64,
+      right: 16,
       bottom: 0,
       justifyContent: 'center',
       opacity: 0.28,
