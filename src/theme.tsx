@@ -56,10 +56,11 @@ export const darkTheme: Theme = {
 
   accent: '#5B4BE0',
   accentText: '#FFFFFF',
-  /** В тёмной теме наоборот: тёмный корпус, тот же сиреневый кант. */
-  ctaBg: '#251C68',
+  /** В тёмной теме кнопка беседы берёт цвет пузыря собеседника — с ним же
+      сиреневым кантом, чтобы не сливаться с лентой сообщений. */
+  ctaBg: '#5B4BE0',
   ctaBorder: '#A78BFA',
-  ctaText: '#C4B5FD',
+  ctaText: '#ECF9FB',
   highlight: '#63D0FA',
 
   danger: '#E83C65',
