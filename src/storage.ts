@@ -174,6 +174,56 @@ export async function archiveSession(
   return archive;
 }
 
+/** Одна порция упражнений с тем, из какой беседы она выросла. */
+export interface NotebookEntry {
+  id: string;
+  language: LanguageCode;
+  level: Level;
+  topicId: string | null;
+  createdAt: number;
+  homework: Homework;
+}
+
+/**
+ * Все упражнения, что были составлены: из законченных бесед и из текущих по
+ * каждому языку. Собирается на лету, а не хранится отдельно, — иначе список
+ * пришлось бы чинить после каждого удаления беседы.
+ */
+export async function loadNotebook(): Promise<NotebookEntry[]> {
+  const entries: NotebookEntry[] = [];
+
+  for (const session of await loadArchive()) {
+    if (!session.hasHomework) continue;
+    const homework = await loadHomework(session.id);
+    if (homework) {
+      entries.push({
+        id: session.id,
+        language: session.language,
+        level: session.level,
+        topicId: session.topicId,
+        createdAt: homework.createdAt,
+        homework,
+      });
+    }
+  }
+
+  for (const language of LANGUAGE_CODES) {
+    const homework = await loadHomework(language);
+    if (!homework) continue;
+    const levels = await loadLevels();
+    entries.push({
+      id: `current-${language}`,
+      language,
+      level: levels[language],
+      topicId: await loadTopic(language),
+      createdAt: homework.createdAt,
+      homework,
+    });
+  }
+
+  return entries.sort((a, b) => b.createdAt - a.createdAt);
+}
+
 export async function deleteArchived(id: string): Promise<ArchivedSession[]> {
   const archive = (await loadArchive()).filter((session) => session.id !== id);
   await AsyncStorage.multiRemove([keyArchived(id), keyHomework(id)]);

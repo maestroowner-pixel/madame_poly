@@ -17,6 +17,7 @@ import { MessageBubble } from './src/components/MessageBubble';
 import { ArchiveScreen } from './src/components/ArchiveScreen';
 import { ArchiveIcon, MoonIcon, SunIcon } from './src/components/icons';
 import { HomeworkScreen } from './src/components/HomeworkScreen';
+import { NotebookScreen } from './src/components/NotebookScreen';
 import { ProfileScreen } from './src/components/ProfileScreen';
 import { RecordButton } from './src/components/RecordButton';
 import { TutorStrip } from './src/components/TutorStrip';
@@ -50,6 +51,7 @@ function Screen() {
   const [archiveOpen, setArchiveOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [homeworkOpen, setHomeworkOpen] = useState(false);
+  const [notebookOpen, setNotebookOpen] = useState(false);
 
   const correctionCount = conversation.messages.reduce(
     (total, message) => total + (message.corrections?.length ?? 0),
@@ -125,6 +127,7 @@ function Screen() {
           onOpenHomework={() => setHomeworkOpen(true)}
           englishVariant={conversation.englishVariant}
           onSelectVariant={conversation.setEnglishVariant}
+          onOpenNotebook={() => setNotebookOpen(true)}
           leading={<TutorStrip status={conversation.status} topicId={conversation.topicId} />}
           trailing={
             <View style={styles.actions}>
@@ -207,6 +210,8 @@ function Screen() {
           }
         />
         </View>
+        <NotebookScreen visible={notebookOpen} onClose={() => setNotebookOpen(false)} />
+
         <HomeworkScreen
           visible={homeworkOpen}
           homework={conversation.homework}

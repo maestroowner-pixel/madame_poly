@@ -6,6 +6,7 @@ import { t } from '../i18n';
 import { useStyles, useTheme, type Theme } from '../theme';
 import { findTopic } from '../topics';
 import { LEVELS, type EnglishVariant, type LanguageCode, type Level } from '../types';
+import { NotebookIcon } from './icons';
 import { TopicPicker } from './TopicPicker';
 
 interface Props {
@@ -28,6 +29,7 @@ interface Props {
   onOpenHomework: () => void;
   englishVariant: EnglishVariant;
   onSelectVariant: (variant: EnglishVariant) => void;
+  onOpenNotebook: () => void;
   /** Правый край шапки — там же, где сводка, живут действия над беседой. */
   trailing?: ReactNode;
   /** Левый край шапки: портрет собеседницы вровень со строкой языка. */
@@ -56,6 +58,7 @@ export function ControlPanel({
   onOpenHomework,
   englishVariant,
   onSelectVariant,
+  onOpenNotebook,
   trailing,
   leading,
 }: Props) {
@@ -96,6 +99,15 @@ export function ControlPanel({
             <View style={styles.levelBadge}>
               <Text style={styles.levelText}>{level}</Text>
             </View>
+          </Pressable>
+
+          <Pressable
+            onPress={onOpenNotebook}
+            hitSlop={8}
+            accessibilityLabel={t.notebookTitle}
+            style={styles.iconButton}
+          >
+            <NotebookIcon size={22} color={theme.accent} />
           </Pressable>
         </View>
 
@@ -242,8 +254,16 @@ const createStyles = (theme: Theme) =>
       paddingVertical: 8,
       gap: 8,
     },
-    side: { flex: 1, alignItems: 'flex-start' },
-    sideRight: { alignItems: 'flex-end' },
+    side: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 },
+    iconButton: {
+      width: 42,
+      height: 42,
+      borderRadius: 14,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: theme.surfaceAlt,
+    },
+    sideRight: { justifyContent: 'flex-end' },
     summary: {
       width: 46,
       height: 46,

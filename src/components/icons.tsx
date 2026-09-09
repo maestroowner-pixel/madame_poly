@@ -124,3 +124,115 @@ export function ArchiveIcon({ size, color }: Props) {
     </View>
   );
 }
+
+/** Тетрадь: обложка со спиралью слева и двумя строками. */
+export function NotebookIcon({ size, color }: Props) {
+  const line = Math.max(1.5, size * 0.08);
+
+  return (
+    <View style={[styles.box, { width: size, height: size }]}>
+      <View
+        style={{
+          width: size * 0.78,
+          height: size * 0.9,
+          borderRadius: size * 0.08,
+          borderWidth: line,
+          borderColor: color,
+          paddingLeft: size * 0.2,
+          justifyContent: 'center',
+          gap: size * 0.12,
+        }}
+      >
+        <View style={{ height: line, width: size * 0.34, backgroundColor: color, borderRadius: line }} />
+        <View style={{ height: line, width: size * 0.34, backgroundColor: color, borderRadius: line }} />
+      </View>
+
+      {/* Корешок: без него обложка читается как обычная рамка. */}
+      <View
+        style={{
+          position: 'absolute',
+          left: size * 0.14,
+          top: size * 0.05,
+          bottom: size * 0.05,
+          width: line,
+          backgroundColor: color,
+          borderRadius: line,
+        }}
+      />
+    </View>
+  );
+}
+
+/**
+ * Системный значок «поделиться» из iOS: коробка с открытым верхом и стрелка,
+ * выходящая из неё вверх. Стрелка рисуется стволом и уголком — повёрнутый
+ * квадрат с двумя сторонами читается как остриё чётче, чем глиф.
+ */
+export function ShareIcon({ size, color }: Props) {
+  const line = Math.max(1.6, size * 0.075);
+  const boxWidth = size * 0.62;
+  const boxHeight = size * 0.5;
+  const head = size * 0.26;
+
+  return (
+    <View style={[styles.box, { width: size, height: size }]}>
+      <View
+        style={{
+          position: 'absolute',
+          bottom: size * 0.06,
+          width: boxWidth,
+          height: boxHeight,
+          borderColor: color,
+          borderLeftWidth: line,
+          borderRightWidth: line,
+          borderBottomWidth: line,
+          borderBottomLeftRadius: size * 0.08,
+          borderBottomRightRadius: size * 0.08,
+        }}
+      />
+
+      <View
+        style={{
+          position: 'absolute',
+          top: size * 0.14,
+          width: line,
+          height: size * 0.5,
+          backgroundColor: color,
+          borderRadius: line,
+        }}
+      />
+
+      <View
+        style={{
+          position: 'absolute',
+          top: size * 0.17,
+          width: head,
+          height: head,
+          borderColor: color,
+          borderTopWidth: line,
+          borderLeftWidth: line,
+          transform: [{ rotate: '45deg' }],
+        }}
+      />
+    </View>
+  );
+}
+
+/** Крестик: две перекрещенные полоски вместо символа «×» ради ровных концов. */
+export function CloseIcon({ size, color }: Props) {
+  const line = Math.max(1.6, size * 0.085);
+  const bar = {
+    position: 'absolute' as const,
+    width: size * 0.78,
+    height: line,
+    backgroundColor: color,
+    borderRadius: line,
+  };
+
+  return (
+    <View style={[styles.box, { width: size, height: size }]}>
+      <View style={[bar, { transform: [{ rotate: '45deg' }] }]} />
+      <View style={[bar, { transform: [{ rotate: '-45deg' }] }]} />
+    </View>
+  );
+}
