@@ -30,6 +30,9 @@ export function ZoomModal({ visible, anchor, onRequestClose, children }: Props) 
   // Держим экран смонтированным до конца схлопывания, иначе он пропадёт разом.
   const [mounted, setMounted] = useState(visible);
   const progress = useRef(new Animated.Value(visible ? 1 : 0)).current;
+  /** Свежее значение для колбэка анимации: он переживает смену пропсов. */
+  const visibleRef = useRef(visible);
+  visibleRef.current = visible;
 
   useEffect(() => {
     if (visible) setMounted(true);
@@ -46,8 +49,10 @@ export function ZoomModal({ visible, anchor, onRequestClose, children }: Props) 
       duration: visible ? OPEN_MS : ZOOM_CLOSE_MS,
       easing: visible ? Easing.out(Easing.cubic) : Easing.in(Easing.cubic),
       useNativeDriver: true,
-    }).start(({ finished }) => {
-      if (finished && !visible) setMounted(false);
+    }).start(() => {
+      // Признак finished намеренно не проверяем: прерванная анимация оставляла
+      // бы невидимую модалку поверх экрана, и она съедала бы все касания.
+      if (!visibleRef.current) setMounted(false);
     });
   }, [mounted, visible, progress]);
 
