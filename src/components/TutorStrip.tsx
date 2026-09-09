@@ -2,9 +2,9 @@ import { useMemo, useState } from 'react';
 import { LayoutAnimation, Pressable, StyleSheet, View } from 'react-native';
 
 import type { Status } from '../hooks/useConversation';
+import { t } from '../i18n';
 import { useStyles, useTheme, type Theme } from '../theme';
 import { TutorPortrait } from './Avatar';
-import { Waveform } from './Waveform';
 
 interface Props {
   status: Status;
@@ -15,9 +15,9 @@ const SMALL = { width: 74, height: 88 };
 const LARGE = { width: 156, height: 186 };
 
 /**
- * Портрет собеседницы и строка состояния под ним. Живёт в центре шапки, вровень
- * со строкой языка: отдельная полоса под шапкой съедала высоту зря.
- * Тап по портрету увеличивает его.
+ * Портрет собеседницы в центре шапки. Точка в углу заменяет подпись: зелёная —
+ * микрофон открыт, красная — закрыт. Строка текста занимала место и читалась
+ * дольше, чем цвет. Тап по портрету увеличивает его.
  */
 export function TutorStrip({ status, topicId }: Props) {
   const { theme } = useTheme();
@@ -25,6 +25,7 @@ export function TutorStrip({ status, topicId }: Props) {
 
   const [expanded, setExpanded] = useState(false);
   const size = expanded ? LARGE : SMALL;
+  const listening = status === 'listening';
 
   return (
     <View style={styles.wrapper}>
@@ -35,14 +36,31 @@ export function TutorStrip({ status, topicId }: Props) {
         }}
       >
         <TutorPortrait width={size.width} height={size.height} topicId={topicId} />
-      </Pressable>
 
-      <Waveform status={status} />
+        <View
+          accessibilityLabel={listening ? t.listening : t.notListening}
+          style={[
+            styles.dot,
+            { backgroundColor: listening ? '#3BC46A' : '#E0453F' },
+          ]}
+        />
+      </Pressable>
     </View>
   );
 }
 
 const createStyles = (theme: Theme) =>
   StyleSheet.create({
-    wrapper: { alignItems: 'center', gap: 4 },
+    wrapper: { alignItems: 'center' },
+    /** Обводка в цвет фона отделяет точку от снимка под ней. */
+    dot: {
+      position: 'absolute',
+      top: -3,
+      right: -3,
+      width: 16,
+      height: 16,
+      borderRadius: 8,
+      borderWidth: 3,
+      borderColor: theme.bg,
+    },
   });
