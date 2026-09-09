@@ -5,7 +5,7 @@ import { LANGUAGES, LANGUAGE_CODES } from '../languages';
 import { t } from '../i18n';
 import { useStyles, useTheme, type Theme } from '../theme';
 import { findTopic } from '../topics';
-import { LEVELS, type LanguageCode, type Level } from '../types';
+import { LEVELS, type EnglishVariant, type LanguageCode, type Level } from '../types';
 import { TopicPicker } from './TopicPicker';
 
 interface Props {
@@ -26,6 +26,8 @@ interface Props {
   /** Сколько упражнений уже составлено; null — задания ещё нет. */
   homeworkCount: number | null;
   onOpenHomework: () => void;
+  englishVariant: EnglishVariant;
+  onSelectVariant: (variant: EnglishVariant) => void;
   /** Правый край шапки — там же, где сводка, живут действия над беседой. */
   trailing?: ReactNode;
   /** Центр шапки: портрет собеседницы стоит вровень со строкой языка. */
@@ -52,6 +54,8 @@ export function ControlPanel({
   onOpenProfile,
   homeworkCount,
   onOpenHomework,
+  englishVariant,
+  onSelectVariant,
   trailing,
   center,
 }: Props) {
@@ -130,6 +134,38 @@ export function ControlPanel({
             </Text>
             <Text style={styles.topicChevron}>›</Text>
           </Pressable>
+
+          {/* Вариант английского: словарь и обороты, не произношение. */}
+          {language === 'en' && (
+            <View style={styles.row}>
+              {(
+                [
+                  ['british', t.british],
+                  ['american', t.american],
+                  ['cockney', t.cockney],
+                ] as [EnglishVariant, string][]
+              ).map(([value, title]) => {
+                const active = value === englishVariant;
+                return (
+                  <Pressable
+                    key={value}
+                    disabled={disabled}
+                    onPress={() => onSelectVariant(value)}
+                    style={[styles.variant, active && styles.tileActive, disabled && styles.dimmed]}
+                  >
+                    <Text
+                      style={[styles.variantLabel, active && styles.activeLabel]}
+                      numberOfLines={1}
+                      adjustsFontSizeToFit
+                      minimumFontScale={0.65}
+                    >
+                      {title}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          )}
 
           <Pressable onPress={onOpenProfile} style={styles.topicButton}>
             <Text style={styles.topicCaption}>{t.profile}</Text>
@@ -219,6 +255,17 @@ const createStyles = (theme: Theme) =>
       alignItems: 'center',
       justifyContent: 'center',
       gap: 4,
+      backgroundColor: theme.surfaceAlt,
+    },
+    /** Подпись всегда в одну строку: «Американский» длиннее трети панели. */
+    variantLabel: { color: theme.textMuted, fontSize: 11, fontWeight: '700' },
+    variant: {
+      flex: 1,
+      paddingVertical: 8,
+      paddingHorizontal: 4,
+      borderRadius: 12,
+      alignItems: 'center',
+      justifyContent: 'center',
       backgroundColor: theme.surfaceAlt,
     },
     square: {

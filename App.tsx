@@ -123,6 +123,8 @@ function Screen() {
           onOpenProfile={() => setProfileOpen(true)}
           homeworkCount={conversation.homework?.exercises.length ?? null}
           onOpenHomework={() => setHomeworkOpen(true)}
+          englishVariant={conversation.englishVariant}
+          onSelectVariant={conversation.setEnglishVariant}
           center={<TutorStrip status={conversation.status} topicId={conversation.topicId} />}
           trailing={
             <View style={styles.actions}>

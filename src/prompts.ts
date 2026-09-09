@@ -1,7 +1,7 @@
 import { EXPLANATION_LANGUAGE } from './config';
 import { LANGUAGES } from './languages';
 import { ROLEPLAY_SCENES, type Topic } from './topics';
-import type { Correction, LanguageCode, Level } from './types';
+import type { Correction, EnglishVariant, LanguageCode, Level } from './types';
 
 /**
  * Промпт для домашнего задания. Ошибки беседы уже разобраны — здесь нужны
@@ -56,11 +56,35 @@ const LEVEL_GUIDANCE: Record<Level, string> = {
  * System prompt роли языкового партнёра. Язык и уровень — параметры, поэтому
  * все четыре языка обслуживаются одним промптом.
  */
+/** Чем отличается вариант английского: словарь, написание, регистр речи. */
+const VARIANTS: Record<EnglishVariant, string[]> = {
+  british: [
+    '',
+    'Variety:',
+    '- Speak British English: spelling (colour, realise, travelling), vocabulary (lift, flat, queue, autumn) and idiom.',
+    '- When they use an American form, mention it in the corrections as a variety difference, not as an error.',
+  ],
+  american: [
+    '',
+    'Variety:',
+    '- Speak American English: spelling (color, realize, traveling), vocabulary (elevator, apartment, line, fall) and idiom.',
+    '- When they use a British form, mention it in the corrections as a variety difference, not as an error.',
+  ],
+  cockney: [
+    '',
+    'Variety:',
+    '- Speak as a Londoner: Cockney register. Drop the h where it is natural in speech, use "ain\'t", "innit", "mate", and rhyming slang sparingly — and only when the meaning is clear from the context.',
+    '- Keep it understandable at their level: a dialect they cannot follow teaches nothing. At A1-A2 use only the lightest touches.',
+    '- Correct them towards standard English, not towards Cockney. Your own voice is the dialect; what you teach is the standard — otherwise they would learn to speak in a way that only works in one part of one city.',
+  ],
+};
+
 export function buildSystemPrompt(
   language: LanguageCode,
   level: Level,
   topic?: Topic | null,
   name?: string,
+  variant?: EnglishVariant,
 ): string {
   const { englishName } = LANGUAGES[language];
 
@@ -83,6 +107,7 @@ export function buildSystemPrompt(
   ];
 
   const subject = topic ? (topic.kind === 'roleplay' ? roleplay : discussion) : [];
+  const variety = language === 'en' && variant ? VARIANTS[variant] : [];
 
   return [
     `You are a warm, curious conversation partner helping someone practise spoken ${englishName}.`,
@@ -113,5 +138,6 @@ export function buildSystemPrompt(
     '- If they said nothing wrong, return an empty list. Do not invent mistakes to be helpful.',
     '- Never mention the corrections inside your spoken reply; they are shown separately on screen.',
     ...subject,
+    ...variety,
   ].join('\n');
 }

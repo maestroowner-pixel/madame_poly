@@ -5,7 +5,14 @@ import * as z from 'zod/v4';
 import { ANTHROPIC_API_KEY, CLAUDE_MAX_TOKENS, CLAUDE_MODEL, HISTORY_WINDOW } from '../config';
 import { buildHomeworkPrompt, buildSystemPrompt, formatCorrections } from '../prompts';
 import type { Topic } from '../topics';
-import type { Correction, Homework, LanguageCode, Level, Message } from '../types';
+import type {
+  Correction,
+  EnglishVariant,
+  Homework,
+  LanguageCode,
+  Level,
+  Message,
+} from '../types';
 import { t } from '../i18n';
 
 const CorrectionSchema = z.object({
@@ -65,8 +72,9 @@ export async function respond(params: {
   level: Level;
   topic?: Topic | null;
   name?: string;
+  variant?: EnglishVariant;
 }): Promise<TurnResult> {
-  const { history, userText, language, level, topic, name } = params;
+  const { history, userText, language, level, topic, name, variant } = params;
 
   if (!ANTHROPIC_API_KEY) throw new Error(t.noAnthropicKey);
 
@@ -77,7 +85,7 @@ export async function respond(params: {
   const response = await client.messages.parse({
     model: CLAUDE_MODEL,
     max_tokens: CLAUDE_MAX_TOKENS,
-    system: buildSystemPrompt(language, level, topic, name),
+    system: buildSystemPrompt(language, level, topic, name, variant),
     // Разговорная латентность важнее глубины рассуждения: реплики короткие,
     // а пауза между «сказал» и «услышал ответ» ощущается сразу.
     thinking: { type: 'disabled' },
@@ -151,8 +159,9 @@ export async function openConversation(params: {
   level: Level;
   topic: Topic;
   name?: string;
+  variant?: EnglishVariant;
 }): Promise<string> {
-  const { language, level, topic, name } = params;
+  const { language, level, topic, name, variant } = params;
 
   const instruction =
     topic.kind === 'roleplay'
@@ -168,6 +177,7 @@ export async function openConversation(params: {
     level,
     topic,
     name,
+    variant,
   });
 
   return turn.reply;

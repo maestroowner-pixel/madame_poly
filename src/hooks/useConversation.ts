@@ -32,6 +32,7 @@ import {
   loadHistory,
   loadLanguage,
   loadLevels,
+  loadEnglishVariant,
   loadHomework,
   loadProfile,
   loadTopic,
@@ -39,6 +40,7 @@ import {
   saveHistory,
   saveLanguage,
   saveLevels,
+  saveEnglishVariant,
   saveHomework,
   saveProfile,
   saveTopic,
@@ -52,6 +54,7 @@ import type {
   Homework,
   LanguageCode,
   Level,
+  EnglishVariant,
   Message,
   Profile,
   TurnMode,
@@ -90,6 +93,7 @@ export function useConversation() {
   const [homework, setHomework] = useState<Homework | null>(null);
   const [homeworkBusy, setHomeworkBusy] = useState(false);
   const [turnMode, setTurnModeState] = useState<TurnMode>('auto');
+  const [englishVariant, setVariantState] = useState<EnglishVariant>('british');
   const [error, setError] = useState<string | null>(null);
 
   // Актуальные значения для колбэков конвейера — состояние обновляется асинхронно.
@@ -105,6 +109,8 @@ export function useConversation() {
   profileRef.current = profile;
   const turnModeRef = useRef<TurnMode>(turnMode);
   turnModeRef.current = turnMode;
+  const variantRef = useRef<EnglishVariant>(englishVariant);
+  variantRef.current = englishVariant;
   const sessionRef = useRef(false);
 
   // Состояние определения границы реплики.
@@ -135,6 +141,7 @@ export function useConversation() {
       setProfileState(await loadProfile());
       setHomework(await loadHomework(storedLanguage));
       setTurnModeState(await loadTurnMode());
+      setVariantState(await loadEnglishVariant());
       setReady(true);
     })().catch((e: unknown) => setError(String(e)));
   }, []);
@@ -231,6 +238,7 @@ export function useConversation() {
         level: currentLevels[currentLanguage],
         topic: findTopic(currentLanguage, topicRef.current),
         name: profileRef.current.name || undefined,
+        variant: variantRef.current,
       });
 
       persist((previous) =>
@@ -360,6 +368,7 @@ export function useConversation() {
           level: levelMap[languageRef.current],
           topic,
           name: profileRef.current.name || undefined,
+          variant: variantRef.current,
         });
 
         const opening: Message = {
@@ -419,6 +428,12 @@ export function useConversation() {
     if (!sessionRef.current) return;
     await finishTurn();
   }, [finishTurn]);
+
+  const setEnglishVariant = useCallback(async (next: EnglishVariant) => {
+    setVariantState(next);
+    variantRef.current = next;
+    await saveEnglishVariant(next);
+  }, []);
 
   const setTurnMode = useCallback(async (next: TurnMode) => {
     setTurnModeState(next);
@@ -577,6 +592,7 @@ export function useConversation() {
     archive,
     profile,
     turnMode,
+    englishVariant,
     homework,
     homeworkBusy,
     status,
@@ -591,6 +607,7 @@ export function useConversation() {
     setTopic,
     setProfile,
     setTurnMode,
+    setEnglishVariant,
     endTurn,
     beginTurn,
     makeHomework,

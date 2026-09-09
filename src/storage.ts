@@ -7,6 +7,7 @@ import type {
   LanguageCode,
   Level,
   Message,
+  EnglishVariant,
   Profile,
   TurnMode,
 } from './types';
@@ -18,6 +19,7 @@ const keyTopic = (language: LanguageCode) => `polyglotta:topic:${language}`;
 const KEY_ARCHIVE = 'polyglotta:archive';
 const KEY_PROFILE = 'polyglotta:profile';
 const KEY_MODE = 'polyglotta:turnMode';
+const KEY_VARIANT = 'polyglotta:englishVariant';
 const keyArchived = (id: string) => `polyglotta:archive:${id}`;
 const keyHomework = (id: string) => `polyglotta:homework:${id}`;
 
@@ -90,6 +92,16 @@ export async function loadTurnMode(): Promise<TurnMode> {
 
 export async function saveTurnMode(mode: TurnMode): Promise<void> {
   await AsyncStorage.setItem(KEY_MODE, mode);
+}
+
+/** Вариант английского — общий для всех бесед на нём. */
+export async function loadEnglishVariant(): Promise<EnglishVariant> {
+  const raw = await AsyncStorage.getItem(KEY_VARIANT);
+  return raw === 'american' || raw === 'cockney' ? raw : 'british';
+}
+
+export async function saveEnglishVariant(variant: EnglishVariant): Promise<void> {
+  await AsyncStorage.setItem(KEY_VARIANT, variant);
 }
 
 export const EMPTY_PROFILE: Profile = { name: '', avatarId: null, photoUri: null };

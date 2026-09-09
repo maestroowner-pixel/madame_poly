@@ -31,6 +31,9 @@ export const EXPLANATION_LANGUAGE_NAME: Record<UiLocale, string> = {
 
 const en = {
   // Шапка и панель
+  british: 'British',
+  american: 'American',
+  cockney: 'Cockney',
   archive: 'Archive',
   toArchive: 'Archive it',
   free: 'Free',
@@ -144,6 +147,9 @@ const en = {
 export type Strings = typeof en;
 
 const uk: Strings = {
+  british: 'Британська',
+  american: 'Американська',
+  cockney: 'Кокні',
   archive: 'Архів',
   toArchive: 'В архів',
   free: 'Вільна',
@@ -245,6 +251,9 @@ const uk: Strings = {
 };
 
 const es: Strings = {
+  british: 'Británico',
+  american: 'Americano',
+  cockney: 'Cockney',
   archive: 'Archivo',
   toArchive: 'Archivar',
   free: 'Libre',
@@ -346,6 +355,9 @@ const es: Strings = {
 };
 
 const ru: Strings = {
+  british: 'Британский',
+  american: 'Американский',
+  cockney: 'Кокни',
   archive: 'Архив',
   toArchive: 'В архив',
   free: 'Свободная',
