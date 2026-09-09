@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
-import { CloseIcon } from './icons';
+import { CloseIcon, ShareIcon } from './icons';
 import { CONTENT_MAX_WIDTH } from '../layout';
 import { t } from '../i18n';
 import { useStyles, useTheme, type Theme } from '../theme';
@@ -126,10 +126,19 @@ export function HomeworkScreen({
             <Text style={styles.title}>{t.homeworkTitle}</Text>
             <View style={styles.headerActions}>
               {homework && (
-                <Pressable onPress={() => void exportPdf()} disabled={exporting} hitSlop={12}>
-                  <Text style={[styles.action, exporting && styles.actionBusy]}>
-                    {exporting ? t.preparing : t.pdf}
-                  </Text>
+                <Pressable
+                  onPress={() => void exportPdf()}
+                  disabled={exporting}
+                  hitSlop={12}
+                  accessibilityRole="button"
+                  accessibilityLabel={t.pdf}
+                  style={styles.iconButton}
+                >
+                  {exporting ? (
+                    <ActivityIndicator color={theme.accent} size="small" />
+                  ) : (
+                    <ShareIcon size={22} color={theme.accent} />
+                  )}
                 </Pressable>
               )}
               <Pressable
@@ -197,8 +206,6 @@ const createStyles = (theme: Theme) =>
       alignSelf: 'center',
     },
     title: { color: theme.text, fontSize: 18, fontWeight: '700' },
-    action: { color: theme.accent, fontSize: 15 },
-    actionBusy: { opacity: 0.5 },
     headerActions: { flexDirection: 'row', alignItems: 'center', gap: 14 },
     iconButton: { width: 30, height: 30, alignItems: 'center', justifyContent: 'center' },
     exportError: { color: theme.dangerText, fontSize: 12 },
