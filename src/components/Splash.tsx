@@ -4,21 +4,21 @@ import { useCallback, useEffect, useRef } from 'react';
 import { Animated, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { SPLASH_HOLD_MS } from '../config';
-import { useStyles, type Theme } from '../theme';
+import { t } from '../i18n';
+import { useStyles } from '../theme';
 
 interface Props {
   onDone: () => void;
 }
 
 /**
- * Заставка: одно изображение во весь экран под гонг. Звук подрезан ровно под
- * длительность показа, чтобы картинка и гонг заканчивались вместе. Тап снимает
- * её сразу, если ждать некогда.
+ * Заставка на запуске: логотип под гонг. Висит ровно столько, сколько звучит
+ * звук, но не мигает и не задерживает дольше потолка. Тап снимает её сразу.
  */
 export function Splash({ onDone }: Props) {
-  const player = useAudioPlayer(require('../../assets/splash.m4a'));
   const styles = useStyles(createStyles);
 
+  const player = useAudioPlayer(require('../../assets/splash.m4a'));
   const opacity = useRef(new Animated.Value(1)).current;
   const dismissed = useRef(false);
 
@@ -48,10 +48,16 @@ export function Splash({ onDone }: Props) {
   return (
     <Animated.View style={[styles.overlay, { opacity }]}>
       <Pressable style={styles.tapArea} onPress={dismiss}>
-        <Image source={require('../../assets/splash.png')} style={styles.image} resizeMode="cover" />
+        <Image source={require('../../assets/splash.png')} style={styles.photo} resizeMode="cover" />
 
-        {/* Затемнение снизу: без него подпись теряется на светлых участках. */}
+        {/* Затемнение снизу: по светлым участкам снимка белый текст теряется. */}
         <View style={styles.scrim} />
+
+        <View style={styles.caption}>
+          <Text style={styles.title}>Madame Poly</Text>
+          <Text style={styles.tagline}>{t.tagline}</Text>
+        </View>
+
         <View style={styles.footer}>
           <Text style={styles.footerText}>Kuka Lab</Text>
           <Text style={styles.footerText}>Mykhaylo Osypov</Text>
@@ -62,7 +68,7 @@ export function Splash({ onDone }: Props) {
   );
 }
 
-const createStyles = (theme: Theme) =>
+const createStyles = () =>
   StyleSheet.create({
     overlay: {
       position: 'absolute',
@@ -70,20 +76,25 @@ const createStyles = (theme: Theme) =>
       left: 0,
       right: 0,
       bottom: 0,
-      backgroundColor: theme.bg,
+      // Фон прибит к тёмному, а не взят из темы: пока снимок грузится, светлая
+      // тема давала белую вспышку перед портретом.
+      backgroundColor: '#0B1046',
       zIndex: 10,
     },
     tapArea: { flex: 1 },
-    image: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, width: '100%', height: '100%' },
+    photo: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, width: '100%', height: '100%' },
     scrim: {
       position: 'absolute',
       left: 0,
       right: 0,
       bottom: 0,
-      height: 150,
-      backgroundColor: 'rgba(0,0,0,0.45)',
+      height: 260,
+      backgroundColor: 'rgba(4,8,40,0.55)',
     },
-    footer: { position: 'absolute', left: 0, right: 0, bottom: 28, alignItems: 'center', gap: 2 },
-    footerText: { color: '#FFFFFF', fontSize: 13, fontWeight: '600' },
-    footerVersion: { color: '#FFFFFF', fontSize: 11, opacity: 0.75, marginTop: 2 },
+    caption: { position: 'absolute', left: 0, right: 0, bottom: 96, alignItems: 'center', gap: 4 },
+    title: { color: '#FFFFFF', fontSize: 30, fontWeight: '700' },
+    tagline: { color: '#FFFFFF', fontSize: 14, opacity: 0.85 },
+    footer: { position: 'absolute', left: 0, right: 0, bottom: 26, alignItems: 'center', gap: 2 },
+    footerText: { color: '#FFFFFF', fontSize: 12, opacity: 0.8 },
+    footerVersion: { color: '#FFFFFF', fontSize: 11, opacity: 0.6, marginTop: 2 },
   });
