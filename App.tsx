@@ -1,6 +1,6 @@
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -19,7 +19,6 @@ import { ArchiveIcon, MoonIcon, SunIcon } from './src/components/icons';
 import { HomeworkScreen } from './src/components/HomeworkScreen';
 import { ListeningScreen } from './src/components/ListeningScreen';
 import { NotebookScreen } from './src/components/NotebookScreen';
-import { ZOOM_CLOSE_MS } from './src/components/ZoomModal';
 import { ProfileScreen } from './src/components/ProfileScreen';
 import { RecordButton } from './src/components/RecordButton';
 import { TutorStrip } from './src/components/TutorStrip';
@@ -27,8 +26,7 @@ import { LANGUAGES } from './src/languages';
 import { findTopic } from './src/topics';
 import { CONTENT_MAX_WIDTH } from './src/layout';
 import { useConversation } from './src/hooks/useConversation';
-import { useZoomScreen, type ZoomScreen } from './src/hooks/useZoomScreen';
-import type { Anchor } from './src/anchor';
+import { useZoomScreen } from './src/hooks/useZoomScreen';
 import { ThemeProvider, useStyles, useTheme, type Theme } from './src/theme';
 import type { Message } from './src/types';
 import { locale, t } from './src/i18n';
@@ -57,19 +55,6 @@ function Screen() {
   const homeworkScreen = useZoomScreen();
   const notebookScreen = useZoomScreen();
   const listeningScreen = useZoomScreen();
-
-  /**
-   * Открыть экран из строки настроек. iOS не поднимает вторую модалку над уже
-   * поднятой, поэтому сначала складываем настройки и лишь потом разворачиваем
-   * следующий экран — из той же строки, координаты уже сняты.
-   */
-  const openFromPanel = useCallback(
-    (screen: ZoomScreen) => (anchor: Anchor | null) => {
-      setPanelOpen(false);
-      setTimeout(() => screen.show(anchor), ZOOM_CLOSE_MS);
-    },
-    [],
-  );
 
   // Начали беседу — убираем панель и все открытые экраны: разговор идёт на
   // чистом окне, иначе первую реплику слушаешь, глядя в настройки.
@@ -145,15 +130,57 @@ function Screen() {
           topicId={conversation.topicId}
           onSelectTopic={conversation.setTopic}
           archiveCount={conversation.archive.length}
-          onOpenArchive={openFromPanel(archiveScreen)}
+          onOpenArchive={archiveScreen.show}
           profileName={conversation.profile.name}
-          onOpenProfile={openFromPanel(profileScreen)}
+          onOpenProfile={profileScreen.show}
           homeworkCount={conversation.homework?.exercises.length ?? null}
-          onOpenHomework={openFromPanel(homeworkScreen)}
+          onOpenHomework={homeworkScreen.show}
           englishVariant={conversation.englishVariant}
           onSelectVariant={conversation.setEnglishVariant}
           onOpenNotebook={notebookScreen.show}
-          onOpenListening={openFromPanel(listeningScreen)}
+          onOpenListening={listeningScreen.show}
+          screens={
+            <>
+              <ListeningScreen
+                visible={listeningScreen.open}
+                anchor={listeningScreen.anchor}
+                language={conversation.language}
+                level={conversation.level}
+                topicId={conversation.topicId}
+                onClose={listeningScreen.hide}
+              />
+
+              <HomeworkScreen
+                visible={homeworkScreen.open}
+                anchor={homeworkScreen.anchor}
+                homework={conversation.homework}
+                correctionCount={correctionCount}
+                busy={conversation.homeworkBusy}
+                messages={conversation.messages}
+                title={pdfTitle}
+                subtitle={pdfSubtitle}
+                onGenerate={conversation.makeHomework}
+                onClose={homeworkScreen.hide}
+              />
+
+              <ProfileScreen
+                visible={profileScreen.open}
+                anchor={profileScreen.anchor}
+                profile={conversation.profile}
+                onSave={conversation.setProfile}
+                onClose={profileScreen.hide}
+              />
+
+              <ArchiveScreen
+                visible={archiveScreen.open}
+                anchor={archiveScreen.anchor}
+                archive={conversation.archive}
+                profile={conversation.profile}
+                onDelete={conversation.removeArchived}
+                onClose={archiveScreen.hide}
+              />
+            </>
+          }
           leading={<TutorStrip status={conversation.status} topicId={conversation.topicId} />}
           trailing={
             <View style={styles.actions}>
@@ -236,50 +263,12 @@ function Screen() {
           }
         />
         </View>
-        <ListeningScreen
-          visible={listeningScreen.open}
-          anchor={listeningScreen.anchor}
-          language={conversation.language}
-          level={conversation.level}
-          topicId={conversation.topicId}
-          onClose={listeningScreen.hide}
-        />
-
         <NotebookScreen
           visible={notebookScreen.open}
           anchor={notebookScreen.anchor}
           onClose={notebookScreen.hide}
         />
 
-        <HomeworkScreen
-          visible={homeworkScreen.open}
-          anchor={homeworkScreen.anchor}
-          homework={conversation.homework}
-          correctionCount={correctionCount}
-          busy={conversation.homeworkBusy}
-          messages={conversation.messages}
-          title={pdfTitle}
-          subtitle={pdfSubtitle}
-          onGenerate={conversation.makeHomework}
-          onClose={homeworkScreen.hide}
-        />
-
-        <ProfileScreen
-          visible={profileScreen.open}
-          anchor={profileScreen.anchor}
-          profile={conversation.profile}
-          onSave={conversation.setProfile}
-          onClose={profileScreen.hide}
-        />
-
-        <ArchiveScreen
-          visible={archiveScreen.open}
-          anchor={archiveScreen.anchor}
-          archive={conversation.archive}
-          profile={conversation.profile}
-          onDelete={conversation.removeArchived}
-          onClose={archiveScreen.hide}
-        />
       </SafeAreaView>
     </SafeAreaProvider>
   );

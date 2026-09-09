@@ -75,8 +75,8 @@ export function ListeningScreen({ visible, anchor, language, level, topicId, onC
     setError(null);
     void loadListening(language).then((stored) => {
       setListening(stored);
-      // Показываем тему уже готового диктанта, а не тему беседы.
-      setTopic(stored ? (stored.topicId ?? null) : topicId);
+      // Тема готового диктанта, а если он старый и без неё — тема беседы.
+      setTopic(stored?.topicId ?? topicId);
       // Озвучка живёт в кэше и переживает не каждый запуск — соберём заново.
       setAudioUri(null);
       setAnswers({});
@@ -86,12 +86,12 @@ export function ListeningScreen({ visible, anchor, language, level, topicId, onC
 
   const fail = (e: unknown) => setError(e instanceof Error ? e.message : String(e));
 
-  const build = async () => {
+  const build = async (subject: string | null) => {
     if (busy) return;
     setBusy(true);
     setError(null);
     try {
-      const chosen = findTopic(language, topic);
+      const chosen = findTopic(language, subject);
       const next = await generateListening({ language, level, topic: chosen ?? undefined });
       setListening(next);
       setAudioUri(null);
@@ -241,7 +241,7 @@ export function ListeningScreen({ visible, anchor, language, level, topicId, onC
             {!listening ? (
               <>
                 <Text style={styles.empty}>{t.listeningEmpty}</Text>
-                <Pressable onPress={() => void build()} disabled={busy} style={styles.cta}>
+                <Pressable onPress={() => void build(topic)} disabled={busy} style={styles.cta}>
                   {busy ? (
                     <ActivityIndicator color={theme.ctaText} size="small" />
                   ) : (
@@ -367,7 +367,7 @@ export function ListeningScreen({ visible, anchor, language, level, topicId, onC
 
                 {/* Пересобрать можно в любой момент — иначе выбранная тема
                     ждала бы, пока доделаешь текущий диктант. */}
-                <Pressable onPress={() => void build()} disabled={busy} style={styles.secondary}>
+                <Pressable onPress={() => void build(topic)} disabled={busy} style={styles.secondary}>
                   {busy ? (
                     <ActivityIndicator color={theme.accent} size="small" />
                   ) : (

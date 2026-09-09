@@ -39,6 +39,12 @@ interface Props {
   onSelectVariant: (variant: EnglishVariant) => void;
   onOpenNotebook: (anchor: Anchor | null) => void;
   onOpenListening: (anchor: Anchor | null) => void;
+  /**
+   * Экраны, которые открываются строками настроек. Их рисуем внутри самого
+   * экрана настроек: iOS не поднимает вторую модалку над уже поднятой, а
+   * вложенную показывает поверх.
+   */
+  screens?: ReactNode;
   /** Правый край шапки — там же, где сводка, живут действия над беседой. */
   trailing?: ReactNode;
   /** Левый край шапки: портрет собеседницы вровень со строкой языка. */
@@ -70,6 +76,7 @@ export function ControlPanel({
   onSelectVariant,
   onOpenNotebook,
   onOpenListening,
+  screens,
   trailing,
   leading,
 }: Props) {
@@ -284,6 +291,8 @@ export function ControlPanel({
 
             {/* Выбор темы держим внутри экрана настроек: iOS показывает вложенную
                 модалку поверх, а соседнюю — из-под уже поднятой. */}
+            {screens}
+
             <TopicPicker
               visible={pickerOpen}
               language={language}

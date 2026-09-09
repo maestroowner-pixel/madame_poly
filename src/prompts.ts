@@ -44,6 +44,9 @@ export function buildListeningPrompt(language: LanguageCode, level: Level, topic
     'Write a short passage to be read aloud, then questions that can only be answered by someone who listened to it.',
     '',
     'Rules:',
+    topic
+      ? `- Subject: ${topic.label}. The situation, the people and the details all come from it — do not drift to another subject.`
+      : '- Choose an everyday subject: work, travel, food, health, city life, study.',
     `- "text" is in ${englishName} and is meant to be heard, not read: full sentences, no headings, no lists, no speaker labels.`,
     `- Length by level: A1 and A2 — 50 to 80 words; B1 and B2 — 100 to 150; C1 and C2 — 180 to 250.`,
     '- Keep the vocabulary and grammar at the level. Put the answers to the questions in different parts of the passage, never all in the first sentence.',
@@ -56,9 +59,6 @@ export function buildListeningPrompt(language: LanguageCode, level: Level, topic
     '- "choice": four "options", one of them correct; "answer" repeats the correct option word for word. Wrong options must be plausible and mention things from the passage.',
     '- "written": the learner types a short answer; "answer" is one model answer, a few words or one sentence. "options" is empty.',
     '- "spoken": the learner answers aloud in a full sentence; "answer" is one model answer. "options" is empty.',
-    topic
-      ? `- The passage is about: ${topic.label}.`
-      : '- Choose an everyday subject: work, travel, food, health, city life, study.',
   ].join('\n');
 }
 
