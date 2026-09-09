@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -21,8 +21,9 @@ import {
 } from 'expo-audio';
 
 import { CloseIcon } from './icons';
+import { TopicPicker } from './TopicPicker';
 import { ZoomModal } from './ZoomModal';
-import type { Anchor } from '../anchor';
+import { measureAnchor, type Anchor } from '../anchor';
 import { t } from '../i18n';
 import { CONTENT_MAX_WIDTH } from '../layout';
 import { checkListeningAnswers, generateListening } from '../services/llm';
@@ -38,6 +39,7 @@ interface Props {
   anchor: Anchor | null;
   language: LanguageCode;
   level: Level;
+  /** Тема беседы — с неё начинается выбор темы диктанта. */
   topicId: string | null;
   onClose: () => void;
 }
@@ -62,18 +64,25 @@ export function ListeningScreen({ visible, anchor, language, level, topicId, onC
   const [checking, setChecking] = useState(false);
   const [speaking, setSpeaking] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  /** Тема диктанта — своя: слушать про аптеку можно и посреди беседы о Риме. */
+  const [topic, setTopic] = useState<string | null>(topicId);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [pickerAnchor, setPickerAnchor] = useState<Anchor | null>(null);
+  const topicRef = useRef<View>(null);
 
   useEffect(() => {
     if (!visible) return;
     setError(null);
     void loadListening(language).then((stored) => {
       setListening(stored);
+      // Показываем тему уже готового диктанта, а не тему беседы.
+      setTopic(stored ? (stored.topicId ?? null) : topicId);
       // Озвучка живёт в кэше и переживает не каждый запуск — соберём заново.
       setAudioUri(null);
       setAnswers({});
       setVerdicts(null);
     });
-  }, [visible, language]);
+  }, [visible, language, topicId]);
 
   const fail = (e: unknown) => setError(e instanceof Error ? e.message : String(e));
 
@@ -82,8 +91,8 @@ export function ListeningScreen({ visible, anchor, language, level, topicId, onC
     setBusy(true);
     setError(null);
     try {
-      const topic = findTopic(language, topicId);
-      const next = await generateListening({ language, level, topic: topic ?? undefined });
+      const chosen = findTopic(language, topic);
+      const next = await generateListening({ language, level, topic: chosen ?? undefined });
       setListening(next);
       setAudioUri(null);
       setAnswers({});
@@ -210,6 +219,25 @@ export function ListeningScreen({ visible, anchor, language, level, topicId, onC
           <ScrollView contentContainerStyle={styles.body} keyboardDismissMode="on-drag">
             {error && <Text style={styles.error}>{error}</Text>}
 
+            {/* Тему берём из того же списка, что и для беседы: тридцать
+                заготовок на язык плюс свободная. */}
+            <Pressable
+              ref={topicRef}
+              onPress={() =>
+                measureAnchor(topicRef, (point) => {
+                  setPickerAnchor(point);
+                  setPickerOpen(true);
+                })
+              }
+              style={styles.topicButton}
+            >
+              <Text style={styles.topicCaption}>{t.topic}</Text>
+              <Text style={styles.topicValue} numberOfLines={1}>
+                {findTopic(language, topic)?.label ?? t.free}
+              </Text>
+              <Text style={styles.topicChevron}>›</Text>
+            </Pressable>
+
             {!listening ? (
               <>
                 <Text style={styles.empty}>{t.listeningEmpty}</Text>
@@ -326,13 +354,6 @@ export function ListeningScreen({ visible, anchor, language, level, topicId, onC
                       <Text style={styles.transcriptCaption}>{t.listeningTranscript}</Text>
                       <Text style={styles.transcript}>{listening.text}</Text>
                     </View>
-                    <Pressable onPress={() => void build()} disabled={busy} style={styles.cta}>
-                      {busy ? (
-                        <ActivityIndicator color={theme.ctaText} size="small" />
-                      ) : (
-                        <Text style={styles.ctaLabel}>{t.listeningNew}</Text>
-                      )}
-                    </Pressable>
                   </>
                 ) : (
                   <Pressable onPress={() => void check()} disabled={checking} style={styles.cta}>
@@ -343,9 +364,28 @@ export function ListeningScreen({ visible, anchor, language, level, topicId, onC
                     )}
                   </Pressable>
                 )}
+
+                {/* Пересобрать можно в любой момент — иначе выбранная тема
+                    ждала бы, пока доделаешь текущий диктант. */}
+                <Pressable onPress={() => void build()} disabled={busy} style={styles.secondary}>
+                  {busy ? (
+                    <ActivityIndicator color={theme.accent} size="small" />
+                  ) : (
+                    <Text style={styles.secondaryLabel}>{t.listeningNew}</Text>
+                  )}
+                </Pressable>
               </>
             )}
           </ScrollView>
+
+          <TopicPicker
+            visible={pickerOpen}
+            anchor={pickerAnchor}
+            language={language}
+            topicId={topic}
+            onSelect={setTopic}
+            onClose={() => setPickerOpen(false)}
+          />
         </SafeAreaView>
       </SafeAreaProvider>
     </ZoomModal>
@@ -380,6 +420,18 @@ const createStyles = (theme: Theme) =>
       gap: 12,
     },
     error: { color: theme.dangerText, fontSize: 12 },
+    topicButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+      paddingVertical: 11,
+      paddingHorizontal: 14,
+      borderRadius: 14,
+      backgroundColor: theme.surfaceAlt,
+    },
+    topicCaption: { color: theme.textMuted, fontSize: 13 },
+    topicValue: { color: theme.text, fontSize: 14, fontWeight: '600', flex: 1 },
+    topicChevron: { color: theme.textMuted, fontSize: 18, lineHeight: 20 },
     empty: {
       color: theme.textMuted,
       fontSize: 14,
@@ -399,6 +451,14 @@ const createStyles = (theme: Theme) =>
       borderColor: theme.ctaBorder,
     },
     ctaLabel: { color: theme.ctaText, fontSize: 15, fontWeight: '700' },
+    secondary: {
+      height: 46,
+      borderRadius: 14,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: theme.surfaceAlt,
+    },
+    secondaryLabel: { color: theme.accent, fontSize: 14, fontWeight: '600' },
 
     card: {
       gap: 8,

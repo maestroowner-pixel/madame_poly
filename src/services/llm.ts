@@ -238,7 +238,7 @@ export async function generateListening(params: {
   const parsed = response.parsed_output;
   if (!parsed || parsed.questions.length === 0) throw new Error(t.badListening);
 
-  return { ...parsed, language, level, createdAt: Date.now() };
+  return { ...parsed, language, level, topicId: topic?.id ?? null, createdAt: Date.now() };
 }
 
 /**

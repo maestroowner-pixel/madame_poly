@@ -84,6 +84,8 @@ export interface Listening {
   text: string;
   language: LanguageCode;
   level: Level;
+  /** Тема, по которой его составили; null — свободная. */
+  topicId: string | null;
   questions: ListeningQuestion[];
   createdAt: number;
 }
