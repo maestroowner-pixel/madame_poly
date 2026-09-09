@@ -83,11 +83,17 @@ export function ControlPanel({
     <View style={styles.wrapper}>
       <View style={styles.header}>
         {leading}
-        <Pressable onPress={onToggle} style={styles.summary} hitSlop={8}>
-          <Text style={styles.summaryText}>
-            {meta.flag} {meta.label} · {level}
-          </Text>
-          <Text style={styles.chevron}>{expanded ? '▲' : '▼'}</Text>
+        <Pressable
+          onPress={onToggle}
+          hitSlop={8}
+          accessibilityLabel={`${meta.label} · ${level}`}
+          style={styles.summary}
+        >
+          <Text style={styles.summaryFlag}>{meta.flag}</Text>
+          {/* Уровень поверх флага: подложка нужна, иначе он теряется на полосах. */}
+          <View style={styles.levelBadge}>
+            <Text style={styles.levelText}>{level}</Text>
+          </View>
         </Pressable>
         <View style={styles.spacer} />
         {trailing}
@@ -233,9 +239,24 @@ const createStyles = (theme: Theme) =>
     },
     /** Распорка отжимает действия вправо: портрет и язык остаются слева. */
     spacer: { flex: 1 },
-    summary: { flexDirection: 'row', alignItems: 'center', gap: 8, flexShrink: 1 },
-    summaryText: { color: theme.text, fontSize: 17, fontWeight: '600' },
-    chevron: { color: theme.textMuted, fontSize: 11 },
+    summary: {
+      width: 46,
+      height: 46,
+      borderRadius: 14,
+      alignItems: 'center',
+      justifyContent: 'center',
+      overflow: 'hidden',
+      backgroundColor: theme.surfaceAlt,
+    },
+    summaryFlag: { fontSize: 38, lineHeight: 46 },
+    levelBadge: {
+      position: 'absolute',
+      paddingHorizontal: 5,
+      paddingVertical: 1,
+      borderRadius: 6,
+      backgroundColor: 'rgba(6,10,40,0.72)',
+    },
+    levelText: { color: '#FFFFFF', fontSize: 13, fontWeight: '800' },
 
     /** Обрезает панель при сворачивании, чтобы содержимое не вылезало. */
     panelClip: { overflow: 'hidden' },
