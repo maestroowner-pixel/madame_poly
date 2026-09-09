@@ -192,7 +192,7 @@ export function useConversation() {
    * TTS. Слушать снова начинаем после того, как ответ доиграет.
    */
   const finishTurn = useCallback(async () => {
-    if (turnBusyRef.current) return;
+    if (turnBusyRef.current || !sessionRef.current) return;
     turnBusyRef.current = true;
 
     try {
@@ -264,6 +264,13 @@ export function useConversation() {
       );
 
       turnBusyRef.current = false;
+      // Кнопку «остановить» могли нажать, пока реплика ходила по сети. Ответ уже
+      // сохранён в ленте, но озвучивать его вдогонку и открывать микрофон нельзя.
+      if (!sessionRef.current) {
+        setStatus('idle');
+        return;
+      }
+
       // Прощание не обрываем на полуслове: сначала даём ответу доиграть.
       endAfterPlaybackRef.current = turn.farewell;
 

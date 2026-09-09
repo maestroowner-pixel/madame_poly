@@ -6,7 +6,7 @@ import { t } from '../i18n';
 import { useStyles, useTheme, type Theme } from '../theme';
 import { findTopic } from '../topics';
 import { LEVELS, type EnglishVariant, type LanguageCode, type Level } from '../types';
-import { NotebookIcon } from './icons';
+import { HomeIcon, NotebookIcon } from './icons';
 import { TopicPicker } from './TopicPicker';
 
 interface Props {
@@ -88,17 +88,15 @@ export function ControlPanel({
         {/* Боковые группы равной ширины: иначе портрет уехал бы вправо —
             слева одна кнопка, справа две. */}
         <View style={styles.side}>
+          {/* Домик открывает панель. Язык и уровень с него убраны — они и так
+              видны внутри панели, а в шапке спорили с портретом за внимание. */}
           <Pressable
             onPress={onToggle}
             hitSlop={8}
             accessibilityLabel={`${meta.label} · ${level}`}
-            style={styles.summary}
+            style={styles.iconButton}
           >
-            <Text style={styles.summaryFlag}>{meta.flag}</Text>
-            {/* Уровень поверх флага: подложка нужна, иначе он теряется на полосах. */}
-            <View style={styles.levelBadge}>
-              <Text style={styles.levelText}>{level}</Text>
-            </View>
+            <HomeIcon size={24} color={theme.accent} />
           </Pressable>
 
           <Pressable
@@ -264,25 +262,6 @@ const createStyles = (theme: Theme) =>
       backgroundColor: theme.surfaceAlt,
     },
     sideRight: { justifyContent: 'flex-end' },
-    summary: {
-      width: 46,
-      height: 46,
-      borderRadius: 14,
-      alignItems: 'center',
-      justifyContent: 'center',
-      overflow: 'hidden',
-      backgroundColor: theme.surfaceAlt,
-    },
-    summaryFlag: { fontSize: 38, lineHeight: 46 },
-    levelBadge: {
-      position: 'absolute',
-      paddingHorizontal: 5,
-      paddingVertical: 1,
-      borderRadius: 6,
-      backgroundColor: 'rgba(6,10,40,0.72)',
-    },
-    levelText: { color: '#FFFFFF', fontSize: 13, fontWeight: '800' },
-
     /** Обрезает панель при сворачивании, чтобы содержимое не вылезало. */
     panelClip: { overflow: 'hidden' },
     panel: {

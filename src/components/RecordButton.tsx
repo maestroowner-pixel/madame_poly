@@ -31,6 +31,11 @@ function formatDuration(millis: number): string {
  * Подсвечен — приложение само ловит паузу; погашен — конец фразы отмечаете вы,
  * и полоса превращается в «Готово». Ни отдельной строки, ни соседней кнопки
  * под режим не выделяем: на маленьком экране место дороже.
+ *
+ * Беседа закрывается долгим нажатием в два шага: первое выводит из авторежима,
+ * второе заканчивает разговор. Одним движением не выйдет — в авторежиме
+ * микрофон открывается сам после каждой реплики, и беседа тут же начиналась
+ * заново.
  */
 export function RecordButton({
   status,
@@ -55,6 +60,8 @@ export function RecordButton({
   const manualTurn = sessionActive && !auto && listening;
   // Ответ доиграл, микрофон закрыт: ждём, пока человек прочитает и будет готов.
   const manualWait = sessionActive && !auto && !listening && !working;
+  // Первый долгий тап в авторежиме только выключает авто, беседу рвёт второй.
+  const longPress = sessionActive ? (auto ? onToggleMode : onToggleSession) : undefined;
 
   const label = !sessionActive
     ? t.start
@@ -80,7 +87,7 @@ export function RecordButton({
     <View style={styles.container}>
       <Pressable
         onPress={manualTurn ? onEndTurn : manualWait ? onBeginTurn : onToggleSession}
-        onLongPress={manualTurn || manualWait ? onToggleSession : undefined}
+        onLongPress={longPress}
         style={[styles.bar, listening && styles.barListening]}
       >
         {/* Осциллограмма живёт фоном под подписью: видно, что микрофон открыт. */}
@@ -95,24 +102,19 @@ export function RecordButton({
           {label}
         </Text>
 
-        {/* Обработчик оставлен и на время беседы: иначе нажатие на погашенный
-            значок проваливалось бы в полосу и обрывало реплику. */}
+        {/* Значок работает и во время беседы: из авторежима нужно уметь выйти
+            посреди разговора, иначе микрофон открывается снова и снова. */}
         <Pressable
-          onPress={() => {
-            if (!sessionActive) onToggleMode();
-          }}
-          style={[
-            styles.auto,
-            { borderColor: tint },
-            auto && { backgroundColor: tint },
-            sessionActive && styles.dimmed,
-          ]}
+          onPress={onToggleMode}
+          style={[styles.auto, { borderColor: tint }, auto && { backgroundColor: tint }]}
         >
           <Text style={[styles.autoLabel, { color: auto ? tintBg : tint }]}>{t.auto}</Text>
         </Pressable>
       </Pressable>
 
-      {(manualTurn || manualWait) && <Text style={styles.hint}>{t.longPressToFinish}</Text>}
+      {sessionActive && (
+        <Text style={styles.hint}>{auto ? t.longPressToManual : t.longPressToFinish}</Text>
+      )}
     </View>
   );
 }
@@ -134,7 +136,6 @@ const createStyles = (theme: Theme) =>
       borderWidth: 1.5,
     },
     autoLabel: { fontSize: 11, fontWeight: '800', letterSpacing: 0.5 },
-    dimmed: { opacity: 0.45 },
 
     bar: {
       flexDirection: 'row',

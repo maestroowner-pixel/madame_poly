@@ -270,3 +270,43 @@ export function CheckIcon({ size, color }: Props) {
     </View>
   );
 }
+
+/** Домик: скат — повёрнутый квадрат о двух сторонах, под ним коробка стен. */
+export function HomeIcon({ size, color }: Props) {
+  const line = Math.max(1.6, size * 0.085);
+  const roof = size * 0.5;
+  const wallWidth = size * 0.62;
+
+  return (
+    <View style={[styles.box, { width: size, height: size }]}>
+      <View
+        style={{
+          position: 'absolute',
+          top: size * 0.24,
+          width: roof,
+          height: roof,
+          borderColor: color,
+          borderTopWidth: line,
+          borderLeftWidth: line,
+          borderTopLeftRadius: line,
+          transform: [{ rotate: '45deg' }],
+        }}
+      />
+
+      <View
+        style={{
+          position: 'absolute',
+          bottom: size * 0.14,
+          width: wallWidth,
+          height: size * 0.36,
+          borderColor: color,
+          borderLeftWidth: line,
+          borderRightWidth: line,
+          borderBottomWidth: line,
+          borderBottomLeftRadius: size * 0.06,
+          borderBottomRightRadius: size * 0.06,
+        }}
+      />
+    </View>
+  );
+}
