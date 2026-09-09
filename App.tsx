@@ -21,11 +21,11 @@ import { NotebookScreen } from './src/components/NotebookScreen';
 import { ProfileScreen } from './src/components/ProfileScreen';
 import { RecordButton } from './src/components/RecordButton';
 import { TutorStrip } from './src/components/TutorStrip';
-import { PANEL_AUTOHIDE_MS } from './src/config';
 import { LANGUAGES } from './src/languages';
 import { findTopic } from './src/topics';
 import { CONTENT_MAX_WIDTH } from './src/layout';
 import { useConversation } from './src/hooks/useConversation';
+import { useZoomScreen } from './src/hooks/useZoomScreen';
 import { ThemeProvider, useStyles, useTheme, type Theme } from './src/theme';
 import type { Message } from './src/types';
 import { locale, t } from './src/i18n';
@@ -48,10 +48,28 @@ function Screen() {
   const listRef = useRef<FlatList<Message>>(null);
   const [splashDone, setSplashDone] = useState(false);
   const [panelOpen, setPanelOpen] = useState(true);
-  const [archiveOpen, setArchiveOpen] = useState(false);
-  const [profileOpen, setProfileOpen] = useState(false);
-  const [homeworkOpen, setHomeworkOpen] = useState(false);
-  const [notebookOpen, setNotebookOpen] = useState(false);
+  // Каждый экран помнит значок, из которого его открыли: в него он и схлопнется.
+  const archiveScreen = useZoomScreen();
+  const profileScreen = useZoomScreen();
+  const homeworkScreen = useZoomScreen();
+  const notebookScreen = useZoomScreen();
+
+  // Начали беседу — убираем панель и все открытые экраны: разговор идёт на
+  // чистом окне, иначе первую реплику слушаешь, глядя в настройки.
+  useEffect(() => {
+    if (!conversation.sessionActive) return;
+    setPanelOpen(false);
+    archiveScreen.hide();
+    profileScreen.hide();
+    homeworkScreen.hide();
+    notebookScreen.hide();
+  }, [
+    conversation.sessionActive,
+    archiveScreen.hide,
+    profileScreen.hide,
+    homeworkScreen.hide,
+    notebookScreen.hide,
+  ]);
 
   const correctionCount = conversation.messages.reduce(
     (total, message) => total + (message.corrections?.length ?? 0),
@@ -90,18 +108,6 @@ function Screen() {
     listRef.current?.scrollToEnd({ animated: true });
   }, [conversation.messages.length]);
 
-  // Панель нужна только чтобы выбрать язык и уровень — дальше она мешает.
-  useEffect(() => {
-    if (!panelOpen || !splashDone) return;
-    const timer = setTimeout(() => setPanelOpen(false), PANEL_AUTOHIDE_MS);
-    return () => clearTimeout(timer);
-  }, [panelOpen, splashDone, conversation.language, conversation.level]);
-
-  // Начали беседу — убираем панель сразу, не дожидаясь таймера.
-  useEffect(() => {
-    if (conversation.sessionActive) setPanelOpen(false);
-  }, [conversation.sessionActive]);
-
   return (
     <SafeAreaProvider>
       <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
@@ -120,14 +126,14 @@ function Screen() {
           topicId={conversation.topicId}
           onSelectTopic={conversation.setTopic}
           archiveCount={conversation.archive.length}
-          onOpenArchive={() => setArchiveOpen(true)}
+          onOpenArchive={archiveScreen.show}
           profileName={conversation.profile.name}
-          onOpenProfile={() => setProfileOpen(true)}
+          onOpenProfile={profileScreen.show}
           homeworkCount={conversation.homework?.exercises.length ?? null}
-          onOpenHomework={() => setHomeworkOpen(true)}
+          onOpenHomework={homeworkScreen.show}
           englishVariant={conversation.englishVariant}
           onSelectVariant={conversation.setEnglishVariant}
-          onOpenNotebook={() => setNotebookOpen(true)}
+          onOpenNotebook={notebookScreen.show}
           leading={<TutorStrip status={conversation.status} topicId={conversation.topicId} />}
           trailing={
             <View style={styles.actions}>
@@ -210,10 +216,15 @@ function Screen() {
           }
         />
         </View>
-        <NotebookScreen visible={notebookOpen} onClose={() => setNotebookOpen(false)} />
+        <NotebookScreen
+          visible={notebookScreen.open}
+          anchor={notebookScreen.anchor}
+          onClose={notebookScreen.hide}
+        />
 
         <HomeworkScreen
-          visible={homeworkOpen}
+          visible={homeworkScreen.open}
+          anchor={homeworkScreen.anchor}
           homework={conversation.homework}
           correctionCount={correctionCount}
           busy={conversation.homeworkBusy}
@@ -221,22 +232,24 @@ function Screen() {
           title={pdfTitle}
           subtitle={pdfSubtitle}
           onGenerate={conversation.makeHomework}
-          onClose={() => setHomeworkOpen(false)}
+          onClose={homeworkScreen.hide}
         />
 
         <ProfileScreen
-          visible={profileOpen}
+          visible={profileScreen.open}
+          anchor={profileScreen.anchor}
           profile={conversation.profile}
           onSave={conversation.setProfile}
-          onClose={() => setProfileOpen(false)}
+          onClose={profileScreen.hide}
         />
 
         <ArchiveScreen
-          visible={archiveOpen}
+          visible={archiveScreen.open}
+          anchor={archiveScreen.anchor}
           archive={conversation.archive}
           profile={conversation.profile}
           onDelete={conversation.removeArchived}
-          onClose={() => setArchiveOpen(false)}
+          onClose={archiveScreen.hide}
         />
       </SafeAreaView>
     </SafeAreaProvider>

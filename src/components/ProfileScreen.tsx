@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   Image,
   KeyboardAvoidingView,
-  Modal,
   Platform,
   Pressable,
   ScrollView,
@@ -13,23 +12,31 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { ZoomModal } from './ZoomModal';
+import {
+  SafeAreaProvider,
+  SafeAreaView,
+  initialWindowMetrics,
+} from 'react-native-safe-area-context';
 
 import { AVATARS, AVATAR_GROUPS } from '../avatars';
 import { CONTENT_MAX_WIDTH } from '../layout';
 import { FONT_SCALES, useStyles, useTheme, type Theme, type FontScale } from '../theme';
 import type { Profile } from '../types';
 import { UserAvatar } from './Avatar';
+import type { Anchor } from '../anchor';
 import { t } from '../i18n';
 
 interface Props {
   visible: boolean;
+  /** Значок, из которого экран вырос. */
+  anchor: Anchor | null;
   profile: Profile;
   onSave: (profile: Profile) => void;
   onClose: () => void;
 }
 
-export function ProfileScreen({ visible, profile, onSave, onClose }: Props) {
+export function ProfileScreen({ visible, anchor, profile, onSave, onClose }: Props) {
   const { theme, fontScale, setFontScale } = useTheme();
   const styles = useStyles(createStyles);
 
@@ -104,8 +111,8 @@ export function ProfileScreen({ visible, profile, onSave, onClose }: Props) {
   };
 
   return (
-    <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
-      <SafeAreaProvider>
+    <ZoomModal visible={visible} anchor={anchor} onRequestClose={onClose}>
+      <SafeAreaProvider initialMetrics={initialWindowMetrics}>
         <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
           <View style={styles.header}>
             <Text style={styles.title}>{t.profileTitle}</Text>
@@ -209,7 +216,7 @@ export function ProfileScreen({ visible, profile, onSave, onClose }: Props) {
           </KeyboardAvoidingView>
         </SafeAreaView>
       </SafeAreaProvider>
-    </Modal>
+    </ZoomModal>
   );
 }
 

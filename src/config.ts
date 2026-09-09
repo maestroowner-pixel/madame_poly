@@ -83,9 +83,6 @@ export const MIN_SPEECH_MS = 400;
 /** Жёсткий потолок одной реплики, мс. */
 export const MAX_TURN_MS = 30000;
 
-/** Через сколько бездействия панель языка и уровня прячется сама, мс. */
-export const PANEL_AUTOHIDE_MS = 5000;
-
 // --- Заставка ---
 
 /**

@@ -1,16 +1,21 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import {
+  SafeAreaProvider,
+  SafeAreaView,
+  initialWindowMetrics,
+} from 'react-native-safe-area-context';
 
 import { CheckIcon, CloseIcon, ShareIcon } from './icons';
+import { ZoomModal } from './ZoomModal';
+import { measureAnchor, type Anchor } from '../anchor';
 import { formatDate } from '../format';
 import { t } from '../i18n';
 import { LANGUAGES } from '../languages';
@@ -23,6 +28,8 @@ import type { ExerciseKind } from '../types';
 
 interface Props {
   visible: boolean;
+  /** Значок тетради в шапке: из него экран растёт и в него схлопывается. */
+  anchor: Anchor | null;
   onClose: () => void;
 }
 
@@ -42,7 +49,7 @@ function entryTitle(entry: NotebookEntry): string {
  * слишком много, чтобы листать. Сам список собирается из архива на лету:
  * хранить его отдельно значило бы чинить после каждого удаления беседы.
  */
-export function NotebookScreen({ visible, onClose }: Props) {
+export function NotebookScreen({ visible, anchor, onClose }: Props) {
   const { theme } = useTheme();
   const styles = useStyles(createStyles);
 
@@ -52,6 +59,9 @@ export function NotebookScreen({ visible, onClose }: Props) {
   /** null — обычный режим; массив (пусть и пустой) — режим выбора. */
   const [selected, setSelected] = useState<string[] | null>(null);
   const [opened, setOpened] = useState<NotebookEntry | null>(null);
+  // Занятие раскрывается из своей строки — в неё же и складывается.
+  const [openedAnchor, setOpenedAnchor] = useState<Anchor | null>(null);
+  const rowRefs = useRef(new Map<string, View>());
 
   useEffect(() => {
     if (!visible) return;
@@ -63,6 +73,12 @@ export function NotebookScreen({ visible, onClose }: Props) {
 
   const total = entries.reduce((sum, entry) => sum + entry.homework.exercises.length, 0);
   const selecting = selected !== null;
+
+  const openLesson = (entry: NotebookEntry) =>
+    measureAnchor({ current: rowRefs.current.get(entry.id) ?? null }, (point) => {
+      setOpenedAnchor(point);
+      setOpened(entry);
+    });
 
   const toggle = (id: string) =>
     setSelected((current) => {
@@ -94,8 +110,8 @@ export function NotebookScreen({ visible, onClose }: Props) {
   const canShare = entries.length > 0 && (selected === null || selected.length > 0);
 
   return (
-    <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
-      <SafeAreaProvider>
+    <ZoomModal visible={visible} anchor={anchor} onRequestClose={onClose}>
+      <SafeAreaProvider initialMetrics={initialWindowMetrics}>
         <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
           <View style={styles.header}>
             <Text style={styles.title}>
@@ -148,7 +164,11 @@ export function NotebookScreen({ visible, onClose }: Props) {
                   return (
                     <Pressable
                       key={entry.id}
-                      onPress={() => (selecting ? toggle(entry.id) : setOpened(entry))}
+                      ref={(node) => {
+                        if (node) rowRefs.current.set(entry.id, node);
+                        else rowRefs.current.delete(entry.id);
+                      }}
+                      onPress={() => (selecting ? toggle(entry.id) : openLesson(entry))}
                       onLongPress={() => (selecting ? toggle(entry.id) : setSelected([entry.id]))}
                       style={[styles.row, checked && styles.rowChecked]}
                     >
@@ -179,25 +199,31 @@ export function NotebookScreen({ visible, onClose }: Props) {
         </SafeAreaView>
       </SafeAreaProvider>
 
-      <LessonModal entry={opened} onClose={() => setOpened(null)} onShare={exportPdf} />
-    </Modal>
+      <LessonModal
+        entry={opened}
+        anchor={openedAnchor}
+        onClose={() => setOpened(null)}
+        onShare={exportPdf}
+      />
+    </ZoomModal>
   );
 }
 
 interface LessonProps {
   entry: NotebookEntry | null;
+  anchor: Anchor | null;
   onClose: () => void;
   onShare: (entries: NotebookEntry[]) => Promise<void>;
 }
 
 /** Одно занятие целиком: задания с правилом, подсказкой и ответом. */
-function LessonModal({ entry, onClose, onShare }: LessonProps) {
+function LessonModal({ entry, anchor, onClose, onShare }: LessonProps) {
   const { theme } = useTheme();
   const styles = useStyles(createStyles);
 
   return (
-    <Modal visible={entry !== null} animationType="slide" onRequestClose={onClose}>
-      <SafeAreaProvider>
+    <ZoomModal visible={entry !== null} anchor={anchor} onRequestClose={onClose}>
+      <SafeAreaProvider initialMetrics={initialWindowMetrics}>
         <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
           {entry && (
             <>
@@ -252,7 +278,7 @@ function LessonModal({ entry, onClose, onShare }: LessonProps) {
           )}
         </SafeAreaView>
       </SafeAreaProvider>
-    </Modal>
+    </ZoomModal>
   );
 }
 

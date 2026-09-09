@@ -2,6 +2,7 @@ import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { LANGUAGES, LANGUAGE_CODES } from '../languages';
+import { measureAnchor, type Anchor } from '../anchor';
 import { t } from '../i18n';
 import { useStyles, useTheme, type Theme } from '../theme';
 import { findTopic } from '../topics';
@@ -21,15 +22,15 @@ interface Props {
   topicId: string | null;
   onSelectTopic: (id: string | null) => void;
   archiveCount: number;
-  onOpenArchive: () => void;
+  onOpenArchive: (anchor: Anchor | null) => void;
   profileName: string;
-  onOpenProfile: () => void;
+  onOpenProfile: (anchor: Anchor | null) => void;
   /** Сколько упражнений уже составлено; null — задания ещё нет. */
   homeworkCount: number | null;
-  onOpenHomework: () => void;
+  onOpenHomework: (anchor: Anchor | null) => void;
   englishVariant: EnglishVariant;
   onSelectVariant: (variant: EnglishVariant) => void;
-  onOpenNotebook: () => void;
+  onOpenNotebook: (anchor: Anchor | null) => void;
   /** Правый край шапки — там же, где сводка, живут действия над беседой. */
   trailing?: ReactNode;
   /** Левый край шапки: портрет собеседницы вровень со строкой языка. */
@@ -66,6 +67,13 @@ export function ControlPanel({
   const styles = useStyles(createStyles);
 
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [pickerAnchor, setPickerAnchor] = useState<Anchor | null>(null);
+  // Ссылки на кнопки: экраны разворачиваются из них и в них схлопываются.
+  const notebookRef = useRef<View>(null);
+  const topicRef = useRef<View>(null);
+  const profileRef = useRef<View>(null);
+  const homeworkRef = useRef<View>(null);
+  const archiveRef = useRef<View>(null);
   const progress = useRef(new Animated.Value(expanded ? 1 : 0)).current;
   // Высоту панели меряем по факту: она зависит от шрифта и плотности экрана.
   const [contentHeight, setContentHeight] = useState(0);
@@ -88,8 +96,9 @@ export function ControlPanel({
         {/* Боковые группы равной ширины: иначе портрет уехал бы вправо —
             слева одна кнопка, справа две. */}
         <View style={styles.side}>
-          {/* Домик открывает панель. Язык и уровень с него убраны — они и так
-              видны внутри панели, а в шапке спорили с портретом за внимание. */}
+          {/* Домик открывает и закрывает панель — больше её ничто не трогает.
+              Язык и уровень с него убраны: они видны внутри панели, а в шапке
+              спорили с портретом за внимание. */}
           <Pressable
             onPress={onToggle}
             hitSlop={8}
@@ -100,7 +109,8 @@ export function ControlPanel({
           </Pressable>
 
           <Pressable
-            onPress={onOpenNotebook}
+            ref={notebookRef}
+            onPress={() => measureAnchor(notebookRef, onOpenNotebook)}
             hitSlop={8}
             accessibilityLabel={t.notebookTitle}
             style={styles.iconButton}
@@ -147,7 +157,13 @@ export function ControlPanel({
 
           <Pressable
             disabled={disabled}
-            onPress={() => setPickerOpen(true)}
+            ref={topicRef}
+            onPress={() =>
+              measureAnchor(topicRef, (point) => {
+                setPickerAnchor(point);
+                setPickerOpen(true);
+              })
+            }
             style={[styles.topicButton, disabled && styles.dimmed]}
           >
             <Text style={styles.topicCaption}>{t.topic}</Text>
@@ -189,7 +205,11 @@ export function ControlPanel({
             </View>
           )}
 
-          <Pressable onPress={onOpenProfile} style={styles.topicButton}>
+          <Pressable
+            ref={profileRef}
+            onPress={() => measureAnchor(profileRef, onOpenProfile)}
+            style={styles.topicButton}
+          >
             <Text style={styles.topicCaption}>{t.profile}</Text>
             <Text style={styles.topicValue} numberOfLines={1}>
               {profileName || t.notSet}
@@ -197,7 +217,11 @@ export function ControlPanel({
             <Text style={styles.topicChevron}>›</Text>
           </Pressable>
 
-          <Pressable onPress={onOpenHomework} style={styles.topicButton}>
+          <Pressable
+            ref={homeworkRef}
+            onPress={() => measureAnchor(homeworkRef, onOpenHomework)}
+            style={styles.topicButton}
+          >
             <Text style={styles.topicCaption}>{t.task}</Text>
             <Text style={styles.topicValue} numberOfLines={1}>
               {homeworkCount === null ? t.notSet : t.exercisesCount(homeworkCount)}
@@ -205,7 +229,11 @@ export function ControlPanel({
             <Text style={styles.topicChevron}>›</Text>
           </Pressable>
 
-          <Pressable onPress={onOpenArchive} style={styles.topicButton}>
+          <Pressable
+            ref={archiveRef}
+            onPress={() => measureAnchor(archiveRef, onOpenArchive)}
+            style={styles.topicButton}
+          >
             <Text style={styles.topicCaption}>{t.archive}</Text>
             <Text style={styles.topicValue} numberOfLines={1}>
               {archiveCount === 0 ? t.empty : `${archiveCount}`}
@@ -236,6 +264,7 @@ export function ControlPanel({
         language={language}
         topicId={topicId}
         onSelect={onSelectTopic}
+        anchor={pickerAnchor}
         onClose={() => setPickerOpen(false)}
       />
     </View>

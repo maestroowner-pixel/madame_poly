@@ -1,8 +1,14 @@
 import { useMemo } from 'react';
-import { FlatList, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ZoomModal } from './ZoomModal';
+import {
+  SafeAreaProvider,
+  SafeAreaView,
+  initialWindowMetrics,
+} from 'react-native-safe-area-context';
 
 import { CONTENT_MAX_WIDTH } from '../layout';
+import type { Anchor } from '../anchor';
 import { t } from '../i18n';
 import { useStyles, useTheme, type Theme } from '../theme';
 import { TOPICS, topicGloss, type Topic } from '../topics';
@@ -10,6 +16,8 @@ import type { LanguageCode } from '../types';
 
 interface Props {
   visible: boolean;
+  /** Значок, из которого экран вырос. */
+  anchor: Anchor | null;
   language: LanguageCode;
   topicId: string | null;
   onSelect: (id: string | null) => void;
@@ -22,7 +30,7 @@ const FREE: Topic = { id: '', label: t.freeTopic };
 /** Ролевые ситуации и обычные темы читаются по-разному — разводим заголовками. */
 type Row = { kind: 'header'; title: string } | { kind: 'topic'; topic: Topic };
 
-export function TopicPicker({ visible, language, topicId, onSelect, onClose }: Props) {
+export function TopicPicker({ visible, anchor, language, topicId, onSelect, onClose }: Props) {
   const { theme } = useTheme();
   const styles = useStyles(createStyles);
 
@@ -43,9 +51,9 @@ export function TopicPicker({ visible, language, topicId, onSelect, onClose }: P
   }, [language]);
 
   return (
-    <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
+    <ZoomModal visible={visible} anchor={anchor} onRequestClose={onClose}>
       {/* Внутрь Modal контекст отступов снаружи не попадает — нужен свой провайдер. */}
-      <SafeAreaProvider>
+      <SafeAreaProvider initialMetrics={initialWindowMetrics}>
         <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
           <View style={styles.header}>
             <Text style={styles.title}>{t.topicTitle}</Text>
@@ -89,7 +97,7 @@ export function TopicPicker({ visible, language, topicId, onSelect, onClose }: P
           />
         </SafeAreaView>
       </SafeAreaProvider>
-    </Modal>
+    </ZoomModal>
   );
 }
 

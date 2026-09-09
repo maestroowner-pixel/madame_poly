@@ -1,11 +1,17 @@
-import { useEffect, useMemo, useState } from 'react';
-import { FlatList, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ZoomModal } from './ZoomModal';
+import {
+  SafeAreaProvider,
+  SafeAreaView,
+  initialWindowMetrics,
+} from 'react-native-safe-area-context';
 
 import { LANGUAGES } from '../languages';
 import { loadArchivedMessages, loadHomework } from '../storage';
 import { CONTENT_MAX_WIDTH } from '../layout';
 import { formatDate } from '../format';
+import { measureAnchor, type Anchor } from '../anchor';
 import { t } from '../i18n';
 import { useStyles, useTheme, type Theme } from '../theme';
 import { findTopic } from '../topics';
@@ -15,6 +21,8 @@ import { MessageBubble } from './MessageBubble';
 
 interface Props {
   visible: boolean;
+  /** Значок, из которого экран вырос. */
+  anchor: Anchor | null;
   archive: ArchivedSession[];
   profile: Profile;
   onDelete: (id: string) => void;
@@ -30,7 +38,7 @@ function plural(count: number, one: string, few: string, many: string): string {
   return many;
 }
 
-export function ArchiveScreen({ visible, archive, profile, onDelete, onClose }: Props) {
+export function ArchiveScreen({ visible, anchor, archive, profile, onDelete, onClose }: Props) {
   const { theme } = useTheme();
   const styles = useStyles(createStyles);
 
@@ -38,6 +46,8 @@ export function ArchiveScreen({ visible, archive, profile, onDelete, onClose }: 
   const [messages, setMessages] = useState<Message[]>([]);
   const [homework, setHomework] = useState<Homework | null>(null);
   const [homeworkOpen, setHomeworkOpen] = useState(false);
+  const [homeworkAnchor, setHomeworkAnchor] = useState<Anchor | null>(null);
+  const taskRef = useRef<View>(null);
 
   const opened = archive.find((session) => session.id === openId) ?? null;
 
@@ -66,8 +76,8 @@ export function ArchiveScreen({ visible, archive, profile, onDelete, onClose }: 
   }, [visible]);
 
   return (
-    <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
-      <SafeAreaProvider>
+    <ZoomModal visible={visible} anchor={anchor} onRequestClose={onClose}>
+      <SafeAreaProvider initialMetrics={initialWindowMetrics}>
         <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
           <View style={styles.header}>
             {opened ? (
@@ -81,7 +91,16 @@ export function ArchiveScreen({ visible, archive, profile, onDelete, onClose }: 
             {opened ? (
               <View style={styles.headerActions}>
                 {homework && (
-                  <Pressable onPress={() => setHomeworkOpen(true)} hitSlop={12}>
+                  <Pressable
+                    ref={taskRef}
+                    onPress={() =>
+                      measureAnchor(taskRef, (point) => {
+                        setHomeworkAnchor(point);
+                        setHomeworkOpen(true);
+                      })
+                    }
+                    hitSlop={12}
+                  >
                     <Text style={styles.action}>{t.task}</Text>
                   </Pressable>
                 )}
@@ -152,6 +171,7 @@ export function ArchiveScreen({ visible, archive, profile, onDelete, onClose }: 
           )}
           <HomeworkScreen
             visible={homeworkOpen}
+            anchor={homeworkAnchor}
             homework={homework}
             correctionCount={opened?.correctionCount ?? 0}
             busy={false}
@@ -171,7 +191,7 @@ export function ArchiveScreen({ visible, archive, profile, onDelete, onClose }: 
           />
         </SafeAreaView>
       </SafeAreaProvider>
-    </Modal>
+    </ZoomModal>
   );
 }
 

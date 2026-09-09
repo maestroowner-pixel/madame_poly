@@ -1,17 +1,22 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
-  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { ZoomModal } from './ZoomModal';
+import {
+  SafeAreaProvider,
+  SafeAreaView,
+  initialWindowMetrics,
+} from 'react-native-safe-area-context';
 
 import { CloseIcon, ShareIcon } from './icons';
 import { CONTENT_MAX_WIDTH } from '../layout';
+import type { Anchor } from '../anchor';
 import { t } from '../i18n';
 import { useStyles, useTheme, type Theme } from '../theme';
 import { exportHomeworkPdf } from '../services/pdf';
@@ -19,6 +24,8 @@ import type { Exercise, ExerciseKind, Homework, Message } from '../types';
 
 interface Props {
   visible: boolean;
+  /** Значок, из которого экран вырос. */
+  anchor: Anchor | null;
   homework: Homework | null;
   /** Сколько ошибок в беседе — из них и составляется задание. */
   correctionCount: number;
@@ -84,6 +91,7 @@ function ExerciseCard({ exercise, index }: { exercise: Exercise; index: number }
 
 export function HomeworkScreen({
   visible,
+  anchor,
   homework,
   correctionCount,
   busy,
@@ -119,8 +127,8 @@ export function HomeworkScreen({
   }, [visible]);
 
   return (
-    <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
-      <SafeAreaProvider>
+    <ZoomModal visible={visible} anchor={anchor} onRequestClose={onClose}>
+      <SafeAreaProvider initialMetrics={initialWindowMetrics}>
         <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
           <View style={styles.header}>
             <Text style={styles.title}>{t.homeworkTitle}</Text>
@@ -188,7 +196,7 @@ export function HomeworkScreen({
           </ScrollView>
         </SafeAreaView>
       </SafeAreaProvider>
-    </Modal>
+    </ZoomModal>
   );
 }
 
