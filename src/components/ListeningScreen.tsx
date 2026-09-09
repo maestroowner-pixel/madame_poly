@@ -1,0 +1,460 @@
+import { useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
+import {
+  SafeAreaProvider,
+  SafeAreaView,
+  initialWindowMetrics,
+} from 'react-native-safe-area-context';
+import {
+  RecordingPresets,
+  setAudioModeAsync,
+  useAudioPlayer,
+  useAudioRecorder,
+} from 'expo-audio';
+
+import { CloseIcon } from './icons';
+import { ZoomModal } from './ZoomModal';
+import type { Anchor } from '../anchor';
+import { t } from '../i18n';
+import { CONTENT_MAX_WIDTH } from '../layout';
+import { checkListeningAnswers, generateListening } from '../services/llm';
+import { transcribe } from '../services/stt';
+import { synthesize } from '../services/tts';
+import { loadListening, saveListening } from '../storage';
+import { useStyles, useTheme, type Theme } from '../theme';
+import { findTopic } from '../topics';
+import type { LanguageCode, Level, Listening, ListeningVerdict } from '../types';
+
+interface Props {
+  visible: boolean;
+  anchor: Anchor | null;
+  language: LanguageCode;
+  level: Level;
+  topicId: string | null;
+  onClose: () => void;
+}
+
+/**
+ * Аудирование: текст под уровень читается вслух, а вопросы к нему отвечаются
+ * тремя способами — выбором, текстом и голосом. Сам текст до проверки скрыт,
+ * иначе вопросы решаются чтением, а не на слух.
+ */
+export function ListeningScreen({ visible, anchor, language, level, topicId, onClose }: Props) {
+  const { theme } = useTheme();
+  const styles = useStyles(createStyles);
+
+  const player = useAudioPlayer(null);
+  const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
+
+  const [listening, setListening] = useState<Listening | null>(null);
+  const [audioUri, setAudioUri] = useState<string | null>(null);
+  const [answers, setAnswers] = useState<Record<number, string>>({});
+  const [verdicts, setVerdicts] = useState<ListeningVerdict[] | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [checking, setChecking] = useState(false);
+  const [speaking, setSpeaking] = useState<number | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!visible) return;
+    setError(null);
+    void loadListening(language).then((stored) => {
+      setListening(stored);
+      // Озвучка живёт в кэше и переживает не каждый запуск — соберём заново.
+      setAudioUri(null);
+      setAnswers({});
+      setVerdicts(null);
+    });
+  }, [visible, language]);
+
+  const fail = (e: unknown) => setError(e instanceof Error ? e.message : String(e));
+
+  const build = async () => {
+    if (busy) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const topic = findTopic(language, topicId);
+      const next = await generateListening({ language, level, topic: topic ?? undefined });
+      setListening(next);
+      setAudioUri(null);
+      setAnswers({});
+      setVerdicts(null);
+      await saveListening(language, next);
+    } catch (e: unknown) {
+      fail(e);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const play = async () => {
+    if (!listening || busy) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const uri = audioUri ?? (await synthesize(listening.text));
+      setAudioUri(uri);
+      await setAudioModeAsync({ playsInSilentMode: true, allowsRecording: false });
+      player.replace({ uri });
+      player.play();
+    } catch (e: unknown) {
+      fail(e);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  /** Голосовой ответ: первое нажатие открывает микрофон, второе — закрывает. */
+  const speak = async (index: number) => {
+    setError(null);
+    try {
+      if (speaking === index) {
+        setSpeaking(null);
+        await recorder.stop();
+        const uri = recorder.uri;
+        if (!uri) throw new Error(t.recordingLost);
+        setChecking(true);
+        const text = await transcribe(uri, language);
+        setAnswers((current) => ({ ...current, [index]: text }));
+        return;
+      }
+
+      player.pause();
+      await setAudioModeAsync({ playsInSilentMode: true, allowsRecording: true });
+      await recorder.prepareToRecordAsync();
+      recorder.record();
+      setSpeaking(index);
+    } catch (e: unknown) {
+      setSpeaking(null);
+      fail(e);
+    } finally {
+      setChecking(false);
+    }
+  };
+
+  const check = async () => {
+    if (!listening || checking) return;
+
+    const given = listening.questions.map((_, index) => (answers[index] ?? '').trim());
+    if (given.every((value) => value.length === 0)) {
+      setError(t.listeningAnswerFirst);
+      return;
+    }
+
+    setChecking(true);
+    setError(null);
+    try {
+      // Выбор из списка проверяется на месте: тратить на него запрос незачем.
+      const free = listening.questions
+        .map((question, index) => ({ question, index }))
+        .filter(({ question }) => question.kind !== 'choice');
+
+      const judged = await checkListeningAnswers({
+        listening,
+        answers: free.map(({ question, index }) => ({
+          question: question.prompt,
+          expected: question.answer,
+          given: given[index] || '—',
+        })),
+      });
+
+      const byIndex = new Map(free.map(({ index }, order) => [index, judged[order]]));
+      setVerdicts(
+        listening.questions.map((question, index) => {
+          if (question.kind !== 'choice') {
+            return byIndex.get(index) ?? { correct: false, comment: '' };
+          }
+          return { correct: given[index] === question.answer, comment: '' };
+        }),
+      );
+    } catch (e: unknown) {
+      fail(e);
+    } finally {
+      setChecking(false);
+    }
+  };
+
+  const score = verdicts ? verdicts.filter((verdict) => verdict.correct).length : 0;
+
+  return (
+    <ZoomModal visible={visible} anchor={anchor} onRequestClose={onClose}>
+      <SafeAreaProvider initialMetrics={initialWindowMetrics}>
+        <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
+          <View style={styles.header}>
+            <Text style={styles.title} numberOfLines={1}>
+              {listening ? listening.title : t.listeningTitle}
+            </Text>
+            <View style={styles.actions}>
+              <Text style={styles.level}>{level}</Text>
+              <Pressable
+                onPress={onClose}
+                hitSlop={12}
+                accessibilityRole="button"
+                accessibilityLabel={t.close}
+                style={styles.iconButton}
+              >
+                <CloseIcon size={20} color={theme.accent} />
+              </Pressable>
+            </View>
+          </View>
+
+          <ScrollView contentContainerStyle={styles.body} keyboardDismissMode="on-drag">
+            {error && <Text style={styles.error}>{error}</Text>}
+
+            {!listening ? (
+              <>
+                <Text style={styles.empty}>{t.listeningEmpty}</Text>
+                <Pressable onPress={() => void build()} disabled={busy} style={styles.cta}>
+                  {busy ? (
+                    <ActivityIndicator color={theme.ctaText} size="small" />
+                  ) : (
+                    <Text style={styles.ctaLabel}>{t.listeningGenerate}</Text>
+                  )}
+                </Pressable>
+              </>
+            ) : (
+              <>
+                <Pressable onPress={() => void play()} disabled={busy} style={styles.cta}>
+                  {busy ? (
+                    <ActivityIndicator color={theme.ctaText} size="small" />
+                  ) : (
+                    <Text style={styles.ctaLabel}>
+                      {audioUri ? t.listeningReplay : t.listeningPlay}
+                    </Text>
+                  )}
+                </Pressable>
+
+                {listening.questions.map((question, index) => {
+                  const verdict = verdicts?.[index];
+                  const given = answers[index] ?? '';
+
+                  return (
+                    <View
+                      key={index}
+                      style={[
+                        styles.card,
+                        verdict && (verdict.correct ? styles.cardRight : styles.cardWrong),
+                      ]}
+                    >
+                      <Text style={styles.prompt}>
+                        {index + 1}. {question.prompt}
+                      </Text>
+
+                      {question.kind === 'choice' && (
+                        <View style={styles.options}>
+                          {question.options.map((option) => {
+                            const picked = given === option;
+                            return (
+                              <Pressable
+                                key={option}
+                                disabled={verdicts !== null}
+                                onPress={() =>
+                                  setAnswers((current) => ({ ...current, [index]: option }))
+                                }
+                                style={[styles.option, picked && styles.optionPicked]}
+                              >
+                                <Text style={[styles.optionLabel, picked && styles.optionLabelOn]}>
+                                  {option}
+                                </Text>
+                              </Pressable>
+                            );
+                          })}
+                        </View>
+                      )}
+
+                      {question.kind === 'written' && (
+                        <TextInput
+                          value={given}
+                          editable={verdicts === null}
+                          onChangeText={(text) =>
+                            setAnswers((current) => ({ ...current, [index]: text }))
+                          }
+                          placeholder={t.listeningWrite}
+                          placeholderTextColor={theme.textMuted}
+                          style={styles.input}
+                          multiline
+                        />
+                      )}
+
+                      {question.kind === 'spoken' && (
+                        <>
+                          {given.length > 0 && <Text style={styles.spokenText}>{given}</Text>}
+                          <Pressable
+                            onPress={() => void speak(index)}
+                            disabled={verdicts !== null}
+                            style={[styles.mic, speaking === index && styles.micOn]}
+                          >
+                            <Text
+                              style={[
+                                styles.micLabel,
+                                speaking === index && styles.micLabelOn,
+                              ]}
+                            >
+                              {speaking === index ? t.listeningRecording : t.listeningSpeak}
+                            </Text>
+                          </Pressable>
+                        </>
+                      )}
+
+                      <Text style={styles.hint}>{question.hint}</Text>
+
+                      {verdict && (
+                        <Text style={verdict.correct ? styles.right : styles.wrong}>
+                          {verdict.comment ||
+                            (verdict.correct ? '' : `${t.correctAnswer}: ${question.answer}`)}
+                        </Text>
+                      )}
+                    </View>
+                  );
+                })}
+
+                {verdicts ? (
+                  <>
+                    <Text style={styles.score}>
+                      {t.listeningScore(score, listening.questions.length)}
+                    </Text>
+                    <View style={styles.card}>
+                      <Text style={styles.transcriptCaption}>{t.listeningTranscript}</Text>
+                      <Text style={styles.transcript}>{listening.text}</Text>
+                    </View>
+                    <Pressable onPress={() => void build()} disabled={busy} style={styles.cta}>
+                      {busy ? (
+                        <ActivityIndicator color={theme.ctaText} size="small" />
+                      ) : (
+                        <Text style={styles.ctaLabel}>{t.listeningNew}</Text>
+                      )}
+                    </Pressable>
+                  </>
+                ) : (
+                  <Pressable onPress={() => void check()} disabled={checking} style={styles.cta}>
+                    {checking ? (
+                      <ActivityIndicator color={theme.ctaText} size="small" />
+                    ) : (
+                      <Text style={styles.ctaLabel}>{t.listeningCheck}</Text>
+                    )}
+                  </Pressable>
+                )}
+              </>
+            )}
+          </ScrollView>
+        </SafeAreaView>
+      </SafeAreaProvider>
+    </ZoomModal>
+  );
+}
+
+const createStyles = (theme: Theme) =>
+  StyleSheet.create({
+    screen: { flex: 1, backgroundColor: theme.bg },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: 10,
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      width: '100%',
+      maxWidth: CONTENT_MAX_WIDTH,
+      alignSelf: 'center',
+    },
+    title: { color: theme.text, fontSize: 18, fontWeight: '700', flexShrink: 1 },
+    actions: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+    level: { color: theme.accent, fontSize: 12, fontWeight: '700' },
+    iconButton: { width: 30, height: 30, alignItems: 'center', justifyContent: 'center' },
+
+    body: {
+      width: '100%',
+      maxWidth: CONTENT_MAX_WIDTH,
+      alignSelf: 'center',
+      paddingHorizontal: 16,
+      paddingBottom: 32,
+      gap: 12,
+    },
+    error: { color: theme.dangerText, fontSize: 12 },
+    empty: {
+      color: theme.textMuted,
+      fontSize: 14,
+      lineHeight: 20,
+      textAlign: 'center',
+      paddingTop: 30,
+      paddingHorizontal: 20,
+    },
+
+    cta: {
+      height: 50,
+      borderRadius: 14,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderWidth: 2,
+      backgroundColor: theme.ctaBg,
+      borderColor: theme.ctaBorder,
+    },
+    ctaLabel: { color: theme.ctaText, fontSize: 15, fontWeight: '700' },
+
+    card: {
+      gap: 8,
+      padding: 14,
+      borderRadius: 16,
+      backgroundColor: theme.surface,
+      borderWidth: 1,
+      borderColor: theme.border,
+    },
+    cardRight: { borderColor: theme.correctionBorder },
+    cardWrong: { borderColor: theme.danger },
+    prompt: { color: theme.text, fontSize: 15, lineHeight: 21, fontWeight: '600' },
+    hint: { color: theme.textMuted, fontSize: 12, lineHeight: 17 },
+    right: { color: theme.correctionText, fontSize: 13, lineHeight: 18 },
+    wrong: { color: theme.dangerText, fontSize: 13, lineHeight: 18 },
+
+    options: { gap: 8 },
+    option: {
+      paddingVertical: 10,
+      paddingHorizontal: 12,
+      borderRadius: 12,
+      backgroundColor: theme.surfaceAlt,
+      borderWidth: 1,
+      borderColor: theme.border,
+    },
+    optionPicked: { backgroundColor: theme.accent, borderColor: theme.accent },
+    optionLabel: { color: theme.text, fontSize: 14, lineHeight: 19 },
+    optionLabelOn: { color: theme.accentText },
+
+    input: {
+      color: theme.text,
+      fontSize: 15,
+      minHeight: 44,
+      paddingVertical: 10,
+      paddingHorizontal: 12,
+      borderRadius: 12,
+      backgroundColor: theme.surfaceAlt,
+      borderWidth: 1,
+      borderColor: theme.border,
+    },
+
+    spokenText: { color: theme.text, fontSize: 15, lineHeight: 21 },
+    mic: {
+      height: 44,
+      borderRadius: 12,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: theme.surfaceAlt,
+      borderWidth: 1,
+      borderColor: theme.border,
+    },
+    micOn: { backgroundColor: theme.dangerBg, borderColor: theme.danger },
+    micLabel: { color: theme.text, fontSize: 14, fontWeight: '600' },
+    micLabelOn: { color: theme.dangerText },
+
+    score: { color: theme.text, fontSize: 15, fontWeight: '700', textAlign: 'center' },
+    transcriptCaption: { color: theme.textMuted, fontSize: 12 },
+    transcript: { color: theme.text, fontSize: 15, lineHeight: 22 },
+  });

@@ -17,6 +17,7 @@ import { MessageBubble } from './src/components/MessageBubble';
 import { ArchiveScreen } from './src/components/ArchiveScreen';
 import { ArchiveIcon, MoonIcon, SunIcon } from './src/components/icons';
 import { HomeworkScreen } from './src/components/HomeworkScreen';
+import { ListeningScreen } from './src/components/ListeningScreen';
 import { NotebookScreen } from './src/components/NotebookScreen';
 import { ZOOM_CLOSE_MS } from './src/components/ZoomModal';
 import { ProfileScreen } from './src/components/ProfileScreen';
@@ -55,6 +56,7 @@ function Screen() {
   const profileScreen = useZoomScreen();
   const homeworkScreen = useZoomScreen();
   const notebookScreen = useZoomScreen();
+  const listeningScreen = useZoomScreen();
 
   /**
    * Открыть экран из строки настроек. iOS не поднимает вторую модалку над уже
@@ -78,12 +80,14 @@ function Screen() {
     profileScreen.hide();
     homeworkScreen.hide();
     notebookScreen.hide();
+    listeningScreen.hide();
   }, [
     conversation.sessionActive,
     archiveScreen.hide,
     profileScreen.hide,
     homeworkScreen.hide,
     notebookScreen.hide,
+    listeningScreen.hide,
   ]);
 
   const correctionCount = conversation.messages.reduce(
@@ -149,6 +153,7 @@ function Screen() {
           englishVariant={conversation.englishVariant}
           onSelectVariant={conversation.setEnglishVariant}
           onOpenNotebook={notebookScreen.show}
+          onOpenListening={openFromPanel(listeningScreen)}
           leading={<TutorStrip status={conversation.status} topicId={conversation.topicId} />}
           trailing={
             <View style={styles.actions}>
@@ -231,6 +236,15 @@ function Screen() {
           }
         />
         </View>
+        <ListeningScreen
+          visible={listeningScreen.open}
+          anchor={listeningScreen.anchor}
+          language={conversation.language}
+          level={conversation.level}
+          topicId={conversation.topicId}
+          onClose={listeningScreen.hide}
+        />
+
         <NotebookScreen
           visible={notebookScreen.open}
           anchor={notebookScreen.anchor}

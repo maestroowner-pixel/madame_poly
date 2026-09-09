@@ -38,6 +38,7 @@ interface Props {
   englishVariant: EnglishVariant;
   onSelectVariant: (variant: EnglishVariant) => void;
   onOpenNotebook: (anchor: Anchor | null) => void;
+  onOpenListening: (anchor: Anchor | null) => void;
   /** Правый край шапки — там же, где сводка, живут действия над беседой. */
   trailing?: ReactNode;
   /** Левый край шапки: портрет собеседницы вровень со строкой языка. */
@@ -68,6 +69,7 @@ export function ControlPanel({
   englishVariant,
   onSelectVariant,
   onOpenNotebook,
+  onOpenListening,
   trailing,
   leading,
 }: Props) {
@@ -84,6 +86,7 @@ export function ControlPanel({
   const profileRef = useRef<View>(null);
   const homeworkRef = useRef<View>(null);
   const archiveRef = useRef<View>(null);
+  const listeningRef = useRef<View>(null);
 
   const meta = LANGUAGES[language];
   const topic = findTopic(language, topicId);
@@ -234,6 +237,18 @@ export function ControlPanel({
                 <Text style={styles.topicCaption}>{t.task}</Text>
                 <Text style={styles.topicValue} numberOfLines={1}>
                   {homeworkCount === null ? t.notSet : t.exercisesCount(homeworkCount)}
+                </Text>
+                <Text style={styles.topicChevron}>›</Text>
+              </Pressable>
+
+              <Pressable
+                ref={listeningRef}
+                onPress={() => measureAnchor(listeningRef, onOpenListening)}
+                style={styles.topicButton}
+              >
+                <Text style={styles.topicCaption}>{t.listeningTitle}</Text>
+                <Text style={styles.topicValue} numberOfLines={1}>
+                  {level}
                 </Text>
                 <Text style={styles.topicChevron}>›</Text>
               </Pressable>
