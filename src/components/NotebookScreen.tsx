@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Modal,
@@ -10,7 +10,8 @@ import {
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
-import { CloseIcon, ShareIcon } from './icons';
+import { CheckIcon, CloseIcon, ShareIcon } from './icons';
+import { formatDate } from '../format';
 import { t } from '../i18n';
 import { LANGUAGES } from '../languages';
 import { CONTENT_MAX_WIDTH } from '../layout';
@@ -31,10 +32,15 @@ const KIND_LABELS: Record<ExerciseKind, string> = {
   translate: t.kindTranslate,
 };
 
+function entryTitle(entry: NotebookEntry): string {
+  const topic = findTopic(entry.language, entry.topicId);
+  return topic ? topic.label : t.freeTopic;
+}
+
 /**
- * Тетрадь: всё, что когда-либо было составлено, разделами по темам. Список
- * собирается из архива на лету — отдельно хранить его значило бы чинить после
- * каждого удаления беседы.
+ * Тетрадь: список занятий, а не сплошная простыня упражнений — их набирается
+ * слишком много, чтобы листать. Сам список собирается из архива на лету:
+ * хранить его отдельно значило бы чинить после каждого удаления беседы.
  */
 export function NotebookScreen({ visible, onClose }: Props) {
   const { theme } = useTheme();
@@ -43,20 +49,34 @@ export function NotebookScreen({ visible, onClose }: Props) {
   const [entries, setEntries] = useState<NotebookEntry[]>([]);
   const [exporting, setExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /** null — обычный режим; массив (пусть и пустой) — режим выбора. */
+  const [selected, setSelected] = useState<string[] | null>(null);
+  const [opened, setOpened] = useState<NotebookEntry | null>(null);
 
   useEffect(() => {
     if (!visible) return;
     setError(null);
+    setSelected(null);
+    setOpened(null);
     void loadNotebook().then(setEntries);
   }, [visible]);
 
   const total = entries.reduce((sum, entry) => sum + entry.homework.exercises.length, 0);
+  const selecting = selected !== null;
 
-  const exportPdf = async () => {
-    if (entries.length === 0 || exporting) return;
+  const toggle = (id: string) =>
+    setSelected((current) => {
+      const list = current ?? [];
+      return list.includes(id) ? list.filter((item) => item !== id) : [...list, id];
+    });
+
+  const exportPdf = async (chosen: NotebookEntry[]) => {
+    if (chosen.length === 0 || exporting) return;
     setExporting(true);
+    setError(null);
     try {
-      await exportNotebookPdf(entries);
+      await exportNotebookPdf(chosen);
+      setSelected(null);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -64,16 +84,27 @@ export function NotebookScreen({ visible, onClose }: Props) {
     }
   };
 
+  // Отбираем фильтром по общему списку: так занятия в PDF идут в том же
+  // порядке, что и на экране, а не в порядке расстановки галочек.
+  const share = () =>
+    void exportPdf(
+      selected === null ? entries : entries.filter((entry) => selected.includes(entry.id)),
+    );
+
+  const canShare = entries.length > 0 && (selected === null || selected.length > 0);
+
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
       <SafeAreaProvider>
         <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
           <View style={styles.header}>
-            <Text style={styles.title}>{t.notebookTitle}</Text>
+            <Text style={styles.title}>
+              {selected === null ? t.notebookTitle : t.selectedCount(selected.length)}
+            </Text>
             <View style={styles.actions}>
-              {entries.length > 0 && (
+              {canShare && (
                 <Pressable
-                  onPress={() => void exportPdf()}
+                  onPress={share}
                   disabled={exporting}
                   hitSlop={12}
                   accessibilityRole="button"
@@ -88,7 +119,8 @@ export function NotebookScreen({ visible, onClose }: Props) {
                 </Pressable>
               )}
               <Pressable
-                onPress={onClose}
+                // В режиме выбора крестик отменяет выбор, а не закрывает тетрадь.
+                onPress={selecting ? () => setSelected(null) : onClose}
                 hitSlop={12}
                 accessibilityRole="button"
                 accessibilityLabel={t.close}
@@ -106,34 +138,118 @@ export function NotebookScreen({ visible, onClose }: Props) {
               <Text style={styles.empty}>{t.notebookEmpty}</Text>
             ) : (
               <>
-                <Text style={styles.total}>{t.totalExercises(total)}</Text>
+                <Text style={styles.total}>
+                  {t.totalExercises(total)}
+                  {!selecting && ` · ${t.notebookHint}`}
+                </Text>
 
                 {entries.map((entry) => {
-                  const topic = findTopic(entry.language, entry.topicId);
+                  const checked = selected !== null && selected.includes(entry.id);
                   return (
-                    <View key={entry.id} style={styles.section}>
-                      <View style={styles.sectionHead}>
-                        <Text style={styles.sectionTitle} numberOfLines={1}>
-                          {LANGUAGES[entry.language].flag} {topic ? topic.label : t.freeTopic}
-                        </Text>
-                        <Text style={styles.level}>{entry.level}</Text>
-                      </View>
-
-                      {entry.homework.exercises.map((exercise, index) => (
-                        <View key={index} style={styles.task}>
-                          <Text style={styles.kind}>
-                            {KIND_LABELS[exercise.kind]} · {exercise.rule}
-                          </Text>
-                          <Text style={styles.prompt}>{exercise.task}</Text>
+                    <Pressable
+                      key={entry.id}
+                      onPress={() => (selecting ? toggle(entry.id) : setOpened(entry))}
+                      onLongPress={() => (selecting ? toggle(entry.id) : setSelected([entry.id]))}
+                      style={[styles.row, checked && styles.rowChecked]}
+                    >
+                      {selecting && (
+                        <View style={[styles.check, checked && styles.checkOn]}>
+                          {checked && <CheckIcon size={16} color={theme.ctaText} />}
                         </View>
-                      ))}
-                    </View>
+                      )}
+
+                      <View style={styles.rowBody}>
+                        <View style={styles.rowHead}>
+                          <Text style={styles.rowTitle} numberOfLines={1}>
+                            {LANGUAGES[entry.language].flag} {entryTitle(entry)}
+                          </Text>
+                          <Text style={styles.level}>{entry.level}</Text>
+                        </View>
+                        <Text style={styles.meta}>
+                          {t.totalExercises(entry.homework.exercises.length)} ·{' '}
+                          {formatDate(entry.createdAt)}
+                        </Text>
+                      </View>
+                    </Pressable>
                   );
                 })}
               </>
             )}
-
           </ScrollView>
+        </SafeAreaView>
+      </SafeAreaProvider>
+
+      <LessonModal entry={opened} onClose={() => setOpened(null)} onShare={exportPdf} />
+    </Modal>
+  );
+}
+
+interface LessonProps {
+  entry: NotebookEntry | null;
+  onClose: () => void;
+  onShare: (entries: NotebookEntry[]) => Promise<void>;
+}
+
+/** Одно занятие целиком: задания с правилом, подсказкой и ответом. */
+function LessonModal({ entry, onClose, onShare }: LessonProps) {
+  const { theme } = useTheme();
+  const styles = useStyles(createStyles);
+
+  return (
+    <Modal visible={entry !== null} animationType="slide" onRequestClose={onClose}>
+      <SafeAreaProvider>
+        <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
+          {entry && (
+            <>
+              <View style={styles.header}>
+                <View style={styles.lessonHead}>
+                  <Text style={styles.title} numberOfLines={1}>
+                    {LANGUAGES[entry.language].flag} {entryTitle(entry)}
+                  </Text>
+                  <Text style={styles.meta}>
+                    {entry.level} · {formatDate(entry.createdAt)}
+                  </Text>
+                </View>
+                <View style={styles.actions}>
+                  <Pressable
+                    onPress={() => void onShare([entry])}
+                    hitSlop={12}
+                    accessibilityRole="button"
+                    accessibilityLabel={t.pdf}
+                    style={styles.iconButton}
+                  >
+                    <ShareIcon size={22} color={theme.accent} />
+                  </Pressable>
+                  <Pressable
+                    onPress={onClose}
+                    hitSlop={12}
+                    accessibilityRole="button"
+                    accessibilityLabel={t.close}
+                    style={styles.iconButton}
+                  >
+                    <CloseIcon size={20} color={theme.accent} />
+                  </Pressable>
+                </View>
+              </View>
+
+              <ScrollView contentContainerStyle={styles.body}>
+                <Text style={styles.summary}>{entry.homework.summary}</Text>
+
+                {entry.homework.exercises.map((exercise, index) => (
+                  <View key={index} style={styles.card}>
+                    <Text style={styles.kind}>
+                      {index + 1}. {KIND_LABELS[exercise.kind]} · {exercise.rule}
+                    </Text>
+                    <Text style={styles.prompt}>{exercise.task}</Text>
+                    <Text style={styles.hint}>{exercise.hint}</Text>
+                    <Text style={styles.answerLine}>
+                      {t.correctAnswer}: {exercise.answer}
+                    </Text>
+                  </View>
+                ))}
+              </ScrollView>
+            </>
+          )}
         </SafeAreaView>
       </SafeAreaProvider>
     </Modal>
@@ -147,6 +263,7 @@ const createStyles = (theme: Theme) =>
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
+      gap: 10,
       paddingHorizontal: 16,
       paddingVertical: 12,
       width: '100%',
@@ -154,6 +271,7 @@ const createStyles = (theme: Theme) =>
       alignSelf: 'center',
     },
     title: { color: theme.text, fontSize: 18, fontWeight: '700' },
+    lessonHead: { flexShrink: 1, gap: 2 },
     actions: { flexDirection: 'row', alignItems: 'center', gap: 14 },
     iconButton: { width: 30, height: 30, alignItems: 'center', justifyContent: 'center' },
 
@@ -165,7 +283,7 @@ const createStyles = (theme: Theme) =>
       paddingBottom: 32,
       gap: 10,
     },
-    total: { color: theme.textMuted, fontSize: 12 },
+    total: { color: theme.textMuted, fontSize: 12, lineHeight: 17 },
     error: { color: theme.dangerText, fontSize: 12 },
     empty: {
       color: theme.textMuted,
@@ -176,19 +294,45 @@ const createStyles = (theme: Theme) =>
       paddingHorizontal: 20,
     },
 
-    section: {
-      gap: 8,
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
       padding: 14,
       borderRadius: 16,
       backgroundColor: theme.surface,
       borderWidth: 1,
       borderColor: theme.border,
     },
-    sectionHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
-    sectionTitle: { color: theme.text, fontSize: 15, fontWeight: '700', flexShrink: 1 },
+    rowChecked: { borderColor: theme.accent },
+    rowBody: { flex: 1, gap: 3 },
+    rowHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
+    rowTitle: { color: theme.text, fontSize: 15, fontWeight: '700', flexShrink: 1 },
     level: { color: theme.accent, fontSize: 12, fontWeight: '700' },
+    meta: { color: theme.textMuted, fontSize: 12 },
 
-    task: { gap: 2 },
+    check: {
+      width: 24,
+      height: 24,
+      borderRadius: 12,
+      borderWidth: 2,
+      borderColor: theme.border,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    checkOn: { backgroundColor: theme.accent, borderColor: theme.accent },
+
+    summary: { color: theme.textMuted, fontSize: 13, lineHeight: 18 },
+    card: {
+      gap: 3,
+      padding: 14,
+      borderRadius: 16,
+      backgroundColor: theme.surface,
+      borderWidth: 1,
+      borderColor: theme.border,
+    },
     kind: { color: theme.textMuted, fontSize: 11 },
-    prompt: { color: theme.text, fontSize: 14, lineHeight: 19 },
+    prompt: { color: theme.text, fontSize: 15, lineHeight: 21 },
+    hint: { color: theme.textMuted, fontSize: 12, lineHeight: 17 },
+    answerLine: { color: theme.accent, fontSize: 13, lineHeight: 18, marginTop: 3 },
   });

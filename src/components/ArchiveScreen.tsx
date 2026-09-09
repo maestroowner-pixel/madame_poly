@@ -5,6 +5,7 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { LANGUAGES } from '../languages';
 import { loadArchivedMessages, loadHomework } from '../storage';
 import { CONTENT_MAX_WIDTH } from '../layout';
+import { formatDate } from '../format';
 import { t } from '../i18n';
 import { useStyles, useTheme, type Theme } from '../theme';
 import { findTopic } from '../topics';
@@ -18,16 +19,6 @@ interface Props {
   profile: Profile;
   onDelete: (id: string) => void;
   onClose: () => void;
-}
-
-const pad = (value: number) => String(value).padStart(2, '0');
-
-/** Intl в Hermes есть не везде — дату собираем руками. */
-function formatDate(millis: number): string {
-  const date = new Date(millis);
-  return `${pad(date.getDate())}.${pad(date.getMonth() + 1)}.${date.getFullYear()}, ${pad(
-    date.getHours(),
-  )}:${pad(date.getMinutes())}`;
 }
 
 function plural(count: number, one: string, few: string, many: string): string {

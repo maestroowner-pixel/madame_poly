@@ -236,3 +236,37 @@ export function CloseIcon({ size, color }: Props) {
     </View>
   );
 }
+
+/** Галочка: короткая и длинная полоски под углом, как в системном чекбоксе. */
+export function CheckIcon({ size, color }: Props) {
+  const line = Math.max(1.6, size * 0.12);
+
+  return (
+    <View style={[styles.box, { width: size, height: size }]}>
+      <View
+        style={{
+          position: 'absolute',
+          left: size * 0.18,
+          top: size * 0.46,
+          width: size * 0.34,
+          height: line,
+          backgroundColor: color,
+          borderRadius: line,
+          transform: [{ rotate: '45deg' }],
+        }}
+      />
+      <View
+        style={{
+          position: 'absolute',
+          left: size * 0.34,
+          top: size * 0.38,
+          width: size * 0.58,
+          height: line,
+          backgroundColor: color,
+          borderRadius: line,
+          transform: [{ rotate: '-52deg' }],
+        }}
+      />
+    </View>
+  );
+}
