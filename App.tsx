@@ -200,6 +200,7 @@ function Screen() {
           mode={conversation.turnMode}
           onToggleSession={conversation.toggleSession}
           onEndTurn={conversation.endTurn}
+          onBeginTurn={conversation.beginTurn}
           inputLevel={conversation.inputLevel}
           onToggleMode={() =>
             void conversation.setTurnMode(conversation.turnMode === 'auto' ? 'manual' : 'auto')

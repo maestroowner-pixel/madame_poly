@@ -16,6 +16,8 @@ interface Props {
   onToggleSession: () => void;
   /** Закончить реплику в ручном режиме. */
   onEndTurn: () => void;
+  /** Открыть микрофон в ручном режиме, когда человек готов отвечать. */
+  onBeginTurn: () => void;
   onToggleMode: () => void;
 }
 
@@ -38,6 +40,7 @@ export function RecordButton({
   inputLevel,
   onToggleSession,
   onEndTurn,
+  onBeginTurn,
   onToggleMode,
 }: Props) {
   const { theme } = useTheme();
@@ -50,6 +53,8 @@ export function RecordButton({
 
   // В ручном режиме полоса заканчивает реплику, а беседу закрывает долгий тап.
   const manualTurn = sessionActive && !auto && listening;
+  // Ответ доиграл, микрофон закрыт: ждём, пока человек прочитает и будет готов.
+  const manualWait = sessionActive && !auto && !listening && !working;
 
   const label = !sessionActive
     ? t.start
@@ -61,7 +66,9 @@ export function RecordButton({
           : t.answering
       : manualTurn
         ? `${t.done} · ${timer}`
-        : listening
+        : manualWait
+          ? t.answer
+          : listening
           ? `${t.stop} · ${timer}`
           : t.stop;
 
@@ -77,8 +84,8 @@ export function RecordButton({
         </Pressable>
 
         <Pressable
-          onPress={manualTurn ? onEndTurn : onToggleSession}
-          onLongPress={manualTurn ? onToggleSession : undefined}
+          onPress={manualTurn ? onEndTurn : manualWait ? onBeginTurn : onToggleSession}
+          onLongPress={manualTurn || manualWait ? onToggleSession : undefined}
           style={[styles.bar, listening && styles.barListening]}
         >
           {/* Осциллограмма живёт фоном под подписью: видно, что микрофон открыт. */}
@@ -93,7 +100,7 @@ export function RecordButton({
         </Pressable>
       </View>
 
-      {manualTurn && <Text style={styles.hint}>{t.longPressToFinish}</Text>}
+      {(manualTurn || manualWait) && <Text style={styles.hint}>{t.longPressToFinish}</Text>}
     </View>
   );
 }

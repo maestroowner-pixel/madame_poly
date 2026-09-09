@@ -329,6 +329,13 @@ export function useConversation() {
         return;
       }
 
+      // В ручном режиме микрофон открывает нажатие: человеку нужно время
+      // прочитать ответ и придумать свой, а не отвечать сразу после гудка.
+      if (turnModeRef.current === 'manual') {
+        setStatus('idle');
+        return;
+      }
+
       void listenRef.current();
     });
     return () => subscription.remove();
@@ -400,6 +407,12 @@ export function useConversation() {
     }
     setStatus('idle');
   }, [player, recorder, recorderState.isRecording]);
+
+  /** Ручное начало реплики: человек готов отвечать. */
+  const beginTurn = useCallback(async () => {
+    if (!sessionRef.current || turnBusyRef.current) return;
+    await listen();
+  }, [listen]);
 
   /** Ручное окончание реплики. */
   const endTurn = useCallback(async () => {
@@ -579,6 +592,7 @@ export function useConversation() {
     setProfile,
     setTurnMode,
     endTurn,
+    beginTurn,
     makeHomework,
     replay,
     finishConversation,
