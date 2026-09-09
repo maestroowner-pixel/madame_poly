@@ -15,7 +15,7 @@ import { ControlPanel } from './src/components/ControlPanel';
 import { Splash } from './src/components/Splash';
 import { MessageBubble } from './src/components/MessageBubble';
 import { ArchiveScreen } from './src/components/ArchiveScreen';
-import { MoonIcon, SunIcon } from './src/components/SchemeIcon';
+import { ArchiveIcon, MoonIcon, SunIcon } from './src/components/icons';
 import { HomeworkScreen } from './src/components/HomeworkScreen';
 import { ProfileScreen } from './src/components/ProfileScreen';
 import { RecordButton } from './src/components/RecordButton';
@@ -125,23 +125,21 @@ function Screen() {
           onOpenHomework={() => setHomeworkOpen(true)}
           englishVariant={conversation.englishVariant}
           onSelectVariant={conversation.setEnglishVariant}
-          center={<TutorStrip status={conversation.status} topicId={conversation.topicId} />}
+          leading={<TutorStrip status={conversation.status} topicId={conversation.topicId} />}
           trailing={
             <View style={styles.actions}>
               <Pressable
                 onPress={conversation.finishConversation}
                 disabled={conversation.messages.length === 0 || conversation.sessionActive}
+                accessibilityLabel={t.toArchive}
                 hitSlop={12}
+                style={[
+                  styles.iconButton,
+                  (conversation.messages.length === 0 || conversation.sessionActive) &&
+                    styles.iconButtonOff,
+                ]}
               >
-                <Text
-                  style={[
-                    styles.reset,
-                    (conversation.messages.length === 0 || conversation.sessionActive) &&
-                      styles.resetDisabled,
-                  ]}
-                >
-                  {t.toArchive}
-                </Text>
+                <ArchiveIcon size={22} color={theme.accent} />
               </Pressable>
               <Pressable onPress={toggle} hitSlop={12} style={styles.schemeButton}>
                 {scheme === 'dark' ? (
@@ -245,8 +243,16 @@ const createStyles = (theme: Theme) =>
     screen: { flex: 1, backgroundColor: theme.bg },
     column: { flex: 1, width: '100%', maxWidth: CONTENT_MAX_WIDTH, alignSelf: 'center' },
     actions: { flexDirection: 'row', alignItems: 'center', gap: 14 },
-    reset: { color: theme.accent, fontSize: 13, fontWeight: '600' },
-    resetDisabled: { color: theme.textMuted, opacity: 0.45, fontWeight: '400' },
+    iconButton: {
+      width: 42,
+      height: 42,
+      borderRadius: 14,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: theme.surfaceAlt,
+    },
+    /** Архивировать нечего или идёт беседа — кнопка гаснет, но остаётся на месте. */
+    iconButtonOff: { opacity: 0.35 },
     schemeButton: {
       width: 42,
       height: 42,

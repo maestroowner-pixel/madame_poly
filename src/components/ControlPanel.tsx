@@ -30,8 +30,8 @@ interface Props {
   onSelectVariant: (variant: EnglishVariant) => void;
   /** Правый край шапки — там же, где сводка, живут действия над беседой. */
   trailing?: ReactNode;
-  /** Центр шапки: портрет собеседницы стоит вровень со строкой языка. */
-  center?: ReactNode;
+  /** Левый край шапки: портрет собеседницы вровень со строкой языка. */
+  leading?: ReactNode;
 }
 
 /**
@@ -57,7 +57,7 @@ export function ControlPanel({
   englishVariant,
   onSelectVariant,
   trailing,
-  center,
+  leading,
 }: Props) {
   const { theme } = useTheme();
   const styles = useStyles(createStyles);
@@ -82,13 +82,14 @@ export function ControlPanel({
   return (
     <View style={styles.wrapper}>
       <View style={styles.header}>
+        {leading}
         <Pressable onPress={onToggle} style={styles.summary} hitSlop={8}>
           <Text style={styles.summaryText}>
             {meta.flag} {meta.label} · {level}
           </Text>
           <Text style={styles.chevron}>{expanded ? '▲' : '▼'}</Text>
         </Pressable>
-        {center && <View style={styles.center}>{center}</View>}
+        <View style={styles.spacer} />
         {trailing}
       </View>
 
@@ -230,8 +231,8 @@ const createStyles = (theme: Theme) =>
       paddingVertical: 8,
       gap: 8,
     },
-    /** Портрет тянет шапку вниз, но его верх остаётся вровень со строкой языка. */
-    center: { flex: 1, alignItems: 'center' },
+    /** Распорка отжимает действия вправо: портрет и язык остаются слева. */
+    spacer: { flex: 1 },
     summary: { flexDirection: 'row', alignItems: 'center', gap: 8, flexShrink: 1 },
     summaryText: { color: theme.text, fontSize: 17, fontWeight: '600' },
     chevron: { color: theme.textMuted, fontSize: 11 },
