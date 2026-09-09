@@ -61,6 +61,40 @@ export interface Homework {
   createdAt: number;
 }
 
+/** Как отвечают на вопрос по прослушанному тексту. */
+export type ListeningAnswerKind = 'choice' | 'written' | 'spoken';
+
+export interface ListeningQuestion {
+  prompt: string;
+  kind: ListeningAnswerKind;
+  /** Варианты ответа; заполнены только у 'choice', у остальных пусто. */
+  options: string[];
+  answer: string;
+  /** Подсказка на языке интерфейса — на случай, если вопрос непонятен. */
+  hint: string;
+}
+
+/** Диктант: текст под запись и вопросы к нему. */
+export interface Listening {
+  title: string;
+  /**
+   * Текст диктора. До проверки его не показываем — иначе вопросы решаются
+   * чтением, а не на слух.
+   */
+  text: string;
+  language: LanguageCode;
+  level: Level;
+  questions: ListeningQuestion[];
+  createdAt: number;
+}
+
+/** Итог проверки одного ответа. */
+export interface ListeningVerdict {
+  correct: boolean;
+  /** Короткий разбор на языке интерфейса. */
+  comment: string;
+}
+
 /** Кто занимается: имя уходит в промпт, аватарка — в ленту. */
 export interface Profile {
   name: string;

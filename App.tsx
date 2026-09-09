@@ -1,6 +1,6 @@
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -18,6 +18,7 @@ import { ArchiveScreen } from './src/components/ArchiveScreen';
 import { ArchiveIcon, MoonIcon, SunIcon } from './src/components/icons';
 import { HomeworkScreen } from './src/components/HomeworkScreen';
 import { NotebookScreen } from './src/components/NotebookScreen';
+import { ZOOM_CLOSE_MS } from './src/components/ZoomModal';
 import { ProfileScreen } from './src/components/ProfileScreen';
 import { RecordButton } from './src/components/RecordButton';
 import { TutorStrip } from './src/components/TutorStrip';
@@ -25,7 +26,8 @@ import { LANGUAGES } from './src/languages';
 import { findTopic } from './src/topics';
 import { CONTENT_MAX_WIDTH } from './src/layout';
 import { useConversation } from './src/hooks/useConversation';
-import { useZoomScreen } from './src/hooks/useZoomScreen';
+import { useZoomScreen, type ZoomScreen } from './src/hooks/useZoomScreen';
+import type { Anchor } from './src/anchor';
 import { ThemeProvider, useStyles, useTheme, type Theme } from './src/theme';
 import type { Message } from './src/types';
 import { locale, t } from './src/i18n';
@@ -53,6 +55,19 @@ function Screen() {
   const profileScreen = useZoomScreen();
   const homeworkScreen = useZoomScreen();
   const notebookScreen = useZoomScreen();
+
+  /**
+   * Открыть экран из строки настроек. iOS не поднимает вторую модалку над уже
+   * поднятой, поэтому сначала складываем настройки и лишь потом разворачиваем
+   * следующий экран — из той же строки, координаты уже сняты.
+   */
+  const openFromPanel = useCallback(
+    (screen: ZoomScreen) => (anchor: Anchor | null) => {
+      setPanelOpen(false);
+      setTimeout(() => screen.show(anchor), ZOOM_CLOSE_MS);
+    },
+    [],
+  );
 
   // Начали беседу — убираем панель и все открытые экраны: разговор идёт на
   // чистом окне, иначе первую реплику слушаешь, глядя в настройки.
@@ -126,11 +141,11 @@ function Screen() {
           topicId={conversation.topicId}
           onSelectTopic={conversation.setTopic}
           archiveCount={conversation.archive.length}
-          onOpenArchive={archiveScreen.show}
+          onOpenArchive={openFromPanel(archiveScreen)}
           profileName={conversation.profile.name}
-          onOpenProfile={profileScreen.show}
+          onOpenProfile={openFromPanel(profileScreen)}
           homeworkCount={conversation.homework?.exercises.length ?? null}
-          onOpenHomework={homeworkScreen.show}
+          onOpenHomework={openFromPanel(homeworkScreen)}
           englishVariant={conversation.englishVariant}
           onSelectVariant={conversation.setEnglishVariant}
           onOpenNotebook={notebookScreen.show}

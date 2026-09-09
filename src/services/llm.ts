@@ -3,7 +3,13 @@ import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
 import * as z from 'zod/v4';
 
 import { ANTHROPIC_API_KEY, CLAUDE_MAX_TOKENS, CLAUDE_MODEL, HISTORY_WINDOW } from '../config';
-import { buildHomeworkPrompt, buildSystemPrompt, formatCorrections } from '../prompts';
+import {
+  buildHomeworkPrompt,
+  buildListeningCheckPrompt,
+  buildListeningPrompt,
+  buildSystemPrompt,
+  formatCorrections,
+} from '../prompts';
 import type { Topic } from '../topics';
 import type {
   Correction,
@@ -11,6 +17,8 @@ import type {
   Homework,
   LanguageCode,
   Level,
+  Listening,
+  ListeningVerdict,
   Message,
 } from '../types';
 import { t } from '../i18n';
@@ -45,6 +53,30 @@ const ExerciseSchema = z.object({
 const HomeworkSchema = z.object({
   summary: z.string(),
   exercises: z.array(ExerciseSchema),
+});
+
+const ListeningQuestionSchema = z.object({
+  prompt: z.string(),
+  kind: z.enum(['choice', 'written', 'spoken']),
+  /** Варианты только у 'choice'; у остальных модель возвращает пустой список. */
+  options: z.array(z.string()),
+  answer: z.string(),
+  hint: z.string(),
+});
+
+const ListeningSchema = z.object({
+  title: z.string(),
+  text: z.string(),
+  questions: z.array(ListeningQuestionSchema),
+});
+
+const VerdictSchema = z.object({
+  correct: z.boolean(),
+  comment: z.string(),
+});
+
+const CheckSchema = z.object({
+  verdicts: z.array(VerdictSchema),
 });
 
 const client = new Anthropic({
@@ -181,4 +213,68 @@ export async function openConversation(params: {
   });
 
   return turn.reply;
+}
+
+
+/** Диктант под уровень: текст для озвучки и вопросы к нему. */
+export async function generateListening(params: {
+  language: LanguageCode;
+  level: Level;
+  topic?: Topic;
+}): Promise<Listening> {
+  const { language, level, topic } = params;
+
+  if (!ANTHROPIC_API_KEY) throw new Error(t.noAnthropicKey);
+
+  const response = await client.messages.parse({
+    model: CLAUDE_MODEL,
+    max_tokens: 8192,
+    system: buildListeningPrompt(language, level, topic),
+    thinking: { type: 'disabled' },
+    messages: [{ role: 'user', content: 'Write the passage and the questions.' }],
+    output_config: { format: zodOutputFormat(ListeningSchema) },
+  });
+
+  const parsed = response.parsed_output;
+  if (!parsed || parsed.questions.length === 0) throw new Error(t.badListening);
+
+  return { ...parsed, language, level, createdAt: Date.now() };
+}
+
+/**
+ * Проверка свободных ответов. Уходит одним запросом на все вопросы сразу:
+ * отдельный вызов на каждый стоил бы дороже и отвечал бы вразнобой.
+ */
+export async function checkListeningAnswers(params: {
+  listening: Listening;
+  /** Вопрос и то, что ответил человек, — в порядке вопросов. */
+  answers: { question: string; expected: string; given: string }[];
+}): Promise<ListeningVerdict[]> {
+  const { listening, answers } = params;
+
+  if (!ANTHROPIC_API_KEY) throw new Error(t.noAnthropicKey);
+  if (answers.length === 0) return [];
+
+  const items = answers
+    .map(
+      (item, index) =>
+        `${index + 1}. Question: ${item.question}\n` +
+        `   Model answer: ${item.expected}\n` +
+        `   Learner answer: ${item.given}`,
+    )
+    .join('\n');
+
+  const response = await client.messages.parse({
+    model: CLAUDE_MODEL,
+    max_tokens: CLAUDE_MAX_TOKENS,
+    system: buildListeningCheckPrompt(listening.language, listening.level),
+    thinking: { type: 'disabled' },
+    messages: [{ role: 'user', content: `Passage:\n${listening.text}\n\nItems:\n${items}` }],
+    output_config: { format: zodOutputFormat(CheckSchema) },
+  });
+
+  const verdicts = response.parsed_output?.verdicts;
+  if (!verdicts || verdicts.length !== answers.length) throw new Error(t.badListeningCheck);
+
+  return verdicts;
 }

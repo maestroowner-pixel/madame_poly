@@ -31,6 +31,54 @@ export function buildHomeworkPrompt(language: LanguageCode, level: Level): strin
   ].join('\n');
 }
 
+/**
+ * Диктант: текст под запись и вопросы к нему. Текст пишем под уровень — на A1
+ * это несколько простых предложений, на C1 связный рассказ с деталями, которые
+ * с первого раза не удержать.
+ */
+export function buildListeningPrompt(language: LanguageCode, level: Level, topic?: Topic): string {
+  const { englishName } = LANGUAGES[language];
+
+  return [
+    `You are a ${englishName} teacher preparing a listening comprehension exercise for a CEFR ${level} learner.`,
+    'Write a short passage to be read aloud, then questions that can only be answered by someone who listened to it.',
+    '',
+    'Rules:',
+    `- "text" is in ${englishName} and is meant to be heard, not read: full sentences, no headings, no lists, no speaker labels.`,
+    `- Length by level: A1 and A2 — 50 to 80 words; B1 and B2 — 100 to 150; C1 and C2 — 180 to 250.`,
+    '- Keep the vocabulary and grammar at the level. Put the answers to the questions in different parts of the passage, never all in the first sentence.',
+    `- "title" is a short name for the passage in ${englishName}.`,
+    '- Write exactly six questions: two "choice", two "written", two "spoken".',
+    `- Questions and answers are in ${englishName}. "hint" is one short sentence in ${EXPLANATION_LANGUAGE}.`,
+    '- Ask about facts, numbers, reasons and intentions stated in the passage. Never ask about something it does not mention.',
+    '',
+    'Question kinds:',
+    '- "choice": four "options", one of them correct; "answer" repeats the correct option word for word. Wrong options must be plausible and mention things from the passage.',
+    '- "written": the learner types a short answer; "answer" is one model answer, a few words or one sentence. "options" is empty.',
+    '- "spoken": the learner answers aloud in a full sentence; "answer" is one model answer. "options" is empty.',
+    topic
+      ? `- The passage is about: ${topic.label}.`
+      : '- Choose an everyday subject: work, travel, food, health, city life, study.',
+  ].join('\n');
+}
+
+/** Проверка свободных ответов: точное совпадение здесь не годится. */
+export function buildListeningCheckPrompt(language: LanguageCode, level: Level): string {
+  const { englishName } = LANGUAGES[language];
+
+  return [
+    `You are a ${englishName} teacher checking a CEFR ${level} learner's answers to a listening exercise.`,
+    'For each item you get the passage, the question, a model answer and what the learner said or wrote.',
+    '',
+    'Rules:',
+    '- Mark "correct" true when the answer carries the right meaning, even if the wording differs from the model or the grammar is imperfect.',
+    '- Mark it false when the fact is wrong, missing, or not in the passage.',
+    `- "comment" is one short sentence in ${EXPLANATION_LANGUAGE}: what was missed, or what to fix in the wording. Never repeat the model answer verbatim when the learner got it right.`,
+    '- Answers come from speech recognition too, so ignore punctuation and capitalisation.',
+    '- Return one verdict per item, in the same order.',
+  ].join('\n');
+}
+
 /** Список ошибок беседы в том виде, в каком его получает составитель задания. */
 export function formatCorrections(corrections: Correction[]): string {
   return corrections

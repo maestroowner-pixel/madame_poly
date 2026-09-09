@@ -6,6 +6,7 @@ import type {
   Homework,
   LanguageCode,
   Level,
+  Listening,
   Message,
   EnglishVariant,
   Profile,
@@ -22,6 +23,7 @@ const KEY_MODE = 'polyglotta:turnMode';
 const KEY_VARIANT = 'polyglotta:englishVariant';
 const keyArchived = (id: string) => `polyglotta:archive:${id}`;
 const keyHomework = (id: string) => `polyglotta:homework:${id}`;
+const keyListening = (language: LanguageCode) => `polyglotta:listening:${language}`;
 
 const DEFAULT_LEVEL: Level = 'B1';
 
@@ -136,6 +138,25 @@ export async function loadArchive(): Promise<ArchivedSession[]> {
  * законченной — её идентификатор, поэтому при уходе в архив достаточно
  * перенести одну запись.
  */
+/** Последний диктант по языку: пережить перезапуск он должен, история — нет. */
+export async function loadListening(language: LanguageCode): Promise<Listening | null> {
+  const raw = await AsyncStorage.getItem(keyListening(language));
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw) as Listening;
+  } catch {
+    return null;
+  }
+}
+
+export async function saveListening(
+  language: LanguageCode,
+  listening: Listening | null,
+): Promise<void> {
+  if (listening) await AsyncStorage.setItem(keyListening(language), JSON.stringify(listening));
+  else await AsyncStorage.removeItem(keyListening(language));
+}
+
 export async function loadHomework(id: string): Promise<Homework | null> {
   const raw = await AsyncStorage.getItem(keyHomework(id));
   if (!raw) return null;
