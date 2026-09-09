@@ -82,21 +82,26 @@ export function ControlPanel({
   return (
     <View style={styles.wrapper}>
       <View style={styles.header}>
+        {/* Боковые группы равной ширины: иначе портрет уехал бы вправо —
+            слева одна кнопка, справа две. */}
+        <View style={styles.side}>
+          <Pressable
+            onPress={onToggle}
+            hitSlop={8}
+            accessibilityLabel={`${meta.label} · ${level}`}
+            style={styles.summary}
+          >
+            <Text style={styles.summaryFlag}>{meta.flag}</Text>
+            {/* Уровень поверх флага: подложка нужна, иначе он теряется на полосах. */}
+            <View style={styles.levelBadge}>
+              <Text style={styles.levelText}>{level}</Text>
+            </View>
+          </Pressable>
+        </View>
+
         {leading}
-        <Pressable
-          onPress={onToggle}
-          hitSlop={8}
-          accessibilityLabel={`${meta.label} · ${level}`}
-          style={styles.summary}
-        >
-          <Text style={styles.summaryFlag}>{meta.flag}</Text>
-          {/* Уровень поверх флага: подложка нужна, иначе он теряется на полосах. */}
-          <View style={styles.levelBadge}>
-            <Text style={styles.levelText}>{level}</Text>
-          </View>
-        </Pressable>
-        <View style={styles.spacer} />
-        {trailing}
+
+        <View style={[styles.side, styles.sideRight]}>{trailing}</View>
       </View>
 
       <Animated.View
@@ -237,8 +242,8 @@ const createStyles = (theme: Theme) =>
       paddingVertical: 8,
       gap: 8,
     },
-    /** Распорка отжимает действия вправо: портрет и язык остаются слева. */
-    spacer: { flex: 1 },
+    side: { flex: 1, alignItems: 'flex-start' },
+    sideRight: { alignItems: 'flex-end' },
     summary: {
       width: 46,
       height: 46,
