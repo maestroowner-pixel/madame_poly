@@ -1,13 +1,20 @@
-import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
+import { type ReactNode, useMemo, useRef, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  SafeAreaProvider,
+  SafeAreaView,
+  initialWindowMetrics,
+} from 'react-native-safe-area-context';
 
 import { LANGUAGES, LANGUAGE_CODES } from '../languages';
 import { measureAnchor, type Anchor } from '../anchor';
+import { CONTENT_MAX_WIDTH } from '../layout';
 import { t } from '../i18n';
 import { useStyles, useTheme, type Theme } from '../theme';
 import { findTopic } from '../topics';
 import { LEVELS, type EnglishVariant, type LanguageCode, type Level } from '../types';
-import { HomeIcon, NotebookIcon } from './icons';
+import { CloseIcon, HomeIcon, NotebookIcon } from './icons';
+import { ZoomModal } from './ZoomModal';
 import { TopicPicker } from './TopicPicker';
 
 interface Props {
@@ -38,8 +45,9 @@ interface Props {
 }
 
 /**
- * Язык и уровень одной панелью. Свёрнутая показывает текущий выбор строкой,
- * чтобы после автоскрытия было видно, на каком языке идёт беседа.
+ * Шапка беседы и настройки за домиком. Настройки раскрываются отдельным
+ * экраном из самого домика и складываются обратно в него: раньше панель
+ * распахивалась в потолок ленты и наполовину её закрывала.
  */
 export function ControlPanel({
   language,
@@ -69,23 +77,13 @@ export function ControlPanel({
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pickerAnchor, setPickerAnchor] = useState<Anchor | null>(null);
   // Ссылки на кнопки: экраны разворачиваются из них и в них схлопываются.
+  const homeRef = useRef<View>(null);
+  const [homeAnchor, setHomeAnchor] = useState<Anchor | null>(null);
   const notebookRef = useRef<View>(null);
   const topicRef = useRef<View>(null);
   const profileRef = useRef<View>(null);
   const homeworkRef = useRef<View>(null);
   const archiveRef = useRef<View>(null);
-  const progress = useRef(new Animated.Value(expanded ? 1 : 0)).current;
-  // Высоту панели меряем по факту: она зависит от шрифта и плотности экрана.
-  const [contentHeight, setContentHeight] = useState(0);
-
-  useEffect(() => {
-    Animated.timing(progress, {
-      toValue: expanded ? 1 : 0,
-      duration: 220,
-      // Высота — не трансформация, нативный драйвер её не анимирует.
-      useNativeDriver: false,
-    }).start();
-  }, [expanded, progress]);
 
   const meta = LANGUAGES[language];
   const topic = findTopic(language, topicId);
@@ -100,7 +98,13 @@ export function ControlPanel({
               Язык и уровень с него убраны: они видны внутри панели, а в шапке
               спорили с портретом за внимание. */}
           <Pressable
-            onPress={onToggle}
+            ref={homeRef}
+            onPress={() =>
+              measureAnchor(homeRef, (point) => {
+                setHomeAnchor(point);
+                onToggle();
+              })
+            }
             hitSlop={8}
             accessibilityLabel={`${meta.label} · ${level}`}
             style={styles.iconButton}
@@ -124,149 +128,158 @@ export function ControlPanel({
         <View style={[styles.side, styles.sideRight]}>{trailing}</View>
       </View>
 
-      <Animated.View
-        style={[
-          styles.panelClip,
-          {
-            height: contentHeight
-              ? progress.interpolate({ inputRange: [0, 1], outputRange: [0, contentHeight] })
-              : undefined,
-            opacity: progress,
-          },
-        ]}
-      >
-        <View style={styles.panel} onLayout={(e) => setContentHeight(e.nativeEvent.layout.height)}>
-          <View style={styles.row}>
-            {LANGUAGE_CODES.map((code) => {
-              const active = code === language;
-              return (
-                <Pressable
-                  key={code}
-                  disabled={disabled}
-                  onPress={() => onSelectLanguage(code)}
-                  style={[styles.tile, active && styles.tileActive, disabled && styles.dimmed]}
-                >
-                  <Text style={styles.flag}>{LANGUAGES[code].flag}</Text>
-                  <Text style={[styles.tileLabel, active && styles.activeLabel]} numberOfLines={1}>
-                    {LANGUAGES[code].label}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-
-          <Pressable
-            disabled={disabled}
-            ref={topicRef}
-            onPress={() =>
-              measureAnchor(topicRef, (point) => {
-                setPickerAnchor(point);
-                setPickerOpen(true);
-              })
-            }
-            style={[styles.topicButton, disabled && styles.dimmed]}
-          >
-            <Text style={styles.topicCaption}>{t.topic}</Text>
-            <Text style={styles.topicValue} numberOfLines={1}>
-              {topic ? topic.label : t.free}
-            </Text>
-            <Text style={styles.topicChevron}>›</Text>
-          </Pressable>
-
-          {/* Вариант английского: словарь и обороты, не произношение. */}
-          {language === 'en' && (
-            <View style={styles.row}>
-              {(
-                [
-                  ['british', t.british],
-                  ['american', t.american],
-                  ['cockney', t.cockney],
-                ] as [EnglishVariant, string][]
-              ).map(([value, title]) => {
-                const active = value === englishVariant;
-                return (
-                  <Pressable
-                    key={value}
-                    disabled={disabled}
-                    onPress={() => onSelectVariant(value)}
-                    style={[styles.variant, active && styles.tileActive, disabled && styles.dimmed]}
-                  >
-                    <Text
-                      style={[styles.variantLabel, active && styles.activeLabel]}
-                      numberOfLines={1}
-                      adjustsFontSizeToFit
-                      minimumFontScale={0.65}
-                    >
-                      {title}
-                    </Text>
-                  </Pressable>
-                );
-              })}
+      <ZoomModal visible={expanded} anchor={homeAnchor} onRequestClose={onToggle}>
+        <SafeAreaProvider initialMetrics={initialWindowMetrics}>
+          <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
+            <View style={styles.screenHeader}>
+              <Text style={styles.screenTitle}>{t.settingsTitle}</Text>
+              <Pressable
+                onPress={onToggle}
+                hitSlop={12}
+                accessibilityRole="button"
+                accessibilityLabel={t.close}
+                style={styles.closeButton}
+              >
+                <CloseIcon size={20} color={theme.accent} />
+              </Pressable>
             </View>
-          )}
 
-          <Pressable
-            ref={profileRef}
-            onPress={() => measureAnchor(profileRef, onOpenProfile)}
-            style={styles.topicButton}
-          >
-            <Text style={styles.topicCaption}>{t.profile}</Text>
-            <Text style={styles.topicValue} numberOfLines={1}>
-              {profileName || t.notSet}
-            </Text>
-            <Text style={styles.topicChevron}>›</Text>
-          </Pressable>
+            <ScrollView contentContainerStyle={styles.panel}>
+              <View style={styles.row}>
+                {LANGUAGE_CODES.map((code) => {
+                  const active = code === language;
+                  return (
+                    <Pressable
+                      key={code}
+                      disabled={disabled}
+                      onPress={() => onSelectLanguage(code)}
+                      style={[styles.tile, active && styles.tileActive, disabled && styles.dimmed]}
+                    >
+                      <Text style={styles.flag}>{LANGUAGES[code].flag}</Text>
+                      <Text style={[styles.tileLabel, active && styles.activeLabel]} numberOfLines={1}>
+                        {LANGUAGES[code].label}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
 
-          <Pressable
-            ref={homeworkRef}
-            onPress={() => measureAnchor(homeworkRef, onOpenHomework)}
-            style={styles.topicButton}
-          >
-            <Text style={styles.topicCaption}>{t.task}</Text>
-            <Text style={styles.topicValue} numberOfLines={1}>
-              {homeworkCount === null ? t.notSet : t.exercisesCount(homeworkCount)}
-            </Text>
-            <Text style={styles.topicChevron}>›</Text>
-          </Pressable>
+              <Pressable
+                disabled={disabled}
+                ref={topicRef}
+                onPress={() =>
+                  measureAnchor(topicRef, (point) => {
+                    setPickerAnchor(point);
+                    setPickerOpen(true);
+                  })
+                }
+                style={[styles.topicButton, disabled && styles.dimmed]}
+              >
+                <Text style={styles.topicCaption}>{t.topic}</Text>
+                <Text style={styles.topicValue} numberOfLines={1}>
+                  {topic ? topic.label : t.free}
+                </Text>
+                <Text style={styles.topicChevron}>›</Text>
+              </Pressable>
 
-          <Pressable
-            ref={archiveRef}
-            onPress={() => measureAnchor(archiveRef, onOpenArchive)}
-            style={styles.topicButton}
-          >
-            <Text style={styles.topicCaption}>{t.archive}</Text>
-            <Text style={styles.topicValue} numberOfLines={1}>
-              {archiveCount === 0 ? t.empty : `${archiveCount}`}
-            </Text>
-            <Text style={styles.topicChevron}>›</Text>
-          </Pressable>
+              {/* Вариант английского: словарь и обороты, не произношение. */}
+              {language === 'en' && (
+                <View style={styles.row}>
+                  {(
+                    [
+                      ['british', t.british],
+                      ['american', t.american],
+                      ['cockney', t.cockney],
+                    ] as [EnglishVariant, string][]
+                  ).map(([value, title]) => {
+                    const active = value === englishVariant;
+                    return (
+                      <Pressable
+                        key={value}
+                        disabled={disabled}
+                        onPress={() => onSelectVariant(value)}
+                        style={[styles.variant, active && styles.tileActive, disabled && styles.dimmed]}
+                      >
+                        <Text
+                          style={[styles.variantLabel, active && styles.activeLabel]}
+                          numberOfLines={1}
+                          adjustsFontSizeToFit
+                          minimumFontScale={0.65}
+                        >
+                          {title}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              )}
 
-          <View style={styles.row}>
-            {LEVELS.map((value) => {
-              const active = value === level;
-              return (
-                <Pressable
-                  key={value}
-                  disabled={disabled}
-                  onPress={() => onSelectLevel(value)}
-                  style={[styles.square, active && styles.tileActive, disabled && styles.dimmed]}
-                >
-                  <Text style={[styles.squareLabel, active && styles.activeLabel]}>{value}</Text>
-                </Pressable>
-              );
-            })}
-          </View>
-        </View>
-      </Animated.View>
+              <Pressable
+                ref={profileRef}
+                onPress={() => measureAnchor(profileRef, onOpenProfile)}
+                style={styles.topicButton}
+              >
+                <Text style={styles.topicCaption}>{t.profile}</Text>
+                <Text style={styles.topicValue} numberOfLines={1}>
+                  {profileName || t.notSet}
+                </Text>
+                <Text style={styles.topicChevron}>›</Text>
+              </Pressable>
 
-      <TopicPicker
-        visible={pickerOpen}
-        language={language}
-        topicId={topicId}
-        onSelect={onSelectTopic}
-        anchor={pickerAnchor}
-        onClose={() => setPickerOpen(false)}
-      />
+              <Pressable
+                ref={homeworkRef}
+                onPress={() => measureAnchor(homeworkRef, onOpenHomework)}
+                style={styles.topicButton}
+              >
+                <Text style={styles.topicCaption}>{t.task}</Text>
+                <Text style={styles.topicValue} numberOfLines={1}>
+                  {homeworkCount === null ? t.notSet : t.exercisesCount(homeworkCount)}
+                </Text>
+                <Text style={styles.topicChevron}>›</Text>
+              </Pressable>
+
+              <Pressable
+                ref={archiveRef}
+                onPress={() => measureAnchor(archiveRef, onOpenArchive)}
+                style={styles.topicButton}
+              >
+                <Text style={styles.topicCaption}>{t.archive}</Text>
+                <Text style={styles.topicValue} numberOfLines={1}>
+                  {archiveCount === 0 ? t.empty : `${archiveCount}`}
+                </Text>
+                <Text style={styles.topicChevron}>›</Text>
+              </Pressable>
+
+              <View style={styles.row}>
+                {LEVELS.map((value) => {
+                  const active = value === level;
+                  return (
+                    <Pressable
+                      key={value}
+                      disabled={disabled}
+                      onPress={() => onSelectLevel(value)}
+                      style={[styles.square, active && styles.tileActive, disabled && styles.dimmed]}
+                    >
+                      <Text style={[styles.squareLabel, active && styles.activeLabel]}>{value}</Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </ScrollView>
+
+            {/* Выбор темы держим внутри экрана настроек: iOS показывает вложенную
+                модалку поверх, а соседнюю — из-под уже поднятой. */}
+            <TopicPicker
+              visible={pickerOpen}
+              language={language}
+              topicId={topicId}
+              onSelect={onSelectTopic}
+              anchor={pickerAnchor}
+              onClose={() => setPickerOpen(false)}
+            />
+          </SafeAreaView>
+        </SafeAreaProvider>
+      </ZoomModal>
     </View>
   );
 }
@@ -292,14 +305,26 @@ const createStyles = (theme: Theme) =>
     },
     sideRight: { justifyContent: 'flex-end' },
     /** Обрезает панель при сворачивании, чтобы содержимое не вылезало. */
-    panelClip: { overflow: 'hidden' },
+    screen: { flex: 1, backgroundColor: theme.bg },
+    screenHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      width: '100%',
+      maxWidth: CONTENT_MAX_WIDTH,
+      alignSelf: 'center',
+    },
+    screenTitle: { color: theme.text, fontSize: 18, fontWeight: '700' },
+    closeButton: { width: 30, height: 30, alignItems: 'center', justifyContent: 'center' },
     panel: {
+      width: '100%',
+      maxWidth: CONTENT_MAX_WIDTH,
+      alignSelf: 'center',
       gap: 10,
-      padding: 12,
-      borderRadius: 20,
-      backgroundColor: theme.surface,
-      borderWidth: 1,
-      borderColor: theme.border,
+      paddingHorizontal: 16,
+      paddingBottom: 32,
     },
     row: { flexDirection: 'row', justifyContent: 'center', gap: 10 },
 

@@ -47,7 +47,7 @@ function Screen() {
   const conversation = useConversation();
   const listRef = useRef<FlatList<Message>>(null);
   const [splashDone, setSplashDone] = useState(false);
-  const [panelOpen, setPanelOpen] = useState(true);
+  const [panelOpen, setPanelOpen] = useState(false);
   // Каждый экран помнит значок, из которого его открыли: в него он и схлопнется.
   const archiveScreen = useZoomScreen();
   const profileScreen = useZoomScreen();
