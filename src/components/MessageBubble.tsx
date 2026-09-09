@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { t } from '../i18n';
 import { useStyles, useTheme, type Theme } from '../theme';
 import type { Message, Profile } from '../types';
-import { TutorAvatar, UserAvatar } from './Avatar';
+import { tutorSource, userSource } from './Avatar';
 
 interface Props {
   message: Message;
@@ -16,7 +16,9 @@ interface Props {
   onReplay: (message: Message) => void;
 }
 
-const AVATAR_SIZE = 32;
+/** Встроенная в строку — мельче отдельной: она стоит вровень с буквами. */
+const INLINE_AVATAR = 38;
+const CORNER_AVATAR = 52;
 
 export function MessageBubble({ message, profile, topicId, drilled, onReplay }: Props) {
   const { theme } = useTheme();
@@ -26,20 +28,30 @@ export function MessageBubble({ message, profile, topicId, drilled, onReplay }: 
   const [showRules, setShowRules] = useState(false);
 
   const isUser = message.role === 'user';
+  const avatar = userSource(profile.avatarId, profile.photoUri);
   const corrections = message.corrections ?? [];
   const hasRules = corrections.some((correction) => correction.rule ?? correction.details);
 
   return (
     <View style={[styles.wrapper, isUser ? styles.wrapperUser : styles.wrapperAssistant]}>
       <View style={[styles.bubbleRow, isUser && styles.bubbleRowUser]}>
-        {!isUser && <TutorAvatar size={AVATAR_SIZE} topicId={topicId} />}
-
         <Pressable
           onPress={() => !isUser && onReplay(message)}
           style={[styles.bubble, isUser ? styles.bubbleUser : styles.bubbleAssistant]}
         >
-          <Text style={[styles.text, isUser && styles.textUser]}>{message.text}</Text>
+          <Text style={[styles.text, isUser && styles.textUser]}>
+            {/* Лицо собеседницы — первым символом строки, а не отдельной колонкой. */}
+            {!isUser && <Image source={tutorSource(topicId)} style={styles.inlineAvatar} />}
+            {!isUser && '  '}
+            {message.text}
+          </Text>
           {!isUser && <Text style={styles.replayHint}>{t.tapToPlay}</Text>}
+
+          {isUser && avatar && (
+            // Угол пузыря отведён под аватарку: под неё оставлен отступ справа,
+            // поэтому текст в неё не упирается ни на одной строке.
+            <Image source={avatar} style={styles.cornerAvatar} />
+          )}
         </Pressable>
 
         {hasRules && (
@@ -54,14 +66,6 @@ export function MessageBubble({ message, profile, topicId, drilled, onReplay }: 
           </Pressable>
         )}
 
-        {isUser && (
-          <UserAvatar
-            avatarId={profile.avatarId}
-            photoUri={profile.photoUri}
-            name={profile.name}
-            size={AVATAR_SIZE}
-          />
-        )}
       </View>
 
       {corrections.map((correction, index) => (
@@ -101,7 +105,12 @@ const createStyles = (theme: Theme) =>
     bubbleRowUser: { justifyContent: 'flex-end' },
 
     bubble: { borderRadius: 18, paddingVertical: 10, paddingHorizontal: 14, flexShrink: 1 },
-    bubbleUser: { backgroundColor: theme.accent, borderBottomRightRadius: 6 },
+    bubbleUser: {
+      backgroundColor: theme.accent,
+      borderBottomRightRadius: 6,
+      // Колонка под аватарку в углу — текст сюда не заходит.
+      paddingRight: CORNER_AVATAR + 18,
+    },
     bubbleAssistant: {
       backgroundColor: theme.surface,
       borderWidth: 1,
@@ -109,6 +118,15 @@ const createStyles = (theme: Theme) =>
       borderBottomLeftRadius: 6,
     },
     text: { color: theme.text, fontSize: 16, lineHeight: 22 },
+    inlineAvatar: { width: INLINE_AVATAR, height: INLINE_AVATAR, borderRadius: 4 },
+    cornerAvatar: {
+      position: 'absolute',
+      top: 8,
+      right: 8,
+      width: CORNER_AVATAR,
+      height: CORNER_AVATAR,
+      borderRadius: CORNER_AVATAR / 2,
+    },
     textUser: { color: theme.accentText },
     replayHint: { color: theme.highlight, fontSize: 11, marginTop: 6, opacity: 0.8 },
 

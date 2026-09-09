@@ -22,6 +22,11 @@ function initials(name: string): string {
     .join('');
 }
 
+/** То же для аватарки пользователя: своё фото важнее готового портрета. */
+export function userSource(avatarId: string | null, photoUri?: string | null) {
+  return photoUri ? { uri: photoUri } : (findAvatar(avatarId)?.photo ?? null);
+}
+
 export function UserAvatar({ avatarId, photoUri, name, size }: UserProps) {
   const { theme } = useTheme();
   const styles = useStyles(createStyles);
@@ -70,7 +75,8 @@ const TUTOR_BY_TOPIC: Record<string, number> = {
   repair: require('../../assets/tutor-repair.png'),
 };
 
-function tutorSource(topicId?: string | null) {
+/** Источник картинки собеседницы: нужен, чтобы вставить её прямо в строку текста. */
+export function tutorSource(topicId?: string | null) {
   return (topicId && TUTOR_BY_TOPIC[topicId]) || TUTOR_DEFAULT;
 }
 

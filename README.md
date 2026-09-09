@@ -65,6 +65,8 @@ src/components/TutorStrip.tsx    портрет собеседника рядо�
 src/components/Waveform.tsx      осциллограмма входа: слушает или нет
 src/components/SchemeIcon.tsx    солнце и месяц фигурами, без шрифтовых глифов
 src/components/Avatar.tsx        аватарки пользователя и собеседника
+   (в ленте они внутри пузыря: у собеседницы — первым символом строки,
+    у пользователя — в углу, под неё оставлен отступ)
 src/components/ProfileScreen.tsx имя и выбор аватарки
 src/components/Splash.tsx   заставка с логотипом и гонгом
 scripts/smoke.ts            прогон сервисного слоя без UI
