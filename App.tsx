@@ -16,6 +16,7 @@ import { Splash } from './src/components/Splash';
 import { MessageBubble } from './src/components/MessageBubble';
 import { ArchiveScreen } from './src/components/ArchiveScreen';
 import { ArchiveIcon, MoonIcon, SunIcon } from './src/components/icons';
+import { NeonButton } from './src/components/NeonButton';
 import { HomeworkScreen } from './src/components/HomeworkScreen';
 import { AccountScreen } from './src/components/AccountScreen';
 import { ListeningScreen } from './src/components/ListeningScreen';
@@ -218,26 +219,20 @@ function Screen() {
           leading={<TutorStrip status={conversation.status} topicId={conversation.topicId} />}
           trailing={
             <View style={styles.actions}>
-              <Pressable
+              <NeonButton
                 onPress={conversation.finishConversation}
                 disabled={conversation.messages.length === 0 || conversation.sessionActive}
                 accessibilityLabel={t.toArchive}
-                hitSlop={12}
-                style={[
-                  styles.iconButton,
-                  (conversation.messages.length === 0 || conversation.sessionActive) &&
-                    styles.iconButtonOff,
-                ]}
               >
-                <ArchiveIcon size={22} color={theme.accent} />
-              </Pressable>
-              <Pressable onPress={toggle} hitSlop={12} style={styles.schemeButton}>
+                <ArchiveIcon size={22} color={theme.neon} />
+              </NeonButton>
+              <NeonButton onPress={toggle} accessibilityLabel={t.themeToggle}>
                 {scheme === 'dark' ? (
-                  <MoonIcon size={26} color={theme.text} cutout={theme.surfaceAlt} />
+                  <MoonIcon size={26} color={theme.neon} cutout={theme.surfaceAlt} />
                 ) : (
-                  <SunIcon size={26} color={theme.text} />
+                  <SunIcon size={26} color={theme.neon} />
                 )}
-              </Pressable>
+              </NeonButton>
             </View>
           }
         />
@@ -356,7 +351,7 @@ const createStyles = (theme: Theme) =>
       justifyContent: 'center',
       backgroundColor: theme.surfaceAlt,
     },
-    remindLabel: { color: theme.accent, fontSize: 13, fontWeight: '700' },
+    remindLabel: { color: theme.text, fontSize: 13, fontWeight: '700' },
     column: { flex: 1, width: '100%', maxWidth: CONTENT_MAX_WIDTH, alignSelf: 'center' },
     actions: { flexDirection: 'row', alignItems: 'center', gap: 14 },
     iconButton: {
@@ -368,7 +363,6 @@ const createStyles = (theme: Theme) =>
       backgroundColor: theme.surfaceAlt,
     },
     /** Архивировать нечего или идёт беседа — кнопка гаснет, но остаётся на месте. */
-    iconButtonOff: { opacity: 0.35 },
     schemeButton: {
       width: 42,
       height: 42,

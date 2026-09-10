@@ -14,6 +14,7 @@ import { useStyles, useTheme, type Theme } from '../theme';
 import { findTopic } from '../topics';
 import { LEVELS, type EnglishVariant, type LanguageCode, type Level } from '../types';
 import { CloseIcon, HomeIcon, NotebookIcon } from './icons';
+import { NeonButton } from './NeonButton';
 import { ZoomModal } from './ZoomModal';
 import { TopicPicker } from './TopicPicker';
 
@@ -113,30 +114,28 @@ export function ControlPanel({
           {/* Домик открывает и закрывает панель — больше её ничто не трогает.
               Язык и уровень с него убраны: они видны внутри панели, а в шапке
               спорили с портретом за внимание. */}
-          <Pressable
-            ref={homeRef}
-            onPress={() =>
-              measureAnchor(homeRef, (point) => {
-                setHomeAnchor(point);
-                onToggle();
-              })
-            }
-            hitSlop={8}
-            accessibilityLabel={`${meta.label} · ${level}`}
-            style={styles.iconButton}
-          >
-            <HomeIcon size={24} color={theme.accent} />
-          </Pressable>
+          <View ref={homeRef} collapsable={false}>
+            <NeonButton
+              onPress={() =>
+                measureAnchor(homeRef, (point) => {
+                  setHomeAnchor(point);
+                  onToggle();
+                })
+              }
+              accessibilityLabel={`${meta.label} · ${level}`}
+            >
+              <HomeIcon size={24} color={theme.neon} />
+            </NeonButton>
+          </View>
 
-          <Pressable
-            ref={notebookRef}
-            onPress={() => measureAnchor(notebookRef, onOpenNotebook)}
-            hitSlop={8}
-            accessibilityLabel={t.notebookTitle}
-            style={styles.iconButton}
-          >
-            <NotebookIcon size={22} color={theme.accent} />
-          </Pressable>
+          <View ref={notebookRef} collapsable={false}>
+            <NeonButton
+              onPress={() => measureAnchor(notebookRef, onOpenNotebook)}
+              accessibilityLabel={t.notebookTitle}
+            >
+              <NotebookIcon size={22} color={theme.neon} />
+            </NeonButton>
+          </View>
         </View>
 
         {leading}
@@ -337,14 +336,6 @@ const createStyles = (theme: Theme) =>
       gap: 8,
     },
     side: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 },
-    iconButton: {
-      width: 42,
-      height: 42,
-      borderRadius: 14,
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: theme.surfaceAlt,
-    },
     sideRight: { justifyContent: 'flex-end' },
     /** Обрезает панель при сворачивании, чтобы содержимое не вылезало. */
     screen: { flex: 1, backgroundColor: theme.bg },
