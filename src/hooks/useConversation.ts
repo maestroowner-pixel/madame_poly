@@ -16,7 +16,8 @@ import {
   PEAK_DECAY_DB,
   QUIET_RISE_DB,
   SILENCE_HOLD_MS,
-  SPEECH_DROP_DB,
+  SPEECH_SHARE,
+  VOICE_RANGE_DB,
 } from '../config';
 import { generateHomework, openConversation, respond } from '../services/llm';
 import { transcribe } from '../services/stt';
@@ -332,9 +333,12 @@ export function useConversation() {
       level < quietRef.current ? level : quietRef.current + QUIET_RISE_DB;
 
     // Пока в реплике нет и громкого, и тихого, речи в ней нет: ровный шум не
-    // должен сойти за фразу и оборваться «паузой» через секунду.
-    const hasVoice = peakRef.current - quietRef.current >= SPEECH_DROP_DB;
-    const isSpeech = hasVoice && level > peakRef.current - SPEECH_DROP_DB;
+    // должен сойти за фразу и оборваться «паузой» через секунду. Границу речи
+    // берём долей от разброса, а не в децибелах: тихую фразу на сжатом
+    // микрофоне фиксированный отступ от пика уже не признавал речью.
+    const range = peakRef.current - quietRef.current;
+    const hasVoice = range >= VOICE_RANGE_DB;
+    const isSpeech = hasVoice && level > quietRef.current + range * SPEECH_SHARE;
 
     if (isSpeech) {
       lastSoundAtRef.current = now;
