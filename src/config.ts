@@ -1,3 +1,5 @@
+import type { Level } from './types';
+
 import { EXPLANATION_LANGUAGE_NAME, locale } from './i18n';
 
 /**
@@ -90,3 +92,16 @@ export const MAX_TURN_MS = 30000;
  * картинка и звук заканчиваются вместе.
  */
 export const SPLASH_HOLD_MS = 3000;
+
+/**
+ * Темп чтения диктанта по уровням. Медленная речь — половина сложности
+ * аудирования: на A1 тот же текст на нормальной скорости не разобрать.
+ */
+export const LISTENING_SPEED: Record<Level, number> = {
+  A1: 0.75,
+  A2: 0.85,
+  B1: 0.95,
+  B2: 1,
+  C1: 1.1,
+  C2: 1.15,
+};

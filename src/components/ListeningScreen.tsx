@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -25,6 +24,7 @@ import { CloseIcon } from './icons';
 import { TopicPicker } from './TopicPicker';
 import { ZoomModal } from './ZoomModal';
 import { measureAnchor, type Anchor } from '../anchor';
+import { LISTENING_SPEED } from '../config';
 import { t } from '../i18n';
 import { CONTENT_MAX_WIDTH } from '../layout';
 import { checkListeningAnswers, generateListening } from '../services/llm';
@@ -46,6 +46,9 @@ import type {
   ListeningStats,
   ListeningVerdict,
 } from '../types';
+
+/** Что подтверждает человек: выход или смену темы. Оба бросают диктант. */
+type Pending = { kind: 'close' } | { kind: 'topic'; id: string | null };
 
 interface Props {
   visible: boolean;
@@ -78,6 +81,7 @@ export function ListeningScreen({ visible, anchor, language, level, topicId, onC
   const [speaking, setSpeaking] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [stats, setStats] = useState<ListeningStats>(EMPTY_LISTENING_STATS);
+  const [pending, setPending] = useState<Pending | null>(null);
   /** Тема диктанта — своя: слушать про аптеку можно и посреди беседы о Риме. */
   const [topic, setTopic] = useState<string | null>(topicId);
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -96,6 +100,7 @@ export function ListeningScreen({ visible, anchor, language, level, topicId, onC
       setAudioUri(null);
       setAnswers({});
       setVerdicts(null);
+      setPending(null);
     });
   }, [visible, language, topicId]);
 
@@ -112,9 +117,18 @@ export function ListeningScreen({ visible, anchor, language, level, topicId, onC
     await saveListeningStats(language, next);
   };
 
+  /** Плеер может быть без источника — глушим молча, дальше всё равно идём. */
+  const hush = () => {
+    try {
+      player.pause();
+    } catch {
+      // Останавливать нечего.
+    }
+  };
+
   /** Останавливаем всё, что звучит: экран уходит, а плеер бы доигрывал. */
   const leave = () => {
-    player.pause();
+    hush();
     if (speaking !== null) {
       setSpeaking(null);
       void recorder.stop().catch(() => {});
@@ -128,28 +142,13 @@ export function ListeningScreen({ visible, anchor, language, level, topicId, onC
    * этом всё равно брошен, поэтому спрашиваем так же, как на выходе.
    */
   const changeTopic = (id: string | null) => {
-    const rebuild = () => {
-      setTopic(id);
-      void build(id);
-    };
+    if (abandoning) setPending({ kind: 'topic', id });
+    else rebuild(id);
+  };
 
-    const started = audioUri !== null || Object.keys(answers).length > 0;
-    if (!listening || verdicts !== null || !started) {
-      rebuild();
-      return;
-    }
-
-    Alert.alert(t.listeningQuitTitle, t.listeningQuitWarning, [
-      { text: t.cancel, style: 'cancel' },
-      {
-        text: t.listeningQuit,
-        style: 'destructive',
-        onPress: () => {
-          void record(0, listening.questions.length, true);
-          rebuild();
-        },
-      },
-    ]);
+  const rebuild = (id: string | null) => {
+    setTopic(id);
+    void build(id);
   };
 
   /**
@@ -157,28 +156,22 @@ export function ListeningScreen({ visible, anchor, language, level, topicId, onC
    * идёт в средний балл нулём. Предупреждаем до того, как экран закроется.
    */
   const requestClose = () => {
-    const started = audioUri !== null || Object.keys(answers).length > 0;
-    if (!listening || verdicts !== null || !started) {
-      leave();
-      return;
-    }
+    if (abandoning) setPending({ kind: 'close' });
+    else leave();
+  };
 
-    Alert.alert(t.listeningQuitTitle, t.listeningQuitWarning, [
-      { text: t.cancel, style: 'cancel' },
-      {
-        text: t.listeningQuit,
-        style: 'destructive',
-        onPress: () => {
-          void record(0, listening.questions.length, true);
-          leave();
-        },
-      },
-    ]);
+  /** Подтверждение рисуем в самом экране: системный алерт снимается вместе с
+      модалкой, и iOS терял одно из двух — кнопка «Выйти» не срабатывала. */
+  const accept = (choice: Pending) => {
+    setPending(null);
+    if (listening) void record(0, listening.questions.length, true);
+    if (choice.kind === 'close') leave();
+    else rebuild(choice.id);
   };
 
   const build = async (subject: string | null) => {
     if (busy) return;
-    player.pause();
+    hush();
     setBusy(true);
     setError(null);
     try {
@@ -201,7 +194,8 @@ export function ListeningScreen({ visible, anchor, language, level, topicId, onC
     setBusy(true);
     setError(null);
     try {
-      const uri = audioUri ?? (await synthesize(listening.text));
+      const uri =
+        audioUri ?? (await synthesize(listening.text, LISTENING_SPEED[listening.level] ?? 1));
       setAudioUri(uri);
       await setAudioModeAsync({ playsInSilentMode: true, allowsRecording: false });
       player.replace({ uri });
@@ -228,7 +222,7 @@ export function ListeningScreen({ visible, anchor, language, level, topicId, onC
         return;
       }
 
-      player.pause();
+      hush();
       await setAudioModeAsync({ playsInSilentMode: true, allowsRecording: true });
       await recorder.prepareToRecordAsync();
       recorder.record();
@@ -282,6 +276,12 @@ export function ListeningScreen({ visible, anchor, language, level, topicId, onC
       setChecking(false);
     }
   };
+
+  /** Диктант начат и не доведён до проверки: уход засчитывается нулём. */
+  const abandoning =
+    listening !== null &&
+    verdicts === null &&
+    (audioUri !== null || Object.keys(answers).length > 0);
 
   const score = verdicts ? verdicts.filter((verdict) => verdict.correct).length : 0;
 
@@ -475,6 +475,23 @@ export function ListeningScreen({ visible, anchor, language, level, topicId, onC
             )}
           </ScrollView>
 
+          {pending && (
+            <View style={styles.confirmBackdrop}>
+              <View style={styles.confirmCard}>
+                <Text style={styles.confirmTitle}>{t.listeningQuitTitle}</Text>
+                <Text style={styles.confirmText}>{t.listeningQuitWarning}</Text>
+                <View style={styles.confirmRow}>
+                  <Pressable onPress={() => setPending(null)} style={styles.confirmGhost}>
+                    <Text style={styles.confirmGhostLabel}>{t.cancel}</Text>
+                  </Pressable>
+                  <Pressable onPress={() => accept(pending)} style={styles.confirmDanger}>
+                    <Text style={styles.confirmDangerLabel}>{t.listeningQuit}</Text>
+                  </Pressable>
+                </View>
+              </View>
+            </View>
+          )}
+
           <TopicPicker
             visible={pickerOpen}
             anchor={pickerAnchor}
@@ -518,6 +535,49 @@ const createStyles = (theme: Theme) =>
     },
     error: { color: theme.dangerText, fontSize: 12 },
     stats: { color: theme.textMuted, fontSize: 12 },
+
+    confirmBackdrop: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: 24,
+      backgroundColor: 'rgba(6,10,40,0.55)',
+    },
+    confirmCard: {
+      width: '100%',
+      maxWidth: 340,
+      gap: 10,
+      padding: 18,
+      borderRadius: 20,
+      backgroundColor: theme.surface,
+      borderWidth: 1,
+      borderColor: theme.border,
+    },
+    confirmTitle: { color: theme.text, fontSize: 17, fontWeight: '700' },
+    confirmText: { color: theme.textMuted, fontSize: 14, lineHeight: 20 },
+    confirmRow: { flexDirection: 'row', gap: 10, marginTop: 4 },
+    confirmGhost: {
+      flex: 1,
+      height: 44,
+      borderRadius: 12,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: theme.surfaceAlt,
+    },
+    confirmGhostLabel: { color: theme.text, fontSize: 15, fontWeight: '600' },
+    confirmDanger: {
+      flex: 1,
+      height: 44,
+      borderRadius: 12,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: theme.danger,
+    },
+    confirmDangerLabel: { color: '#FFFFFF', fontSize: 15, fontWeight: '700' },
     topicButton: {
       flexDirection: 'row',
       alignItems: 'center',

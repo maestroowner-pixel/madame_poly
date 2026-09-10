@@ -32,6 +32,19 @@ export function buildHomeworkPrompt(language: LanguageCode, level: Level): strin
 }
 
 /**
+ * Чем отличается диктант по уровням. Одной фразы «держитесь уровня» не хватало:
+ * тексты выходили похожими, менялась только длина.
+ */
+const LISTENING_GUIDANCE: Record<Level, string> = {
+  A1: '50-80 words. Only the thousand most common words, present tense, one clause per sentence. Name each fact once, plainly. Read-aloud pace is slow.',
+  A2: '70-100 words. Everyday vocabulary, past and future tenses, two short clauses at most. Facts stated directly, no inference needed.',
+  B1: '100-150 words. Ordinary vocabulary with subordinate clauses and connectors. One or two facts require putting two sentences together.',
+  B2: '140-190 words. Broad vocabulary, occasional idiom, varied sentence length, reported speech. Some answers need inference from what the speaker implies.',
+  C1: '180-230 words. Nuanced and idiomatic, complex structures, shifts of register, an aside or a digression. Several answers rest on implication rather than a stated fact.',
+  C2: '200-260 words. Native density: colloquialism, irony, allusion, embedded clauses, information carried by tone as much as by wording. Most answers require reading between the lines.',
+};
+
+/**
  * Диктант: текст под запись и вопросы к нему. Текст пишем под уровень — на A1
  * это несколько простых предложений, на C1 связный рассказ с деталями, которые
  * с первого раза не удержать.
@@ -48,12 +61,13 @@ export function buildListeningPrompt(language: LanguageCode, level: Level, topic
       ? `- Subject: ${topic.label}. The situation, the people and the details all come from it — do not drift to another subject.`
       : '- Choose an everyday subject: work, travel, food, health, city life, study.',
     `- "text" is in ${englishName} and is meant to be heard, not read: full sentences, no headings, no lists, no speaker labels.`,
-    `- Length by level: A1 and A2 — 50 to 80 words; B1 and B2 — 100 to 150; C1 and C2 — 180 to 250.`,
-    '- Keep the vocabulary and grammar at the level. Put the answers to the questions in different parts of the passage, never all in the first sentence.',
+    `- Level ${level}: ${LISTENING_GUIDANCE[level]}`,
+    '- Put the answers to the questions in different parts of the passage, never all in the first sentence.',
     `- "title" is a short name for the passage in ${englishName}.`,
     '- Write exactly six questions: two "choice", two "written", two "spoken".',
     `- Questions and answers are in ${englishName}. "hint" is one short sentence in ${EXPLANATION_LANGUAGE}.`,
-    '- Ask about facts, numbers, reasons and intentions stated in the passage. Never ask about something it does not mention.',
+    '- Ask about facts, numbers, reasons and intentions the passage carries. Never ask about something it does not mention.',
+    `- Pitch the questions at ${level} too: at A1 and A2 they repeat the wording of the passage, from B2 up they paraphrase it.`,
     '',
     'Question kinds:',
     '- "choice": four "options", one of them correct; "answer" repeats the correct option word for word. Wrong options must be plausible and mention things from the passage.',

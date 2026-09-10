@@ -38,7 +38,7 @@ async function readBytes(response: Response): Promise<Uint8Array> {
   return bytes;
 }
 
-async function synthesizeOpenAI(text: string): Promise<Uint8Array> {
+async function synthesizeOpenAI(text: string, speed: number): Promise<Uint8Array> {
   if (!OPENAI_API_KEY) throw new Error(t.noOpenAiKey);
 
   const response = await fetch('https://api.openai.com/v1/audio/speech', {
@@ -52,6 +52,7 @@ async function synthesizeOpenAI(text: string): Promise<Uint8Array> {
       voice: OPENAI_TTS_VOICE,
       input: text,
       response_format: 'mp3',
+      speed,
     }),
   });
 
@@ -61,10 +62,11 @@ async function synthesizeOpenAI(text: string): Promise<Uint8Array> {
 
 /**
  * Озвучивает текст и возвращает локальный uri mp3-файла. Язык не параметр:
- * голос один на все четыре, модель читает их без подсказки.
+ * голос один на все четыре, модель читает их без подсказки. Темп — параметр:
+ * в аудировании на A1 читают медленнее, чем на C2.
  */
-export async function synthesize(text: string): Promise<string> {
-  const bytes = await synthesizeOpenAI(text);
+export async function synthesize(text: string, speed = 1): Promise<string> {
+  const bytes = await synthesizeOpenAI(text, speed);
 
   const file = audioFile();
   file.create({ overwrite: true });
