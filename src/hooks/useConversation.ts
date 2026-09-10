@@ -15,7 +15,6 @@ import {
   MIN_SPEECH_MS,
   PEAK_DECAY_DB,
   QUIET_RISE_DB,
-  SHOW_VAD_DEBUG,
   SILENCE_FLOOR_DB,
   SILENCE_HOLD_MS,
   SPEECH_SHARE,
@@ -124,9 +123,6 @@ export function useConversation() {
   const meteringSeenRef = useRef(false);
   /** Длительность записи для колбэков: пересоздавать их на каждый тик незачем. */
   const durationRef = useRef(0);
-  /** Строка отладки для экрана: заполняется в том же проходе, что и решение. */
-  const vadRef = useRef('');
-
   /** Шкала текущей реплики: самое громкое и самое тихое, что в ней слышали. */
   const peakRef = useRef(-160);
   const quietRef = useRef(0);
@@ -367,14 +363,6 @@ export function useConversation() {
     const silentFor = now - lastSoundAtRef.current;
     const spokeEnough = speechMsRef.current >= MIN_SPEECH_MS;
     const tooLong = recorderState.durationMillis >= MAX_TURN_MS;
-
-    if (SHOW_VAD_DEBUG) {
-      const one = (value: number) => value.toFixed(1);
-      vadRef.current =
-        `ур ${one(level)} · пик ${one(peakRef.current)} · тихо ${one(quietRef.current)}` +
-        ` · разброс ${one(range)}/${one(rangeMaxRef.current)}\n` +
-        `речь ${isSpeech ? 'да' : 'нет'} ${speechMsRef.current} мс · тишина ${silentFor} мс`;
-    }
 
     // Паузу ловим только в авторежиме; потолок реплики работает всегда —
     // он страхует от записи, которую забыли остановить.
@@ -662,7 +650,6 @@ export function useConversation() {
     durationMillis: recorderState.durationMillis,
     /** Уровень входного сигнала 0…1 — для индикатора «тебя слышно». */
     inputLevel: status === 'listening' ? levelToUnit(recorderState.metering) : 0,
-    vad: SHOW_VAD_DEBUG && status === 'listening' ? vadRef.current : '',
     toggleSession,
     switchLanguage,
     setLevel,

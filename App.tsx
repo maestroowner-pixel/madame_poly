@@ -262,9 +262,6 @@ function Screen() {
             void conversation.setTurnMode(conversation.turnMode === 'auto' ? 'manual' : 'auto')
           }
         />
-
-        {/* Временно: живые цифры с микрофона, чтобы настроить авторежим. */}
-        {conversation.vad !== '' && <Text style={styles.vad}>{conversation.vad}</Text>}
         </View>
         <NotebookScreen
           visible={notebookScreen.open}
@@ -280,15 +277,6 @@ function Screen() {
 const createStyles = (theme: Theme) =>
   StyleSheet.create({
     screen: { flex: 1, backgroundColor: theme.bg },
-    vad: {
-      color: theme.textMuted,
-      fontSize: 11,
-      lineHeight: 15,
-      textAlign: 'center',
-      paddingHorizontal: 16,
-      paddingBottom: 8,
-      fontVariant: ['tabular-nums'],
-    },
     column: { flex: 1, width: '100%', maxWidth: CONTENT_MAX_WIDTH, alignSelf: 'center' },
     actions: { flexDirection: 'row', alignItems: 'center', gap: 14 },
     iconButton: {
