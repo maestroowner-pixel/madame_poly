@@ -104,11 +104,15 @@ export function AccountScreen({
           <ScrollView contentContainerStyle={styles.body} keyboardDismissMode="on-drag">
             <Text style={styles.intro}>{t.accountIntro}</Text>
 
-            {!available && <Text style={styles.error}>{t.accountOffline}</Text>}
             {error && <Text style={styles.error}>{error}</Text>}
             {note && <Text style={styles.note}>{note}</Text>}
 
-            {email ? (
+            {!available ? (
+              <View style={styles.card}>
+                <Text style={styles.mail}>{t.accountOffline}</Text>
+                <Text style={styles.state}>{t.accountOfflineHint}</Text>
+              </View>
+            ) : email ? (
               <>
                 <View style={styles.card}>
                   <Text style={styles.mail}>{email}</Text>
@@ -148,7 +152,6 @@ export function AccountScreen({
                   autoCorrect={false}
                   keyboardType="email-address"
                   textContentType="emailAddress"
-                  editable={available}
                 />
                 <TextInput
                   value={password}
@@ -160,12 +163,11 @@ export function AccountScreen({
                   autoCorrect={false}
                   secureTextEntry
                   textContentType="password"
-                  editable={available}
                 />
 
                 <Pressable
                   onPress={withCredentials(login)}
-                  disabled={!available || working}
+                  disabled={working}
                   style={styles.cta}
                 >
                   {working ? (
@@ -177,7 +179,7 @@ export function AccountScreen({
 
                 <Pressable
                   onPress={withCredentials(register)}
-                  disabled={!available || working}
+                  disabled={working}
                   style={styles.secondary}
                 >
                   <Text style={styles.secondaryLabel}>{t.accountRegister}</Text>
@@ -194,7 +196,7 @@ export function AccountScreen({
                       setNote(t.accountSent);
                     });
                   }}
-                  disabled={!available || working}
+                  disabled={working}
                   style={styles.link}
                 >
                   <Text style={styles.linkLabel}>{t.accountForgot}</Text>

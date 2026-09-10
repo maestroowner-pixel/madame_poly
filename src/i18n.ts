@@ -80,6 +80,7 @@ const en = {
   accountSyncNow: 'Sync now',
   accountNeedBoth: 'Enter the email and the password.',
   accountOffline: 'Sync is not set up in this build.',
+  accountOfflineHint: 'Everything stays on this device. Sync will appear once the app is connected to a cloud project.',
   listeningAverage: (percent: number, attempts: number) =>
     `Average ${percent}% over ${attempts} attempts`,
   listeningQuitTitle: 'Leave the dictation?',
@@ -251,6 +252,7 @@ const uk: Strings = {
   accountSyncNow: 'Синхронізувати',
   accountNeedBoth: 'Введіть пошту й пароль.',
   accountOffline: 'У цій збірці синхронізація не налаштована.',
+  accountOfflineHint: 'Усе лишається на цьому пристрої. Синхронізація зʼявиться, коли застосунок під’єднають до хмарного проєкту.',
   listeningAverage: (percent, attempts) =>
     `Середній бал ${percent}% за ${attempts} ${plural(attempts, 'спробу', 'спроби', 'спроб')}`,
   listeningQuitTitle: 'Вийти з диктанту?',
@@ -408,6 +410,7 @@ const es: Strings = {
   accountSyncNow: 'Sincronizar ahora',
   accountNeedBoth: 'Escribe el correo y la contraseña.',
   accountOffline: 'La sincronización no está configurada en esta versión.',
+  accountOfflineHint: 'Todo se queda en este dispositivo. La sincronización aparecerá cuando la app se conecte a un proyecto en la nube.',
   listeningAverage: (percent, attempts) => `Media ${percent}% en ${attempts} intentos`,
   listeningQuitTitle: '¿Salir del dictado?',
   listeningQuitWarning:
@@ -566,6 +569,7 @@ const ru: Strings = {
   accountSyncNow: 'Синхронизировать',
   accountNeedBoth: 'Введите почту и пароль.',
   accountOffline: 'В этой сборке синхронизация не настроена.',
+  accountOfflineHint: 'Всё остаётся на этом устройстве. Синхронизация появится, когда приложение подключат к облачному проекту.',
   listeningAverage: (percent, attempts) =>
     `Средний балл ${percent}% за ${attempts} ${plural(attempts, 'попытку', 'попытки', 'попыток')}`,
   listeningQuitTitle: 'Выйти из диктанта?',
