@@ -7,3 +7,13 @@ export function formatDate(millis: number): string {
     date.getHours(),
   )}:${pad(date.getMinutes())}`;
 }
+
+/** Славянское склонение по числу: 1 попытка, 2 попытки, 5 попыток. */
+export function plural(count: number, one: string, few: string, many: string): string {
+  const tens = count % 100;
+  if (tens >= 11 && tens <= 14) return many;
+  const units = count % 10;
+  if (units === 1) return one;
+  if (units >= 2 && units <= 4) return few;
+  return many;
+}

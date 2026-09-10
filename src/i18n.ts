@@ -1,5 +1,7 @@
 import { getLocales } from 'expo-localization';
 
+import { plural } from './format';
+
 /**
  * Языки интерфейса. Всё остальное получает английский: держать перевод,
  * которым никто не пользуется, дороже, чем понятный английский.
@@ -57,6 +59,13 @@ const en = {
   listeningAnswerFirst: 'Answer at least one question first.',
   badListening: 'Could not build the dictation. Try again.',
   badListeningCheck: 'Could not check the answers. Try again.',
+  listeningAverage: (percent: number, attempts: number) =>
+    `Average ${percent}% over ${attempts} attempts`,
+  listeningQuitTitle: 'Leave the dictation?',
+  listeningQuitWarning:
+    'Listening cannot be paused. An unfinished dictation counts as zero and lowers your average.',
+  listeningQuit: 'Leave',
+  cancel: 'Cancel',
   correctAnswer: 'Answer',
   archive: 'Archive',
   toArchive: 'Archive it',
@@ -198,6 +207,13 @@ const uk: Strings = {
   listeningAnswerFirst: 'Спершу дайте хоч одну відповідь.',
   badListening: 'Не вдалося скласти диктант. Спробуйте ще раз.',
   badListeningCheck: 'Не вдалося перевірити відповіді. Спробуйте ще раз.',
+  listeningAverage: (percent, attempts) =>
+    `Середній бал ${percent}% за ${attempts} ${plural(attempts, 'спробу', 'спроби', 'спроб')}`,
+  listeningQuitTitle: 'Вийти з диктанту?',
+  listeningQuitWarning:
+    'Аудіювання не ставиться на паузу. Незавершений диктант зараховується як нуль і знижує середній бал.',
+  listeningQuit: 'Вийти',
+  cancel: 'Скасувати',
   correctAnswer: 'Відповідь',
   archive: 'Архів',
   toArchive: 'В архів',
@@ -327,6 +343,12 @@ const es: Strings = {
   listeningAnswerFirst: 'Responde al menos a una pregunta.',
   badListening: 'No se pudo crear el dictado. Inténtalo de nuevo.',
   badListeningCheck: 'No se pudieron comprobar las respuestas. Inténtalo de nuevo.',
+  listeningAverage: (percent, attempts) => `Media ${percent}% en ${attempts} intentos`,
+  listeningQuitTitle: '¿Salir del dictado?',
+  listeningQuitWarning:
+    'La comprensión oral no se puede pausar. Un dictado sin terminar cuenta como cero y baja tu media.',
+  listeningQuit: 'Salir',
+  cancel: 'Cancelar',
   correctAnswer: 'Respuesta',
   archive: 'Archivo',
   toArchive: 'Archivar',
@@ -456,6 +478,13 @@ const ru: Strings = {
   listeningAnswerFirst: 'Ответьте хотя бы на один вопрос.',
   badListening: 'Не получилось составить диктант. Попробуйте ещё раз.',
   badListeningCheck: 'Не получилось проверить ответы. Попробуйте ещё раз.',
+  listeningAverage: (percent, attempts) =>
+    `Средний балл ${percent}% за ${attempts} ${plural(attempts, 'попытку', 'попытки', 'попыток')}`,
+  listeningQuitTitle: 'Выйти из диктанта?',
+  listeningQuitWarning:
+    'Аудирование не ставится на паузу. Незаконченный диктант засчитывается как ноль и снижает средний балл.',
+  listeningQuit: 'Выйти',
+  cancel: 'Отмена',
   correctAnswer: 'Ответ',
   archive: 'Архив',
   toArchive: 'В архив',

@@ -7,6 +7,7 @@ import type {
   LanguageCode,
   Level,
   Listening,
+  ListeningStats,
   Message,
   EnglishVariant,
   Profile,
@@ -24,6 +25,7 @@ const KEY_VARIANT = 'polyglotta:englishVariant';
 const keyArchived = (id: string) => `polyglotta:archive:${id}`;
 const keyHomework = (id: string) => `polyglotta:homework:${id}`;
 const keyListening = (language: LanguageCode) => `polyglotta:listening:${language}`;
+const keyListeningStats = (language: LanguageCode) => `polyglotta:listeningStats:${language}`;
 
 const DEFAULT_LEVEL: Level = 'B1';
 
@@ -138,6 +140,30 @@ export async function loadArchive(): Promise<ArchivedSession[]> {
  * законченной — её идентификатор, поэтому при уходе в архив достаточно
  * перенести одну запись.
  */
+export const EMPTY_LISTENING_STATS: ListeningStats = {
+  attempts: 0,
+  abandoned: 0,
+  right: 0,
+  total: 0,
+};
+
+export async function loadListeningStats(language: LanguageCode): Promise<ListeningStats> {
+  const raw = await AsyncStorage.getItem(keyListeningStats(language));
+  if (!raw) return EMPTY_LISTENING_STATS;
+  try {
+    return { ...EMPTY_LISTENING_STATS, ...(JSON.parse(raw) as ListeningStats) };
+  } catch {
+    return EMPTY_LISTENING_STATS;
+  }
+}
+
+export async function saveListeningStats(
+  language: LanguageCode,
+  stats: ListeningStats,
+): Promise<void> {
+  await AsyncStorage.setItem(keyListeningStats(language), JSON.stringify(stats));
+}
+
 /** Последний диктант по языку: пережить перезапуск он должен, история — нет. */
 export async function loadListening(language: LanguageCode): Promise<Listening | null> {
   const raw = await AsyncStorage.getItem(keyListening(language));

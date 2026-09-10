@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -29,10 +30,22 @@ import { CONTENT_MAX_WIDTH } from '../layout';
 import { checkListeningAnswers, generateListening } from '../services/llm';
 import { transcribe } from '../services/stt';
 import { synthesize } from '../services/tts';
-import { loadListening, saveListening } from '../storage';
+import {
+  EMPTY_LISTENING_STATS,
+  loadListening,
+  loadListeningStats,
+  saveListening,
+  saveListeningStats,
+} from '../storage';
 import { useStyles, useTheme, type Theme } from '../theme';
 import { findTopic } from '../topics';
-import type { LanguageCode, Level, Listening, ListeningVerdict } from '../types';
+import type {
+  LanguageCode,
+  Level,
+  Listening,
+  ListeningStats,
+  ListeningVerdict,
+} from '../types';
 
 interface Props {
   visible: boolean;
@@ -64,6 +77,7 @@ export function ListeningScreen({ visible, anchor, language, level, topicId, onC
   const [checking, setChecking] = useState(false);
   const [speaking, setSpeaking] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [stats, setStats] = useState<ListeningStats>(EMPTY_LISTENING_STATS);
   /** Тема диктанта — своя: слушать про аптеку можно и посреди беседы о Риме. */
   const [topic, setTopic] = useState<string | null>(topicId);
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -73,6 +87,7 @@ export function ListeningScreen({ visible, anchor, language, level, topicId, onC
   useEffect(() => {
     if (!visible) return;
     setError(null);
+    void loadListeningStats(language).then(setStats);
     void loadListening(language).then((stored) => {
       setListening(stored);
       // Тема готового диктанта, а если он старый и без неё — тема беседы.
@@ -85,6 +100,51 @@ export function ListeningScreen({ visible, anchor, language, level, topicId, onC
   }, [visible, language, topicId]);
 
   const fail = (e: unknown) => setError(e instanceof Error ? e.message : String(e));
+
+  const record = async (right: number, total: number, abandoned: boolean) => {
+    const next: ListeningStats = {
+      attempts: stats.attempts + 1,
+      abandoned: stats.abandoned + (abandoned ? 1 : 0),
+      right: stats.right + right,
+      total: stats.total + total,
+    };
+    setStats(next);
+    await saveListeningStats(language, next);
+  };
+
+  /** Останавливаем всё, что звучит: экран уходит, а плеер бы доигрывал. */
+  const leave = () => {
+    player.pause();
+    if (speaking !== null) {
+      setSpeaking(null);
+      void recorder.stop().catch(() => {});
+    }
+    onClose();
+  };
+
+  /**
+   * Паузы в аудировании нет: диктант либо доведён до проверки, либо брошен и
+   * идёт в средний балл нулём. Предупреждаем до того, как экран закроется.
+   */
+  const requestClose = () => {
+    const started = audioUri !== null || Object.keys(answers).length > 0;
+    if (!listening || verdicts !== null || !started) {
+      leave();
+      return;
+    }
+
+    Alert.alert(t.listeningQuitTitle, t.listeningQuitWarning, [
+      { text: t.cancel, style: 'cancel' },
+      {
+        text: t.listeningQuit,
+        style: 'destructive',
+        onPress: () => {
+          void record(0, listening.questions.length, true);
+          leave();
+        },
+      },
+    ]);
+  };
 
   const build = async (subject: string | null) => {
     if (busy) return;
@@ -177,14 +237,14 @@ export function ListeningScreen({ visible, anchor, language, level, topicId, onC
       });
 
       const byIndex = new Map(free.map(({ index }, order) => [index, judged[order]]));
-      setVerdicts(
-        listening.questions.map((question, index) => {
-          if (question.kind !== 'choice') {
-            return byIndex.get(index) ?? { correct: false, comment: '' };
-          }
-          return { correct: given[index] === question.answer, comment: '' };
-        }),
-      );
+      const result = listening.questions.map((question, index) => {
+        if (question.kind !== 'choice') {
+          return byIndex.get(index) ?? { correct: false, comment: '' };
+        }
+        return { correct: given[index] === question.answer, comment: '' };
+      });
+      setVerdicts(result);
+      await record(result.filter((verdict) => verdict.correct).length, result.length, false);
     } catch (e: unknown) {
       fail(e);
     } finally {
@@ -195,7 +255,7 @@ export function ListeningScreen({ visible, anchor, language, level, topicId, onC
   const score = verdicts ? verdicts.filter((verdict) => verdict.correct).length : 0;
 
   return (
-    <ZoomModal visible={visible} anchor={anchor} onRequestClose={onClose}>
+    <ZoomModal visible={visible} anchor={anchor} onRequestClose={requestClose}>
       <SafeAreaProvider initialMetrics={initialWindowMetrics}>
         <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
           <View style={styles.header}>
@@ -205,7 +265,7 @@ export function ListeningScreen({ visible, anchor, language, level, topicId, onC
             <View style={styles.actions}>
               <Text style={styles.level}>{level}</Text>
               <Pressable
-                onPress={onClose}
+                onPress={requestClose}
                 hitSlop={12}
                 accessibilityRole="button"
                 accessibilityLabel={t.close}
@@ -218,6 +278,12 @@ export function ListeningScreen({ visible, anchor, language, level, topicId, onC
 
           <ScrollView contentContainerStyle={styles.body} keyboardDismissMode="on-drag">
             {error && <Text style={styles.error}>{error}</Text>}
+
+            {stats.total > 0 && (
+              <Text style={styles.stats}>
+                {t.listeningAverage(Math.round((stats.right / stats.total) * 100), stats.attempts)}
+              </Text>
+            )}
 
             {/* Тему берём из того же списка, что и для беседы: тридцать
                 заготовок на язык плюс свободная. */}
@@ -420,6 +486,7 @@ const createStyles = (theme: Theme) =>
       gap: 12,
     },
     error: { color: theme.dangerText, fontSize: 12 },
+    stats: { color: theme.textMuted, fontSize: 12 },
     topicButton: {
       flexDirection: 'row',
       alignItems: 'center',

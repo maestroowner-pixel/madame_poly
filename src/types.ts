@@ -90,6 +90,17 @@ export interface Listening {
   createdAt: number;
 }
 
+/**
+ * Счёт по аудированию. Брошенный на середине диктант идёт в общий знаменатель
+ * нулём: иначе средний балл легко держать высоким, выходя из каждого трудного.
+ */
+export interface ListeningStats {
+  attempts: number;
+  abandoned: number;
+  right: number;
+  total: number;
+}
+
 /** Итог проверки одного ответа. */
 export interface ListeningVerdict {
   correct: boolean;
