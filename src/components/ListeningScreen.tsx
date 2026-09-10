@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -329,7 +331,13 @@ function ListeningBody({ visible, anchor, language, level, topicId, onClose }: P
             </View>
           </View>
 
-          <ScrollView contentContainerStyle={styles.body} keyboardDismissMode="on-drag">
+          {/* Письменные ответы — те же поля, что и в аккаунте: без этого тап по
+              ним не открывал клавиатуру. */}
+          <KeyboardAvoidingView
+            style={styles.flex}
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          >
+            <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
             {error && <Text style={styles.error}>{error}</Text>}
 
             {stats.total > 0 && (
@@ -495,7 +503,8 @@ function ListeningBody({ visible, anchor, language, level, topicId, onClose }: P
                 </Pressable>
               </>
             )}
-          </ScrollView>
+            </ScrollView>
+          </KeyboardAvoidingView>
 
           {pending && (
             <View style={styles.confirmBackdrop}>
@@ -531,6 +540,7 @@ function ListeningBody({ visible, anchor, language, level, topicId, onClose }: P
 const createStyles = (theme: Theme) =>
   StyleSheet.create({
     screen: { flex: 1, backgroundColor: theme.bg },
+    flex: { flex: 1 },
     header: {
       flexDirection: 'row',
       alignItems: 'center',

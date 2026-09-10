@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import {
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -101,7 +103,13 @@ export function AccountScreen({
             </Pressable>
           </View>
 
-          <ScrollView contentContainerStyle={styles.body} keyboardDismissMode="on-drag">
+          {/* Без этих двух вещей касание по полю не открывало клавиатуру:
+              список перехватывал тап, а поле пряталось под ней. */}
+          <KeyboardAvoidingView
+            style={styles.flex}
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          >
+            <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
             <Text style={styles.intro}>{t.accountIntro}</Text>
 
             {error && <Text style={styles.error}>{error}</Text>}
@@ -203,7 +211,8 @@ export function AccountScreen({
                 </Pressable>
               </>
             )}
-          </ScrollView>
+            </ScrollView>
+          </KeyboardAvoidingView>
         </SafeAreaView>
       </SafeAreaProvider>
     </ZoomModal>
@@ -213,6 +222,7 @@ export function AccountScreen({
 const createStyles = (theme: Theme) =>
   StyleSheet.create({
     screen: { flex: 1, backgroundColor: theme.bg },
+    flex: { flex: 1 },
     header: {
       flexDirection: 'row',
       alignItems: 'center',
