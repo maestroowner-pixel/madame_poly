@@ -128,9 +128,9 @@ export function NotebookScreen({ visible, anchor, onClose }: Props) {
                   style={styles.iconButton}
                 >
                   {exporting ? (
-                    <ActivityIndicator color={theme.accent} size="small" />
+                    <ActivityIndicator color={theme.neon} size="small" />
                   ) : (
-                    <ShareIcon size={22} color={theme.accent} />
+                    <ShareIcon size={22} color={theme.neon} />
                   )}
                 </Pressable>
               )}
@@ -142,7 +142,7 @@ export function NotebookScreen({ visible, anchor, onClose }: Props) {
                 accessibilityLabel={t.close}
                 style={styles.iconButton}
               >
-                <CloseIcon size={20} color={theme.accent} />
+                <CloseIcon size={20} color={theme.neon} />
               </Pressable>
             </View>
           </View>
@@ -244,7 +244,7 @@ function LessonModal({ entry, anchor, onClose, onShare }: LessonProps) {
                     accessibilityLabel={t.pdf}
                     style={styles.iconButton}
                   >
-                    <ShareIcon size={22} color={theme.accent} />
+                    <ShareIcon size={22} color={theme.neon} />
                   </Pressable>
                   <Pressable
                     onPress={onClose}
@@ -253,7 +253,7 @@ function LessonModal({ entry, anchor, onClose, onShare }: LessonProps) {
                     accessibilityLabel={t.close}
                     style={styles.iconButton}
                   >
-                    <CloseIcon size={20} color={theme.accent} />
+                    <CloseIcon size={20} color={theme.neon} />
                   </Pressable>
                 </View>
               </View>
@@ -334,7 +334,7 @@ const createStyles = (theme: Theme) =>
     rowBody: { flex: 1, gap: 3 },
     rowHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
     rowTitle: { color: theme.text, fontSize: 15, fontWeight: '700', flexShrink: 1 },
-    level: { color: theme.accent, fontSize: 12, fontWeight: '700' },
+    level: { color: theme.neon, fontSize: 12, fontWeight: '700' },
     meta: { color: theme.textMuted, fontSize: 12 },
 
     check: {
@@ -360,5 +360,5 @@ const createStyles = (theme: Theme) =>
     kind: { color: theme.textMuted, fontSize: 11 },
     prompt: { color: theme.text, fontSize: 15, lineHeight: 21 },
     hint: { color: theme.textMuted, fontSize: 12, lineHeight: 17 },
-    answerLine: { color: theme.accent, fontSize: 13, lineHeight: 18, marginTop: 3 },
+    answerLine: { color: theme.neon, fontSize: 13, lineHeight: 18, marginTop: 3 },
   });

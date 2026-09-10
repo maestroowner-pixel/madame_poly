@@ -200,7 +200,7 @@ const createStyles = (theme: Theme) =>
       alignSelf: 'center',
     },
     title: { color: theme.text, fontSize: 18, fontWeight: '700' },
-    action: { color: theme.accent, fontSize: 15 },
+    action: { color: theme.neon, fontSize: 15 },
     headerActions: { flexDirection: 'row', alignItems: 'center', gap: 16 },
     delete: { color: theme.danger, fontSize: 15 },
 
@@ -225,7 +225,7 @@ const createStyles = (theme: Theme) =>
     },
     rowHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
     rowTitle: { color: theme.text, fontSize: 16, fontWeight: '600', flexShrink: 1 },
-    rowLevel: { color: theme.accent, fontSize: 12, fontWeight: '700' },
+    rowLevel: { color: theme.neon, fontSize: 12, fontWeight: '700' },
     preview: { color: theme.textMuted, fontSize: 13, lineHeight: 18 },
     meta: { color: theme.textMuted, fontSize: 11, opacity: 0.85 },
   });

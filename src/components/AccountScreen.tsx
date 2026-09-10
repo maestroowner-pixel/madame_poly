@@ -97,7 +97,7 @@ export function AccountScreen({
               accessibilityLabel={t.close}
               style={styles.iconButton}
             >
-              <CloseIcon size={20} color={theme.accent} />
+              <CloseIcon size={20} color={theme.neon} />
             </Pressable>
           </View>
 
@@ -278,7 +278,7 @@ const createStyles = (theme: Theme) =>
       justifyContent: 'center',
       backgroundColor: theme.surfaceAlt,
     },
-    secondaryLabel: { color: theme.accent, fontSize: 14, fontWeight: '600' },
+    secondaryLabel: { color: theme.neon, fontSize: 14, fontWeight: '600' },
     link: { alignItems: 'center', paddingVertical: 6 },
     linkLabel: { color: theme.textMuted, fontSize: 13 },
   });

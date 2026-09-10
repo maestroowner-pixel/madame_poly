@@ -143,9 +143,9 @@ export function HomeworkScreen({
                   style={styles.iconButton}
                 >
                   {exporting ? (
-                    <ActivityIndicator color={theme.accent} size="small" />
+                    <ActivityIndicator color={theme.neon} size="small" />
                   ) : (
-                    <ShareIcon size={22} color={theme.accent} />
+                    <ShareIcon size={22} color={theme.neon} />
                   )}
                 </Pressable>
               )}
@@ -156,7 +156,7 @@ export function HomeworkScreen({
                 accessibilityLabel={t.close}
                 style={styles.iconButton}
               >
-                <CloseIcon size={20} color={theme.accent} />
+                <CloseIcon size={20} color={theme.neon} />
               </Pressable>
             </View>
           </View>
@@ -237,7 +237,7 @@ const createStyles = (theme: Theme) =>
       borderColor: theme.border,
     },
     cardHead: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-    kind: { color: theme.accent, fontSize: 12, fontWeight: '700' },
+    kind: { color: theme.neon, fontSize: 12, fontWeight: '700' },
     rule: { color: theme.textMuted, fontSize: 12, flexShrink: 1 },
     task: { color: theme.text, fontSize: 16, lineHeight: 22 },
     hint: { color: theme.textMuted, fontSize: 12, lineHeight: 17 },

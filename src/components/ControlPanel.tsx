@@ -155,7 +155,7 @@ export function ControlPanel({
                 accessibilityLabel={t.close}
                 style={styles.closeButton}
               >
-                <CloseIcon size={20} color={theme.accent} />
+                <CloseIcon size={20} color={theme.neon} />
               </Pressable>
             </View>
 

@@ -271,7 +271,7 @@ const createStyles = (theme: Theme) =>
       alignSelf: 'center',
     },
     title: { color: theme.text, fontSize: 18, fontWeight: '700' },
-    action: { color: theme.accent, fontSize: 15, fontWeight: '600' },
+    action: { color: theme.neon, fontSize: 15, fontWeight: '600' },
 
     body: {
       width: '100%',
@@ -291,7 +291,7 @@ const createStyles = (theme: Theme) =>
       borderWidth: 1,
       borderColor: theme.border,
     },
-    photoButtonText: { color: theme.accent, fontSize: 13, fontWeight: '600' },
+    photoButtonText: { color: theme.neon, fontSize: 13, fontWeight: '600' },
     photoRemove: { color: theme.danger, fontSize: 13, fontWeight: '600' },
     pickError: { color: theme.dangerText, fontSize: 12 },
     previewName: { color: theme.text, fontSize: 17, fontWeight: '600' },

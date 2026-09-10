@@ -115,7 +115,7 @@ const createStyles = (theme: Theme) =>
       alignSelf: 'center',
     },
     title: { color: theme.text, fontSize: 18, fontWeight: '700' },
-    close: { color: theme.accent, fontSize: 15 },
+    close: { color: theme.neon, fontSize: 15 },
     list: { width: '100%', maxWidth: CONTENT_MAX_WIDTH, alignSelf: 'center', paddingHorizontal: 16, paddingBottom: 24, gap: 8 },
     sectionTitle: {
       color: theme.textMuted,

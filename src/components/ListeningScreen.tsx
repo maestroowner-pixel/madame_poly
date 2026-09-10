@@ -324,7 +324,7 @@ function ListeningBody({ visible, anchor, language, level, topicId, onClose }: P
                 accessibilityLabel={t.close}
                 style={styles.iconButton}
               >
-                <CloseIcon size={20} color={theme.accent} />
+                <CloseIcon size={20} color={theme.neon} />
               </Pressable>
             </View>
           </View>
@@ -544,7 +544,7 @@ const createStyles = (theme: Theme) =>
     },
     title: { color: theme.text, fontSize: 18, fontWeight: '700', flexShrink: 1 },
     actions: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-    level: { color: theme.accent, fontSize: 12, fontWeight: '700' },
+    level: { color: theme.neon, fontSize: 12, fontWeight: '700' },
     iconButton: { width: 30, height: 30, alignItems: 'center', justifyContent: 'center' },
 
     body: {
@@ -638,7 +638,7 @@ const createStyles = (theme: Theme) =>
       justifyContent: 'center',
       backgroundColor: theme.surfaceAlt,
     },
-    secondaryLabel: { color: theme.accent, fontSize: 14, fontWeight: '600' },
+    secondaryLabel: { color: theme.neon, fontSize: 14, fontWeight: '600' },
 
     card: {
       gap: 8,
