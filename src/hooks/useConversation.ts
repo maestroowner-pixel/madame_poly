@@ -117,6 +117,13 @@ export function useConversation() {
   const lastSoundAtRef = useRef(0);
   const speechMsRef = useRef(0);
   /**
+   * Приходил ли вообще уровень входа. Без него речь не измерить, и каждая
+   * реплика уходила бы в тишину — на iPhone так и случилось.
+   */
+  const meteringSeenRef = useRef(false);
+  /** Длительность записи для колбэков: пересоздавать их на каждый тик незачем. */
+  const durationRef = useRef(0);
+  /**
    * Уровень фона. Оценивается по паузам в речи и живёт всю беседу: тихая
    * музыка или шум улицы могут появиться на середине разговора.
    */
@@ -196,7 +203,11 @@ export function useConversation() {
     turnBusyRef.current = true;
 
     try {
-      const spokeEnough = speechMsRef.current >= MIN_SPEECH_MS;
+      // Без уровня входа судить не о чем: считаем, что человек говорил, и
+      // отдаём запись Whisper — пусть решает он.
+      const spokeEnough = meteringSeenRef.current
+        ? speechMsRef.current >= MIN_SPEECH_MS
+        : durationRef.current >= MIN_SPEECH_MS;
       await recorder.stop();
 
       // Тишина или посторонний шум — молча слушаем дальше, не тратя Whisper.
@@ -297,6 +308,8 @@ export function useConversation() {
     if (status !== 'listening') return;
 
     const now = Date.now();
+    if (typeof recorderState.metering === 'number') meteringSeenRef.current = true;
+    durationRef.current = recorderState.durationMillis;
     const level = recorderState.metering ?? -160;
 
     const floor = noiseFloorRef.current;
