@@ -22,7 +22,7 @@ import {
 
 import { CloseIcon } from './icons';
 import { TopicPicker } from './TopicPicker';
-import { ZoomModal } from './ZoomModal';
+import { ZOOM_CLOSE_MS, ZoomModal } from './ZoomModal';
 import { measureAnchor, type Anchor } from '../anchor';
 import { LISTENING_SPEED } from '../config';
 import { t } from '../i18n';
@@ -61,11 +61,33 @@ interface Props {
 }
 
 /**
+ * Оболочка, которая держит экран смонтированным только пока он нужен. Внутри
+ * создаётся свой микрофон, а второй живой рекордер в приложении отбирает
+ * аудиосессию iOS у беседы — там ответ переставал звучать. Размонтируем не
+ * сразу: сперва должно доиграть схлопывание.
+ */
+export function ListeningScreen(props: Props) {
+  const [mounted, setMounted] = useState(props.visible);
+
+  useEffect(() => {
+    if (props.visible) {
+      setMounted(true);
+      return;
+    }
+    const timer = setTimeout(() => setMounted(false), ZOOM_CLOSE_MS + 80);
+    return () => clearTimeout(timer);
+  }, [props.visible]);
+
+  if (!mounted) return null;
+  return <ListeningBody {...props} />;
+}
+
+/**
  * Аудирование: текст под уровень читается вслух, а вопросы к нему отвечаются
  * тремя способами — выбором, текстом и голосом. Сам текст до проверки скрыт,
  * иначе вопросы решаются чтением, а не на слух.
  */
-export function ListeningScreen({ visible, anchor, language, level, topicId, onClose }: Props) {
+function ListeningBody({ visible, anchor, language, level, topicId, onClose }: Props) {
   const { theme } = useTheme();
   const styles = useStyles(createStyles);
 

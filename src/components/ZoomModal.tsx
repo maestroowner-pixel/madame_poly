@@ -6,7 +6,8 @@ import type { Anchor } from '../anchor';
 import { useTheme } from '../theme';
 
 const OPEN_MS = 260;
-const CLOSE_MS = 220;
+/** Сколько экран складывается: столько же ждут те, кто размонтируется следом. */
+export const ZOOM_CLOSE_MS = 220;
 /** Во что схлопывается экран — примерно размер значка, из которого он вырос. */
 const MIN_SCALE = 0.06;
 
@@ -45,7 +46,7 @@ export function ZoomModal({ visible, anchor, onRequestClose, children }: Props) 
 
     Animated.timing(progress, {
       toValue: visible ? 1 : 0,
-      duration: visible ? OPEN_MS : CLOSE_MS,
+      duration: visible ? OPEN_MS : ZOOM_CLOSE_MS,
       easing: visible ? Easing.out(Easing.cubic) : Easing.in(Easing.cubic),
       useNativeDriver: true,
     }).start(() => {
