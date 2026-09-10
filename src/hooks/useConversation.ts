@@ -20,6 +20,7 @@ import {
   SILENCE_HOLD_MS,
   SPEECH_SHARE,
   VOICE_RANGE_DB,
+  WORK_RANGE_DB,
 } from '../config';
 import { generateHomework, openConversation, respond } from '../services/llm';
 import { transcribe } from '../services/stt';
@@ -129,6 +130,8 @@ export function useConversation() {
   /** Шкала текущей реплики: самое громкое и самое тихое, что в ней слышали. */
   const peakRef = useRef(-160);
   const quietRef = useRef(0);
+  /** Наибольший разброс за реплику — по нему судим, был ли вообще голос. */
+  const rangeMaxRef = useRef(0);
   const turnBusyRef = useRef(false);
   /** listen() вызывается из слушателя плеера — держим свежую версию в ref. */
   const listenRef = useRef<() => Promise<void>>(async () => {});
@@ -177,6 +180,7 @@ export function useConversation() {
       speechMsRef.current = 0;
       peakRef.current = -160;
       quietRef.current = 0;
+      rangeMaxRef.current = 0;
       setStatus('listening');
     } catch (e: unknown) {
       sessionRef.current = false;
@@ -341,13 +345,19 @@ export function useConversation() {
     quietRef.current =
       level < quietRef.current ? level : quietRef.current + QUIET_RISE_DB;
 
-    // Пока в реплике нет и громкого, и тихого, речи в ней нет: ровный шум не
-    // должен сойти за фразу и оборваться «паузой» через секунду. Границу речи
-    // берём долей от разброса, а не в децибелах: тихую фразу на сжатом
-    // микрофоне фиксированный отступ от пика уже не признавал речью.
+    // Границу речи берём долей от разброса, а не в децибелах: тихую фразу на
+    // сжатом микрофоне фиксированный отступ от пика уже не признавал речью.
     const range = peakRef.current - quietRef.current;
-    const hasVoice = range >= VOICE_RANGE_DB;
-    const isSpeech = hasVoice && level > quietRef.current + range * SPEECH_SHARE;
+    rangeMaxRef.current = Math.max(rangeMaxRef.current, range);
+    const isSpeech = range >= WORK_RANGE_DB && level > quietRef.current + range * SPEECH_SHARE;
+
+    /**
+     * Был ли в реплике голос, судим по наибольшему разбросу за всю реплику, а
+     * не по нынешнему: у тихой фразы разброс во время речи мал и расширяется
+     * только на паузе после неё. Проверять в тот же миг значило бы никогда не
+     * признать её речью.
+     */
+    const hasVoice = rangeMaxRef.current >= VOICE_RANGE_DB;
 
     if (isSpeech) {
       lastSoundAtRef.current = now;
@@ -362,13 +372,14 @@ export function useConversation() {
       const one = (value: number) => value.toFixed(1);
       vadRef.current =
         `ур ${one(level)} · пик ${one(peakRef.current)} · тихо ${one(quietRef.current)}` +
-        ` · разброс ${one(range)}\n` +
+        ` · разброс ${one(range)}/${one(rangeMaxRef.current)}\n` +
         `речь ${isSpeech ? 'да' : 'нет'} ${speechMsRef.current} мс · тишина ${silentFor} мс`;
     }
 
     // Паузу ловим только в авторежиме; потолок реплики работает всегда —
     // он страхует от записи, которую забыли остановить.
-    const pauseEnds = turnModeRef.current === 'auto' && spokeEnough && silentFor >= SILENCE_HOLD_MS;
+    const pauseEnds =
+      turnModeRef.current === 'auto' && hasVoice && spokeEnough && silentFor >= SILENCE_HOLD_MS;
 
     if (pauseEnds || tooLong) {
       void finishTurn();
