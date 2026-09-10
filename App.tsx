@@ -198,6 +198,8 @@ function Screen() {
               <ProfileScreen
                 visible={profileScreen.open}
                 anchor={profileScreen.anchor}
+                speechRate={conversation.speechRate}
+                onSelectRate={conversation.setSpeechRate}
                 profile={conversation.profile}
                 onSave={conversation.setProfile}
                 onClose={profileScreen.hide}

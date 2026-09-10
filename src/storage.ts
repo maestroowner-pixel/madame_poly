@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import { SPEECH_RATES, type SpeechRate } from './config';
 import { LANGUAGE_CODES } from './languages';
 import { touch } from './services/sync';
 import type {
@@ -22,6 +23,7 @@ const keyTopic = (language: LanguageCode) => `polyglotta:topic:${language}`;
 const KEY_ARCHIVE = 'polyglotta:archive';
 const KEY_PROFILE = 'polyglotta:profile';
 const KEY_MODE = 'polyglotta:turnMode';
+const KEY_RATE = 'polyglotta:speechRate';
 const KEY_VARIANT = 'polyglotta:englishVariant';
 const keyArchived = (id: string) => `polyglotta:archive:${id}`;
 const keyHomework = (id: string) => `polyglotta:homework:${id}`;
@@ -112,6 +114,17 @@ export async function loadTurnMode(): Promise<TurnMode> {
 
 export async function saveTurnMode(mode: TurnMode): Promise<void> {
   await write(KEY_MODE, mode);
+}
+
+/** Темп речи собеседницы. Незнакомое значение приводим к обычному. */
+export async function loadSpeechRate(): Promise<SpeechRate> {
+  const raw = await AsyncStorage.getItem(KEY_RATE);
+  const value = Number(raw);
+  return (SPEECH_RATES as readonly number[]).includes(value) ? (value as SpeechRate) : 1;
+}
+
+export async function saveSpeechRate(rate: SpeechRate): Promise<void> {
+  await write(KEY_RATE, String(rate));
 }
 
 /** Вариант английского — общий для всех бесед на нём. */

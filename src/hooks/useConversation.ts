@@ -18,6 +18,7 @@ import {
   SILENCE_FLOOR_DB,
   SILENCE_HOLD_MS,
   SPEECH_SHARE,
+  type SpeechRate,
   VOICE_RANGE_DB,
   WORK_RANGE_DB,
 } from '../config';
@@ -36,6 +37,7 @@ import {
   loadHomework,
   loadProfile,
   loadTopic,
+  loadSpeechRate,
   loadTurnMode,
   saveHistory,
   saveLanguage,
@@ -44,6 +46,7 @@ import {
   saveHomework,
   saveProfile,
   saveTopic,
+  saveSpeechRate,
   saveTurnMode,
   EMPTY_PROFILE,
   type LevelMap,
@@ -93,6 +96,7 @@ export function useConversation() {
   const [homework, setHomework] = useState<Homework | null>(null);
   const [homeworkBusy, setHomeworkBusy] = useState(false);
   const [turnMode, setTurnModeState] = useState<TurnMode>('auto');
+  const [speechRate, setSpeechRateState] = useState<SpeechRate>(1);
   const [englishVariant, setVariantState] = useState<EnglishVariant>('british');
   const [error, setError] = useState<string | null>(null);
 
@@ -109,6 +113,8 @@ export function useConversation() {
   profileRef.current = profile;
   const turnModeRef = useRef<TurnMode>(turnMode);
   turnModeRef.current = turnMode;
+  const speechRateRef = useRef<SpeechRate>(speechRate);
+  speechRateRef.current = speechRate;
   const variantRef = useRef<EnglishVariant>(englishVariant);
   variantRef.current = englishVariant;
   const sessionRef = useRef(false);
@@ -148,6 +154,7 @@ export function useConversation() {
     setProfileState(await loadProfile());
     setHomework(await loadHomework(storedLanguage));
     setTurnModeState(await loadTurnMode());
+    setSpeechRateState(await loadSpeechRate());
     setVariantState(await loadEnglishVariant());
   }, []);
 
@@ -289,7 +296,7 @@ export function useConversation() {
       persist((previous) => [...previous, assistantMessage]);
 
       setStatus('speaking');
-      const audioUri = await synthesize(turn.reply);
+      const audioUri = await synthesize(turn.reply, speechRateRef.current);
       persist((previous) =>
         previous.map((message) =>
           message.id === assistantMessage.id ? { ...message, audioUri } : message,
@@ -437,7 +444,7 @@ export function useConversation() {
         persist((previous) => [...previous, opening]);
 
         setStatus('speaking');
-        const audioUri = await synthesize(reply);
+        const audioUri = await synthesize(reply, speechRateRef.current);
         persist((previous) =>
           previous.map((message) =>
             message.id === opening.id ? { ...message, audioUri } : message,
@@ -490,6 +497,12 @@ export function useConversation() {
     setVariantState(next);
     variantRef.current = next;
     await saveEnglishVariant(next);
+  }, []);
+
+  const setSpeechRate = useCallback(async (next: SpeechRate) => {
+    setSpeechRateState(next);
+    speechRateRef.current = next;
+    await saveSpeechRate(next);
   }, []);
 
   const setTurnMode = useCallback(async (next: TurnMode) => {
@@ -626,7 +639,7 @@ export function useConversation() {
     async (message: Message) => {
       if (sessionRef.current) return;
       try {
-        const uri = message.audioUri ?? (await synthesize(message.text));
+        const uri = message.audioUri ?? (await synthesize(message.text, speechRateRef.current));
         if (!message.audioUri) {
           persist((previous) =>
             previous.map((m) => (m.id === message.id ? { ...m, audioUri: uri } : m)),
@@ -664,6 +677,8 @@ export function useConversation() {
     setLevel,
     setTopic,
     setProfile,
+    speechRate,
+    setSpeechRate,
     setTurnMode,
     setEnglishVariant,
     endTurn,

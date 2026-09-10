@@ -20,6 +20,7 @@ import {
 } from 'react-native-safe-area-context';
 
 import { AVATARS, AVATAR_GROUPS } from '../avatars';
+import { SPEECH_RATES, type SpeechRate } from '../config';
 import { CONTENT_MAX_WIDTH } from '../layout';
 import { FONT_SCALES, useStyles, useTheme, type Theme, type FontScale } from '../theme';
 import type { Profile } from '../types';
@@ -29,6 +30,9 @@ import { t } from '../i18n';
 
 interface Props {
   visible: boolean;
+  /** Темп речи собеседницы: живёт рядом с размером шрифта — обе про удобство. */
+  speechRate: SpeechRate;
+  onSelectRate: (rate: SpeechRate) => void;
   /** Значок, из которого экран вырос. */
   anchor: Anchor | null;
   profile: Profile;
@@ -36,7 +40,15 @@ interface Props {
   onClose: () => void;
 }
 
-export function ProfileScreen({ visible, anchor, profile, onSave, onClose }: Props) {
+export function ProfileScreen({
+  visible,
+  anchor,
+  speechRate,
+  onSelectRate,
+  profile,
+  onSave,
+  onClose,
+}: Props) {
   const { theme, fontScale, setFontScale } = useTheme();
   const styles = useStyles(createStyles);
 
@@ -160,6 +172,24 @@ export function ProfileScreen({ visible, anchor, profile, onSave, onClose }: Pro
               <Text style={styles.hint}>
                 {t.nameHint}
               </Text>
+
+              <Text style={styles.label}>{t.speechRate}</Text>
+              <View style={styles.fontRow}>
+                {SPEECH_RATES.map((rate, index) => {
+                  const active = rate === speechRate;
+                  return (
+                    <Pressable
+                      key={rate}
+                      onPress={() => onSelectRate(rate)}
+                      style={[styles.fontButton, active && styles.fontButtonActive]}
+                    >
+                      <Text style={[styles.fontSample, active && styles.fontSampleActive]}>
+                        {[t.rateSlow, t.rateNormal, t.rateFast][index]}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
 
               <Text style={styles.label}>{t.textSize}</Text>
               <View style={styles.fontRow}>

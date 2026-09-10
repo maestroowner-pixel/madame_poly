@@ -190,6 +190,10 @@ const en = {
   noAnthropicKey: 'EXPO_PUBLIC_ANTHROPIC_API_KEY is not set',
   badTurn: 'Claude returned an answer that did not match the schema',
   nothingToSpeak: 'There is nothing to read aloud',
+  speechRate: 'Speech rate',
+  rateSlow: 'Slower',
+  rateNormal: 'Normal',
+  rateFast: 'Faster',
   badHomework: 'Claude returned a task that did not match the schema',
 
   // PDF
@@ -354,6 +358,10 @@ const uk: Strings = {
   noAnthropicKey: 'Не задано EXPO_PUBLIC_ANTHROPIC_API_KEY',
   badTurn: 'Claude повернув відповідь, яка не розібралася за схемою',
   nothingToSpeak: 'Немає чого читати вголос',
+  speechRate: 'Темп мовлення',
+  rateSlow: 'Повільніше',
+  rateNormal: 'Звичайно',
+  rateFast: 'Швидше',
   badHomework: 'Claude повернув завдання, яке не розібралося за схемою',
 
   pdfDialog: 'Розмова',
@@ -512,6 +520,10 @@ const es: Strings = {
   noAnthropicKey: 'Falta EXPO_PUBLIC_ANTHROPIC_API_KEY',
   badTurn: 'Claude devolvió una respuesta que no encaja con el esquema',
   nothingToSpeak: 'No hay nada que leer en voz alta',
+  speechRate: 'Velocidad al hablar',
+  rateSlow: 'Más lento',
+  rateNormal: 'Normal',
+  rateFast: 'Más rápido',
   badHomework: 'Claude devolvió una tarea que no encaja con el esquema',
 
   pdfDialog: 'Conversación',
@@ -673,6 +685,10 @@ const ru: Strings = {
   noAnthropicKey: 'Не задан EXPO_PUBLIC_ANTHROPIC_API_KEY',
   badTurn: 'Claude вернул ответ, который не разобрался по схеме',
   nothingToSpeak: 'Нечего читать вслух',
+  speechRate: 'Темп речи',
+  rateSlow: 'Медленнее',
+  rateNormal: 'Обычно',
+  rateFast: 'Быстрее',
   badHomework: 'Claude вернул задание, которое не разобралось по схеме',
 
   pdfDialog: 'Диалог',
