@@ -17,6 +17,7 @@ import { MessageBubble } from './src/components/MessageBubble';
 import { ArchiveScreen } from './src/components/ArchiveScreen';
 import { ArchiveIcon, MoonIcon, SunIcon } from './src/components/icons';
 import { HomeworkScreen } from './src/components/HomeworkScreen';
+import { AccountScreen } from './src/components/AccountScreen';
 import { ListeningScreen } from './src/components/ListeningScreen';
 import { NotebookScreen } from './src/components/NotebookScreen';
 import { ProfileScreen } from './src/components/ProfileScreen';
@@ -26,6 +27,7 @@ import { LANGUAGES } from './src/languages';
 import { findTopic } from './src/topics';
 import { CONTENT_MAX_WIDTH } from './src/layout';
 import { useConversation } from './src/hooks/useConversation';
+import { useAccount } from './src/hooks/useAccount';
 import { useZoomScreen } from './src/hooks/useZoomScreen';
 import { ZOOM_OPEN_MS } from './src/components/ZoomModal';
 import { ThemeProvider, useStyles, useTheme, type Theme } from './src/theme';
@@ -56,6 +58,7 @@ function Screen() {
   const homeworkScreen = useZoomScreen();
   const notebookScreen = useZoomScreen();
   const listeningScreen = useZoomScreen();
+  const accountScreen = useZoomScreen();
 
   // Начали беседу — убираем панель и все открытые экраны: разговор идёт на
   // чистом окне, иначе первую реплику слушаешь, глядя в настройки.
@@ -67,6 +70,7 @@ function Screen() {
     homeworkScreen.hide();
     notebookScreen.hide();
     listeningScreen.hide();
+    accountScreen.hide();
   }, [
     conversation.sessionActive,
     archiveScreen.hide,
@@ -74,6 +78,7 @@ function Screen() {
     homeworkScreen.hide,
     notebookScreen.hide,
     listeningScreen.hide,
+    accountScreen.hide,
   ]);
 
   /**
@@ -85,6 +90,10 @@ function Screen() {
     setPanelOpen(true);
     setTimeout(() => homeworkScreen.show(null), ZOOM_OPEN_MS + 60);
   };
+
+  // Синхронизация приносит данные с других устройств — после неё лента,
+  // уровни и задания перечитываются заново.
+  const account = useAccount(conversation.reload);
 
   const correctionCount = conversation.messages.reduce(
     (total, message) => total + (message.corrections?.length ?? 0),
@@ -150,8 +159,20 @@ function Screen() {
           onSelectVariant={conversation.setEnglishVariant}
           onOpenNotebook={notebookScreen.show}
           onOpenListening={listeningScreen.show}
+          accountEmail={account.email}
+          onOpenAccount={accountScreen.show}
           screens={
             <>
+              <AccountScreen
+                visible={accountScreen.open}
+                anchor={accountScreen.anchor}
+                email={account.email}
+                busy={account.busy}
+                syncedAt={account.syncedAt}
+                onSync={account.sync}
+                onClose={accountScreen.hide}
+              />
+
               <ListeningScreen
                 visible={listeningScreen.open}
                 anchor={listeningScreen.anchor}

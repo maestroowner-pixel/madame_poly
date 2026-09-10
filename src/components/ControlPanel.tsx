@@ -39,6 +39,9 @@ interface Props {
   onSelectVariant: (variant: EnglishVariant) => void;
   onOpenNotebook: (anchor: Anchor | null) => void;
   onOpenListening: (anchor: Anchor | null) => void;
+  /** Почта вошедшего; null — вход не выполнен. */
+  accountEmail: string | null;
+  onOpenAccount: (anchor: Anchor | null) => void;
   /**
    * Экраны, которые открываются строками настроек. Их рисуем внутри самого
    * экрана настроек: iOS не поднимает вторую модалку над уже поднятой, а
@@ -76,6 +79,8 @@ export function ControlPanel({
   onSelectVariant,
   onOpenNotebook,
   onOpenListening,
+  accountEmail,
+  onOpenAccount,
   screens,
   trailing,
   leading,
@@ -94,6 +99,7 @@ export function ControlPanel({
   const homeworkRef = useRef<View>(null);
   const archiveRef = useRef<View>(null);
   const listeningRef = useRef<View>(null);
+  const accountRef = useRef<View>(null);
 
   const meta = LANGUAGES[language];
   const topic = findTopic(language, topicId);
@@ -256,6 +262,18 @@ export function ControlPanel({
                 <Text style={styles.topicCaption}>{t.listeningTitle}</Text>
                 <Text style={styles.topicValue} numberOfLines={1}>
                   {level}
+                </Text>
+                <Text style={styles.topicChevron}>›</Text>
+              </Pressable>
+
+              <Pressable
+                ref={accountRef}
+                onPress={() => measureAnchor(accountRef, onOpenAccount)}
+                style={styles.topicButton}
+              >
+                <Text style={styles.topicCaption}>{t.account}</Text>
+                <Text style={styles.topicValue} numberOfLines={1}>
+                  {accountEmail ?? t.accountOff}
                 </Text>
                 <Text style={styles.topicChevron}>›</Text>
               </Pressable>

@@ -134,24 +134,32 @@ export function useConversation() {
   /** Человек попрощался: доиграть ответ и закончить, а не слушать снова. */
   const endAfterPlaybackRef = useRef(false);
 
+  /**
+   * Читает всё сохранённое в память. Вызывается при запуске и после
+   * синхронизации: облако могло принести беседу, начатую на другом устройстве.
+   */
+  const reload = useCallback(async () => {
+    const [storedLanguage, storedLevels] = await Promise.all([loadLanguage(), loadLevels()]);
+    setLanguage(storedLanguage);
+    setLevels(storedLevels);
+    setMessages(await loadHistory(storedLanguage));
+    setTopicId(await loadTopic(storedLanguage));
+    setArchive(await loadArchive());
+    setProfileState(await loadProfile());
+    setHomework(await loadHomework(storedLanguage));
+    setTurnModeState(await loadTurnMode());
+    setVariantState(await loadEnglishVariant());
+  }, []);
+
   useEffect(() => {
     (async () => {
       const permission = await AudioModule.requestRecordingPermissionsAsync();
       if (!permission.granted) setError(t.noMicrophone);
 
-      const [storedLanguage, storedLevels] = await Promise.all([loadLanguage(), loadLevels()]);
-      setLanguage(storedLanguage);
-      setLevels(storedLevels);
-      setMessages(await loadHistory(storedLanguage));
-      setTopicId(await loadTopic(storedLanguage));
-      setArchive(await loadArchive());
-      setProfileState(await loadProfile());
-      setHomework(await loadHomework(storedLanguage));
-      setTurnModeState(await loadTurnMode());
-      setVariantState(await loadEnglishVariant());
+      await reload();
       setReady(true);
     })().catch((e: unknown) => setError(String(e)));
-  }, []);
+  }, [reload]);
 
   const persist = useCallback((updater: (previous: Message[]) => Message[]) => {
     setMessages((previous) => {
@@ -650,6 +658,7 @@ export function useConversation() {
     durationMillis: recorderState.durationMillis,
     /** Уровень входного сигнала 0…1 — для индикатора «тебя слышно». */
     inputLevel: status === 'listening' ? levelToUnit(recorderState.metering) : 0,
+    reload,
     toggleSession,
     switchLanguage,
     setLevel,

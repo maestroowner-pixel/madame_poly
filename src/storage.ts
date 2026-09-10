@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { LANGUAGE_CODES } from './languages';
+import { touch } from './services/sync';
 import type {
   ArchivedSession,
   Homework,
@@ -27,6 +28,21 @@ const keyHomework = (id: string) => `polyglotta:homework:${id}`;
 const keyListening = (language: LanguageCode) => `polyglotta:listening:${language}`;
 const keyListeningStats = (language: LanguageCode) => `polyglotta:listeningStats:${language}`;
 
+/**
+ * Любая запись отмечается временем — по нему синхронизация решает, чьи данные
+ * свежее. Через эти две функции проходят все изменения, поэтому новый ключ
+ * попадает в облако сам, без правок в синхронизации.
+ */
+async function write(key: string, value: string): Promise<void> {
+  await AsyncStorage.setItem(key, value);
+  await touch(key);
+}
+
+async function drop(key: string): Promise<void> {
+  await AsyncStorage.removeItem(key);
+  await touch(key);
+}
+
 const DEFAULT_LEVEL: Level = 'B1';
 
 export type LevelMap = Record<LanguageCode, Level>;
@@ -47,7 +63,7 @@ export async function loadLevels(): Promise<LevelMap> {
 }
 
 export async function saveLevels(levels: LevelMap): Promise<void> {
-  await AsyncStorage.setItem(KEY_LEVELS, JSON.stringify(levels));
+  await write(KEY_LEVELS, JSON.stringify(levels));
 }
 
 export async function loadLanguage(): Promise<LanguageCode> {
@@ -56,7 +72,7 @@ export async function loadLanguage(): Promise<LanguageCode> {
 }
 
 export async function saveLanguage(language: LanguageCode): Promise<void> {
-  await AsyncStorage.setItem(KEY_LANGUAGE, language);
+  await write(KEY_LANGUAGE, language);
 }
 
 /** История диалога своя для каждого языка. */
@@ -71,7 +87,7 @@ export async function loadHistory(language: LanguageCode): Promise<Message[]> {
 }
 
 export async function saveHistory(language: LanguageCode, messages: Message[]): Promise<void> {
-  await AsyncStorage.setItem(keyHistory(language), JSON.stringify(messages));
+  await write(keyHistory(language), JSON.stringify(messages));
 }
 
 /** Тема разговора своя для каждого языка; null — свободный разговор. */
@@ -80,12 +96,12 @@ export async function loadTopic(language: LanguageCode): Promise<string | null> 
 }
 
 export async function saveTopic(language: LanguageCode, topic: string | null): Promise<void> {
-  if (topic) await AsyncStorage.setItem(keyTopic(language), topic);
-  else await AsyncStorage.removeItem(keyTopic(language));
+  if (topic) await write(keyTopic(language), topic);
+  else await drop(keyTopic(language));
 }
 
 export async function clearHistory(language: LanguageCode): Promise<void> {
-  await AsyncStorage.removeItem(keyHistory(language));
+  await drop(keyHistory(language));
 }
 
 /** Режим окончания реплики — общий для всех языков. */
@@ -95,7 +111,7 @@ export async function loadTurnMode(): Promise<TurnMode> {
 }
 
 export async function saveTurnMode(mode: TurnMode): Promise<void> {
-  await AsyncStorage.setItem(KEY_MODE, mode);
+  await write(KEY_MODE, mode);
 }
 
 /** Вариант английского — общий для всех бесед на нём. */
@@ -105,7 +121,7 @@ export async function loadEnglishVariant(): Promise<EnglishVariant> {
 }
 
 export async function saveEnglishVariant(variant: EnglishVariant): Promise<void> {
-  await AsyncStorage.setItem(KEY_VARIANT, variant);
+  await write(KEY_VARIANT, variant);
 }
 
 export const EMPTY_PROFILE: Profile = { name: '', avatarId: null, photoUri: null };
@@ -121,7 +137,7 @@ export async function loadProfile(): Promise<Profile> {
 }
 
 export async function saveProfile(profile: Profile): Promise<void> {
-  await AsyncStorage.setItem(KEY_PROFILE, JSON.stringify(profile));
+  await write(KEY_PROFILE, JSON.stringify(profile));
 }
 
 /** Список бесед, новые сверху. Реплики хранятся отдельно и грузятся по запросу. */
@@ -161,7 +177,7 @@ export async function saveListeningStats(
   language: LanguageCode,
   stats: ListeningStats,
 ): Promise<void> {
-  await AsyncStorage.setItem(keyListeningStats(language), JSON.stringify(stats));
+  await write(keyListeningStats(language), JSON.stringify(stats));
 }
 
 /** Последний диктант по языку: пережить перезапуск он должен, история — нет. */
@@ -179,8 +195,8 @@ export async function saveListening(
   language: LanguageCode,
   listening: Listening | null,
 ): Promise<void> {
-  if (listening) await AsyncStorage.setItem(keyListening(language), JSON.stringify(listening));
-  else await AsyncStorage.removeItem(keyListening(language));
+  if (listening) await write(keyListening(language), JSON.stringify(listening));
+  else await drop(keyListening(language));
 }
 
 export async function loadHomework(id: string): Promise<Homework | null> {
@@ -194,8 +210,8 @@ export async function loadHomework(id: string): Promise<Homework | null> {
 }
 
 export async function saveHomework(id: string, homework: Homework | null): Promise<void> {
-  if (homework) await AsyncStorage.setItem(keyHomework(id), JSON.stringify(homework));
-  else await AsyncStorage.removeItem(keyHomework(id));
+  if (homework) await write(keyHomework(id), JSON.stringify(homework));
+  else await drop(keyHomework(id));
 }
 
 export async function loadArchivedMessages(id: string): Promise<Message[]> {
@@ -274,6 +290,6 @@ export async function loadNotebook(): Promise<NotebookEntry[]> {
 export async function deleteArchived(id: string): Promise<ArchivedSession[]> {
   const archive = (await loadArchive()).filter((session) => session.id !== id);
   await AsyncStorage.multiRemove([keyArchived(id), keyHomework(id)]);
-  await AsyncStorage.setItem(KEY_ARCHIVE, JSON.stringify(archive));
+  await write(KEY_ARCHIVE, JSON.stringify(archive));
   return archive;
 }

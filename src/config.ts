@@ -42,6 +42,23 @@ export const AUTOPLAY_TTS = true;
 // Беседа идёт без тапов: приложение слушает, ловит паузу, отвечает и снова
 // слушает. Границу реплики определяем по уровню входного сигнала.
 
+/**
+ * Ключи Firebase. Их не прячем: клиентский конфиг Firebase не секрет — доступ
+ * к данным решают правила безопасности на стороне сервера, а не эти строки.
+ * Пусто — приложение работает как прежде, просто без синхронизации.
+ */
+export const FIREBASE_CONFIG = {
+  apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY ?? '',
+  authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN ?? '',
+  projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID ?? '',
+  storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET ?? '',
+  messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_SENDER_ID ?? '',
+  appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID ?? '',
+};
+
+export const FIREBASE_READY =
+  FIREBASE_CONFIG.apiKey !== '' && FIREBASE_CONFIG.projectId !== '';
+
 /** Как часто опрашивать уровень записи, мс. */
 export const METERING_INTERVAL_MS = 100;
 
