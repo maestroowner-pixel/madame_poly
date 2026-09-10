@@ -86,6 +86,16 @@ const client = new Anthropic({
   dangerouslyAllowBrowser: true,
 });
 
+/** Сравниваем без регистра, знаков и диакритики: модель цитирует не буква в букву. */
+function normalise(text: string): string {
+  return text
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
+    .trim();
+}
+
 export interface TurnResult {
   reply: string;
   corrections: Correction[];
@@ -128,9 +138,20 @@ export async function respond(params: {
   const parsed = response.parsed_output;
   if (!parsed) throw new Error(t.badTurn);
 
+  /**
+   * Отсекаем разборы, которых в последней реплике нет. Модель видит всю беседу
+   * и охотно возвращается к старым ошибкам — человек тогда читает под своей
+   * фразой чужой разбор, а настоящие промахи теряются. Просьбы в промпте одной
+   * не хватает, поэтому проверяем цитату.
+   */
+  const said = normalise(userText);
+  const corrections = parsed.corrections.filter((correction) =>
+    said.includes(normalise(correction.original)),
+  );
+
   return {
     reply: parsed.reply.trim(),
-    corrections: parsed.corrections,
+    corrections,
     farewell: parsed.farewell,
   };
 }
