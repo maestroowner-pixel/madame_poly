@@ -123,6 +123,36 @@ export function ListeningScreen({ visible, anchor, language, level, topicId, onC
   };
 
   /**
+   * Смена темы пересобирает диктант сразу: выбранная тема без нового текста —
+   * это подпись, которая расходится с тем, что читают. Начатый диктант при
+   * этом всё равно брошен, поэтому спрашиваем так же, как на выходе.
+   */
+  const changeTopic = (id: string | null) => {
+    const rebuild = () => {
+      setTopic(id);
+      void build(id);
+    };
+
+    const started = audioUri !== null || Object.keys(answers).length > 0;
+    if (!listening || verdicts !== null || !started) {
+      rebuild();
+      return;
+    }
+
+    Alert.alert(t.listeningQuitTitle, t.listeningQuitWarning, [
+      { text: t.cancel, style: 'cancel' },
+      {
+        text: t.listeningQuit,
+        style: 'destructive',
+        onPress: () => {
+          void record(0, listening.questions.length, true);
+          rebuild();
+        },
+      },
+    ]);
+  };
+
+  /**
    * Паузы в аудировании нет: диктант либо доведён до проверки, либо брошен и
    * идёт в средний балл нулём. Предупреждаем до того, как экран закроется.
    */
@@ -148,6 +178,7 @@ export function ListeningScreen({ visible, anchor, language, level, topicId, onC
 
   const build = async (subject: string | null) => {
     if (busy) return;
+    player.pause();
     setBusy(true);
     setError(null);
     try {
@@ -449,7 +480,7 @@ export function ListeningScreen({ visible, anchor, language, level, topicId, onC
             anchor={pickerAnchor}
             language={language}
             topicId={topic}
-            onSelect={setTopic}
+            onSelect={changeTopic}
             onClose={() => setPickerOpen(false)}
           />
         </SafeAreaView>
