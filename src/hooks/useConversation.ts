@@ -17,8 +17,13 @@ import {
   QUIET_RISE_DB,
   SILENCE_FLOOR_DB,
   SILENCE_HOLD_MS,
+  SPEECH_MATCH_SHARE,
+  SPEECH_RATE_MAX,
+  SPEECH_RATE_MIN,
+  SPEECH_REFERENCE_WPM,
   SPEECH_SHARE,
-  type SpeechRate,
+  WPM_BLEND,
+  type SpeechMode,
   VOICE_RANGE_DB,
   WORK_RANGE_DB,
 } from '../config';
@@ -39,6 +44,7 @@ import {
   loadTopic,
   loadSpeechRate,
   loadTurnMode,
+  loadUserWpm,
   saveHistory,
   saveLanguage,
   saveLevels,
@@ -48,6 +54,7 @@ import {
   saveTopic,
   saveSpeechRate,
   saveTurnMode,
+  saveUserWpm,
   EMPTY_PROFILE,
   type LevelMap,
 } from '../storage';
@@ -96,7 +103,7 @@ export function useConversation() {
   const [homework, setHomework] = useState<Homework | null>(null);
   const [homeworkBusy, setHomeworkBusy] = useState(false);
   const [turnMode, setTurnModeState] = useState<TurnMode>('auto');
-  const [speechRate, setSpeechRateState] = useState<SpeechRate>(1);
+  const [speechRate, setSpeechRateState] = useState<SpeechMode>(1);
   const [englishVariant, setVariantState] = useState<EnglishVariant>('british');
   const [error, setError] = useState<string | null>(null);
 
@@ -113,8 +120,10 @@ export function useConversation() {
   profileRef.current = profile;
   const turnModeRef = useRef<TurnMode>(turnMode);
   turnModeRef.current = turnMode;
-  const speechRateRef = useRef<SpeechRate>(speechRate);
+  const speechRateRef = useRef<SpeechMode>(speechRate);
   speechRateRef.current = speechRate;
+  /** Замеренный темп речи человека, слов в минуту. */
+  const userWpmRef = useRef<number | null>(null);
   const variantRef = useRef<EnglishVariant>(englishVariant);
   variantRef.current = englishVariant;
   const sessionRef = useRef(false);
@@ -155,6 +164,7 @@ export function useConversation() {
     setHomework(await loadHomework(storedLanguage));
     setTurnModeState(await loadTurnMode());
     setSpeechRateState(await loadSpeechRate());
+    userWpmRef.current = await loadUserWpm();
     setVariantState(await loadEnglishVariant());
   }, []);
 
@@ -175,6 +185,40 @@ export function useConversation() {
       void saveHistory(languageRef.current, next);
       return next;
     });
+  }, []);
+
+  /**
+   * Темп для озвучки. В режиме «как я» идём навстречу человеку: считаем его
+   * слова в минуту и сдвигаем голос в ту же сторону — но не до конца, иначе
+   * речь выходит неживой, да и чуть более беглую полезно слышать.
+   */
+  const voiceRate = useCallback((): number => {
+    const mode = speechRateRef.current;
+    if (mode !== 'auto') return mode;
+
+    const wpm = userWpmRef.current;
+    if (wpm === null) return 1;
+
+    const shift = ((wpm - SPEECH_REFERENCE_WPM) / SPEECH_REFERENCE_WPM) * SPEECH_MATCH_SHARE;
+    return Math.min(SPEECH_RATE_MAX, Math.max(SPEECH_RATE_MIN, 1 + shift));
+  }, []);
+
+  /**
+   * Замер темпа по только что сказанному. Хвост тишины, по которому реплика и
+   * закончилась, из времени вычитаем — иначе чем дольше человек молчит в
+   * конце, тем медленнее он будто говорит.
+   */
+  const measurePace = useCallback((text: string, durationMs: number) => {
+    const words = text.trim().split(/\s+/).filter(Boolean).length;
+    const tail = turnModeRef.current === 'auto' ? SILENCE_HOLD_MS : 0;
+    const seconds = (durationMs - tail) / 1000;
+    if (words < 4 || seconds < 1.5) return;
+
+    const wpm = (words / seconds) * 60;
+    const known = userWpmRef.current;
+    const next = known === null ? wpm : known + (wpm - known) * WPM_BLEND;
+    userWpmRef.current = next;
+    void saveUserWpm(next);
   }, []);
 
   /** Начинает слушать следующую реплику. */
@@ -260,6 +304,7 @@ export function useConversation() {
 
       // Реплика дошла — прежняя жалоба на слышимость больше не актуальна.
       setError(null);
+      measurePace(text, durationRef.current);
 
       const userMessage: Message = {
         id: nextId(),
@@ -296,7 +341,7 @@ export function useConversation() {
       persist((previous) => [...previous, assistantMessage]);
 
       setStatus('speaking');
-      const audioUri = await synthesize(turn.reply, speechRateRef.current);
+      const audioUri = await synthesize(turn.reply, voiceRate());
       persist((previous) =>
         previous.map((message) =>
           message.id === assistantMessage.id ? { ...message, audioUri } : message,
@@ -444,7 +489,7 @@ export function useConversation() {
         persist((previous) => [...previous, opening]);
 
         setStatus('speaking');
-        const audioUri = await synthesize(reply, speechRateRef.current);
+        const audioUri = await synthesize(reply, voiceRate());
         persist((previous) =>
           previous.map((message) =>
             message.id === opening.id ? { ...message, audioUri } : message,
@@ -499,7 +544,7 @@ export function useConversation() {
     await saveEnglishVariant(next);
   }, []);
 
-  const setSpeechRate = useCallback(async (next: SpeechRate) => {
+  const setSpeechRate = useCallback(async (next: SpeechMode) => {
     setSpeechRateState(next);
     speechRateRef.current = next;
     await saveSpeechRate(next);
@@ -639,7 +684,7 @@ export function useConversation() {
     async (message: Message) => {
       if (sessionRef.current) return;
       try {
-        const uri = message.audioUri ?? (await synthesize(message.text, speechRateRef.current));
+        const uri = message.audioUri ?? (await synthesize(message.text, voiceRate()));
         if (!message.audioUri) {
           persist((previous) =>
             previous.map((m) => (m.id === message.id ? { ...m, audioUri: uri } : m)),

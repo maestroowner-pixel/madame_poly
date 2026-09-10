@@ -194,6 +194,8 @@ const en = {
   rateSlow: 'Slower',
   rateNormal: 'Normal',
   rateFast: 'Faster',
+  rateMatch: 'Like me',
+  rateMatchHint: 'She listens to how quickly you speak and moves towards your pace — never all the way, a slightly livelier voice is worth hearing.',
   badHomework: 'Claude returned a task that did not match the schema',
 
   // PDF
@@ -362,6 +364,8 @@ const uk: Strings = {
   rateSlow: 'Повільніше',
   rateNormal: 'Звичайно',
   rateFast: 'Швидше',
+  rateMatch: 'Як я',
+  rateMatchHint: 'Вона зважає на те, як швидко говорите ви, і йде назустріч — але не до кінця: трохи жвавішу мову корисно чути.',
   badHomework: 'Claude повернув завдання, яке не розібралося за схемою',
 
   pdfDialog: 'Розмова',
@@ -524,6 +528,8 @@ const es: Strings = {
   rateSlow: 'Más lento',
   rateNormal: 'Normal',
   rateFast: 'Más rápido',
+  rateMatch: 'Como yo',
+  rateMatchHint: 'Se fija en la rapidez con la que hablas y se acerca a tu ritmo, aunque no del todo: conviene oír una voz algo más ágil.',
   badHomework: 'Claude devolvió una tarea que no encaja con el esquema',
 
   pdfDialog: 'Conversación',
@@ -689,6 +695,8 @@ const ru: Strings = {
   rateSlow: 'Медленнее',
   rateNormal: 'Обычно',
   rateFast: 'Быстрее',
+  rateMatch: 'Как я',
+  rateMatchHint: 'Она замечает, как быстро говорите вы, и идёт навстречу — но не до конца: чуть более беглую речь полезно слышать.',
   badHomework: 'Claude вернул задание, которое не разобралось по схеме',
 
   pdfDialog: 'Диалог',

@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import { SPEECH_RATES, type SpeechRate } from './config';
+import { SPEECH_RATES, type SpeechMode } from './config';
 import { LANGUAGE_CODES } from './languages';
 import { touch } from './services/sync';
 import type {
@@ -24,6 +24,7 @@ const KEY_ARCHIVE = 'polyglotta:archive';
 const KEY_PROFILE = 'polyglotta:profile';
 const KEY_MODE = 'polyglotta:turnMode';
 const KEY_RATE = 'polyglotta:speechRate';
+const KEY_WPM = 'polyglotta:userWpm';
 const KEY_VARIANT = 'polyglotta:englishVariant';
 const keyArchived = (id: string) => `polyglotta:archive:${id}`;
 const keyHomework = (id: string) => `polyglotta:homework:${id}`;
@@ -117,14 +118,26 @@ export async function saveTurnMode(mode: TurnMode): Promise<void> {
 }
 
 /** Темп речи собеседницы. Незнакомое значение приводим к обычному. */
-export async function loadSpeechRate(): Promise<SpeechRate> {
+export async function loadSpeechRate(): Promise<SpeechMode> {
   const raw = await AsyncStorage.getItem(KEY_RATE);
+  if (raw === 'auto') return 'auto';
   const value = Number(raw);
-  return (SPEECH_RATES as readonly number[]).includes(value) ? (value as SpeechRate) : 1;
+  return (SPEECH_RATES as readonly number[]).includes(value) ? (value as SpeechMode) : 1;
 }
 
-export async function saveSpeechRate(rate: SpeechRate): Promise<void> {
+export async function saveSpeechRate(rate: SpeechMode): Promise<void> {
   await write(KEY_RATE, String(rate));
+}
+
+/** Замеренный темп речи человека, слов в минуту; null — ещё не мерили. */
+export async function loadUserWpm(): Promise<number | null> {
+  const raw = await AsyncStorage.getItem(KEY_WPM);
+  const value = Number(raw);
+  return raw !== null && Number.isFinite(value) && value > 0 ? value : null;
+}
+
+export async function saveUserWpm(wpm: number): Promise<void> {
+  await write(KEY_WPM, String(Math.round(wpm)));
 }
 
 /** Вариант английского — общий для всех бесед на нём. */

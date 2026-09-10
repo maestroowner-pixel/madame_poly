@@ -20,7 +20,7 @@ import {
 } from 'react-native-safe-area-context';
 
 import { AVATARS, AVATAR_GROUPS } from '../avatars';
-import { SPEECH_RATES, type SpeechRate } from '../config';
+import { SPEECH_RATES, type SpeechMode } from '../config';
 import { CONTENT_MAX_WIDTH } from '../layout';
 import { FONT_SCALES, useStyles, useTheme, type Theme, type FontScale } from '../theme';
 import type { Profile } from '../types';
@@ -31,8 +31,8 @@ import { t } from '../i18n';
 interface Props {
   visible: boolean;
   /** Темп речи собеседницы: живёт рядом с размером шрифта — обе про удобство. */
-  speechRate: SpeechRate;
-  onSelectRate: (rate: SpeechRate) => void;
+  speechRate: SpeechMode;
+  onSelectRate: (rate: SpeechMode) => void;
   /** Значок, из которого экран вырос. */
   anchor: Anchor | null;
   profile: Profile;
@@ -175,21 +175,27 @@ export function ProfileScreen({
 
               <Text style={styles.label}>{t.speechRate}</Text>
               <View style={styles.fontRow}>
-                {SPEECH_RATES.map((rate, index) => {
+                {([...SPEECH_RATES, 'auto'] as SpeechMode[]).map((rate, index) => {
                   const active = rate === speechRate;
                   return (
                     <Pressable
-                      key={rate}
+                      key={String(rate)}
                       onPress={() => onSelectRate(rate)}
                       style={[styles.fontButton, active && styles.fontButtonActive]}
                     >
-                      <Text style={[styles.fontSample, active && styles.fontSampleActive]}>
-                        {[t.rateSlow, t.rateNormal, t.rateFast][index]}
+                      <Text
+                        style={[styles.fontSample, active && styles.fontSampleActive]}
+                        numberOfLines={1}
+                        adjustsFontSizeToFit
+                        minimumFontScale={0.7}
+                      >
+                        {[t.rateSlow, t.rateNormal, t.rateFast, t.rateMatch][index]}
                       </Text>
                     </Pressable>
                   );
                 })}
               </View>
+              <Text style={styles.hint}>{t.rateMatchHint}</Text>
 
               <Text style={styles.label}>{t.textSize}</Text>
               <View style={styles.fontRow}>
