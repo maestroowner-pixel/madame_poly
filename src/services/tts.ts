@@ -66,6 +66,9 @@ async function synthesizeOpenAI(text: string, speed: number): Promise<Uint8Array
  * в аудировании на A1 читают медленнее, чем на C2.
  */
 export async function synthesize(text: string, speed = 1): Promise<string> {
+  // Пустую строку сервис отвергает с ошибкой — ловим её здесь, не тратя запрос.
+  if (!text.trim()) throw new Error(t.nothingToSpeak);
+
   const bytes = await synthesizeOpenAI(text, speed);
 
   const file = audioFile();

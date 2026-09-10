@@ -124,19 +124,30 @@ export async function respond(params: {
     .slice(-HISTORY_WINDOW)
     .map((message) => ({ role: message.role, content: message.text }));
 
-  const response = await client.messages.parse({
-    model: CLAUDE_MODEL,
-    max_tokens: CLAUDE_MAX_TOKENS,
-    system: buildSystemPrompt(language, level, topic, name, variant),
-    // Разговорная латентность важнее глубины рассуждения: реплики короткие,
-    // а пауза между «сказал» и «услышал ответ» ощущается сразу.
-    thinking: { type: 'disabled' },
-    messages: [...context, { role: 'user', content: userText }],
-    output_config: { format: zodOutputFormat(TurnSchema) },
-  });
+  const ask = async () => {
+    const response = await client.messages.parse({
+      model: CLAUDE_MODEL,
+      max_tokens: CLAUDE_MAX_TOKENS,
+      system: buildSystemPrompt(language, level, topic, name, variant),
+      // Разговорная латентность важнее глубины рассуждения: реплики короткие,
+      // а пауза между «сказал» и «услышал ответ» ощущается сразу.
+      thinking: { type: 'disabled' },
+      messages: [...context, { role: 'user', content: userText }],
+      output_config: { format: zodOutputFormat(TurnSchema) },
+    });
+    return response.parsed_output;
+  };
 
-  const parsed = response.parsed_output;
-  if (!parsed) throw new Error(t.badTurn);
+  /**
+   * Пустой ответ доходил до экрана пустым пузырём, а до озвучки — пустой
+   * строкой, на которую OpenAI отвечает ошибкой. Осечка редкая и случайная,
+   * поэтому просим ещё раз, а не рвём беседу на первой же.
+   */
+  let parsed = await ask();
+  if (!parsed?.reply.trim()) parsed = await ask();
+
+  const reply = parsed?.reply.trim() ?? '';
+  if (!parsed || !reply) throw new Error(t.badTurn);
 
   /**
    * Отсекаем разборы, которых в последней реплике нет. Модель видит всю беседу
@@ -150,7 +161,7 @@ export async function respond(params: {
   );
 
   return {
-    reply: parsed.reply.trim(),
+    reply,
     corrections,
     farewell: parsed.farewell,
   };

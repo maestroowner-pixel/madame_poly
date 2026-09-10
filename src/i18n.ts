@@ -189,6 +189,7 @@ const en = {
   noOpenAiKey: 'EXPO_PUBLIC_OPENAI_API_KEY is not set',
   noAnthropicKey: 'EXPO_PUBLIC_ANTHROPIC_API_KEY is not set',
   badTurn: 'Claude returned an answer that did not match the schema',
+  nothingToSpeak: 'There is nothing to read aloud',
   badHomework: 'Claude returned a task that did not match the schema',
 
   // PDF
@@ -352,6 +353,7 @@ const uk: Strings = {
   noOpenAiKey: 'Не задано EXPO_PUBLIC_OPENAI_API_KEY',
   noAnthropicKey: 'Не задано EXPO_PUBLIC_ANTHROPIC_API_KEY',
   badTurn: 'Claude повернув відповідь, яка не розібралася за схемою',
+  nothingToSpeak: 'Немає чого читати вголос',
   badHomework: 'Claude повернув завдання, яке не розібралося за схемою',
 
   pdfDialog: 'Розмова',
@@ -509,6 +511,7 @@ const es: Strings = {
   noOpenAiKey: 'Falta EXPO_PUBLIC_OPENAI_API_KEY',
   noAnthropicKey: 'Falta EXPO_PUBLIC_ANTHROPIC_API_KEY',
   badTurn: 'Claude devolvió una respuesta que no encaja con el esquema',
+  nothingToSpeak: 'No hay nada que leer en voz alta',
   badHomework: 'Claude devolvió una tarea que no encaja con el esquema',
 
   pdfDialog: 'Conversación',
@@ -669,6 +672,7 @@ const ru: Strings = {
   noOpenAiKey: 'Не задан EXPO_PUBLIC_OPENAI_API_KEY',
   noAnthropicKey: 'Не задан EXPO_PUBLIC_ANTHROPIC_API_KEY',
   badTurn: 'Claude вернул ответ, который не разобрался по схеме',
+  nothingToSpeak: 'Нечего читать вслух',
   badHomework: 'Claude вернул задание, которое не разобралось по схеме',
 
   pdfDialog: 'Диалог',

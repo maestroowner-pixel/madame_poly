@@ -181,6 +181,7 @@ export function buildSystemPrompt(
     'Rules:',
     `- Always write your reply in ${englishName}, never in another language.`,
     '- This is speech, not writing: the reply is read aloud by a text-to-speech engine. Use 1-3 short sentences, no markdown, no lists, no emoji, no stage directions.',
+    '- "reply" is never empty. Even when the conversation is ending, it carries the goodbye — silence reaches the learner as a blank bubble and nothing to listen to.',
     '- Keep the conversation going. End with a question or an invitation to say more, unless the person clearly wants to stop.',
     '',
     'Ending:',
