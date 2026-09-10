@@ -1,7 +1,8 @@
 import Constants from 'expo-constants';
-import { setAudioModeAsync, useAudioPlayer } from 'expo-audio';
+import { setAudioModeAsync } from 'expo-audio';
+import { useVideoPlayer, VideoView } from 'expo-video';
 import { useCallback, useEffect, useRef } from 'react';
-import { Animated, Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { SPLASH_HOLD_MS } from '../config';
 import { t } from '../i18n';
@@ -12,13 +13,17 @@ interface Props {
 }
 
 /**
- * Заставка на запуске: логотип под гонг. Висит ровно столько, сколько звучит
- * звук, но не мигает и не задерживает дольше потолка. Тап снимает её сразу.
+ * Заставка на запуске: короткий ролик со своей дорожкой. Отдельного гонга
+ * больше нет — иначе звучали бы оба. Держим по таймеру, а не по событию конца
+ * ролика: на Android оно приходит раньше, чем файл успевает открыться, и
+ * заставка мигала. Тап снимает её сразу.
  */
 export function Splash({ onDone }: Props) {
   const styles = useStyles(createStyles);
 
-  const player = useAudioPlayer(require('../../assets/splash.m4a'));
+  const player = useVideoPlayer(require('../../assets/splash.mp4'), (video) => {
+    video.loop = false;
+  });
   const opacity = useRef(new Animated.Value(1)).current;
   const dismissed = useRef(false);
 
@@ -34,7 +39,7 @@ export function Splash({ onDone }: Props) {
   }, [onDone, opacity, player]);
 
   useEffect(() => {
-    // Гонг должен звучать и при выключенном звонке — это не уведомление.
+    // Ролик должен звучать и при выключенном звонке — это не уведомление.
     void setAudioModeAsync({ playsInSilentMode: true, allowsRecording: false }).then(() => {
       player.play();
     });
@@ -48,7 +53,12 @@ export function Splash({ onDone }: Props) {
   return (
     <Animated.View style={[styles.overlay, { opacity }]}>
       <Pressable style={styles.tapArea} onPress={dismiss}>
-        <Image source={require('../../assets/splash.png')} style={styles.photo} resizeMode="cover" />
+        <VideoView
+          player={player}
+          style={styles.photo}
+          contentFit="cover"
+          nativeControls={false}
+        />
 
         {/* Затемнение снизу: по светлым участкам снимка белый текст теряется. */}
         <View style={styles.scrim} />
