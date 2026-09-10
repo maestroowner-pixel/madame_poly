@@ -16,6 +16,7 @@ import {
   PEAK_DECAY_DB,
   QUIET_RISE_DB,
   SHOW_VAD_DEBUG,
+  SILENCE_FLOOR_DB,
   SILENCE_HOLD_MS,
   SPEECH_SHARE,
   VOICE_RANGE_DB,
@@ -329,6 +330,10 @@ export function useConversation() {
     if (typeof recorderState.metering === 'number') meteringSeenRef.current = true;
     durationRef.current = recorderState.durationMillis;
     const level = recorderState.metering ?? -160;
+
+    // Пустые отсчёты в начале записи не сообщают о комнате ничего — пропускаем,
+    // иначе они станут «самым тихим» и перекосят всю шкалу реплики.
+    if (level <= SILENCE_FLOOR_DB) return;
 
     // Пик оседает, отметка тишины падает сразу и ползёт вверх: так шкала
     // подстраивается под комнату и не застревает на случайном хлопке.
