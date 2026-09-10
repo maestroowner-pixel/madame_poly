@@ -61,6 +61,9 @@ const en = {
   badListeningCheck: 'Could not check the answers. Try again.',
   tooQuiet: 'I heard no voice — speak a little louder, or turn AUTO off and press when you have finished.',
   notRecognised: 'I could not make out the words — say it again.',
+  remindTask: (n: number) => `${n} mistakes in this conversation — worth working through`,
+  remindTaskReady: (n: number) => `Your task is ready: ${n} exercises`,
+  remindNotebook: 'The copybook holds every exercise and exports to PDF — print it or write on a tablet.',
   listeningAverage: (percent: number, attempts: number) =>
     `Average ${percent}% over ${attempts} attempts`,
   listeningQuitTitle: 'Leave the dictation?',
@@ -211,6 +214,11 @@ const uk: Strings = {
   badListeningCheck: 'Не вдалося перевірити відповіді. Спробуйте ще раз.',
   tooQuiet: 'Я не почула голосу — говоріть трохи гучніше або вимкніть АВТО і натисніть, коли договорите.',
   notRecognised: 'Не розібрала слів — скажіть ще раз.',
+  remindTask: (n) =>
+    `${n} ${plural(n, 'помилка', 'помилки', 'помилок')} у цій розмові — варто розібрати`,
+  remindTaskReady: (n) =>
+    `Завдання готове: ${n} ${plural(n, 'вправа', 'вправи', 'вправ')}`,
+  remindNotebook: 'У зошиті зібрані всі вправи, і його можна вивантажити в PDF — друкуйте або пишіть на планшеті.',
   listeningAverage: (percent, attempts) =>
     `Середній бал ${percent}% за ${attempts} ${plural(attempts, 'спробу', 'спроби', 'спроб')}`,
   listeningQuitTitle: 'Вийти з диктанту?',
@@ -349,6 +357,9 @@ const es: Strings = {
   badListeningCheck: 'No se pudieron comprobar las respuestas. Inténtalo de nuevo.',
   tooQuiet: 'No he oído tu voz: habla un poco más alto, o desactiva AUTO y pulsa al terminar.',
   notRecognised: 'No he entendido las palabras: dilo otra vez.',
+  remindTask: (n) => `${n} errores en esta conversación: conviene repasarlos`,
+  remindTaskReady: (n) => `Tu tarea está lista: ${n} ejercicios`,
+  remindNotebook: 'El cuaderno reúne todos los ejercicios y se exporta a PDF: imprímelo o escribe en la tableta.',
   listeningAverage: (percent, attempts) => `Media ${percent}% en ${attempts} intentos`,
   listeningQuitTitle: '¿Salir del dictado?',
   listeningQuitWarning:
@@ -486,6 +497,11 @@ const ru: Strings = {
   badListeningCheck: 'Не получилось проверить ответы. Попробуйте ещё раз.',
   tooQuiet: 'Не услышала голоса — говорите чуть громче или выключите АВТО и нажимайте, когда договорите.',
   notRecognised: 'Не разобрала слов — скажите ещё раз.',
+  remindTask: (n) =>
+    `${n} ${plural(n, 'ошибка', 'ошибки', 'ошибок')} в этой беседе — стоит разобрать`,
+  remindTaskReady: (n) =>
+    `Задание готово: ${n} ${plural(n, 'упражнение', 'упражнения', 'упражнений')}`,
+  remindNotebook: 'В тетради собраны все упражнения, её можно выгрузить в PDF — распечатать или писать на планшете.',
   listeningAverage: (percent, attempts) =>
     `Средний балл ${percent}% за ${attempts} ${plural(attempts, 'попытку', 'попытки', 'попыток')}`,
   listeningQuitTitle: 'Выйти из диктанта?',

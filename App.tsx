@@ -27,6 +27,7 @@ import { findTopic } from './src/topics';
 import { CONTENT_MAX_WIDTH } from './src/layout';
 import { useConversation } from './src/hooks/useConversation';
 import { useZoomScreen } from './src/hooks/useZoomScreen';
+import { ZOOM_OPEN_MS } from './src/components/ZoomModal';
 import { ThemeProvider, useStyles, useTheme, type Theme } from './src/theme';
 import type { Message } from './src/types';
 import { locale, t } from './src/i18n';
@@ -74,6 +75,16 @@ function Screen() {
     notebookScreen.hide,
     listeningScreen.hide,
   ]);
+
+  /**
+   * Задание живёт внутри экрана настроек, поэтому открываем его в два шага:
+   * сперва настройки, затем — когда они развернулись — само задание. iOS
+   * поднимает вложенную модалку поверх, но не во время чужой анимации.
+   */
+  const openTask = () => {
+    setPanelOpen(true);
+    setTimeout(() => homeworkScreen.show(null), ZOOM_OPEN_MS + 60);
+  };
 
   const correctionCount = conversation.messages.reduce(
     (total, message) => total + (message.corrections?.length ?? 0),
@@ -249,6 +260,30 @@ function Screen() {
           </View>
         )}
 
+        {/* Беседа закончена и в ней были ошибки — напоминаем, где с ними
+            работать, пока разговор не ушёл в архив. */}
+        {!conversation.sessionActive && correctionCount > 0 && (
+          <View style={styles.remind}>
+            <Text style={styles.remindText}>
+              {conversation.homework
+                ? t.remindTaskReady(conversation.homework.exercises.length)
+                : t.remindTask(correctionCount)}
+            </Text>
+            <Text style={styles.remindHint}>{t.remindNotebook}</Text>
+            <View style={styles.remindRow}>
+              <Pressable onPress={openTask} style={styles.remindButton}>
+                <Text style={styles.remindLabel}>{t.task}</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => notebookScreen.show(null)}
+                style={styles.remindButton}
+              >
+                <Text style={styles.remindLabel}>{t.notebookTitle}</Text>
+              </Pressable>
+            </View>
+          </View>
+        )}
+
         <RecordButton
           status={conversation.status}
           sessionActive={conversation.sessionActive}
@@ -277,6 +312,28 @@ function Screen() {
 const createStyles = (theme: Theme) =>
   StyleSheet.create({
     screen: { flex: 1, backgroundColor: theme.bg },
+    remind: {
+      gap: 6,
+      marginHorizontal: 16,
+      marginBottom: 8,
+      padding: 12,
+      borderRadius: 16,
+      backgroundColor: theme.surface,
+      borderWidth: 1,
+      borderColor: theme.border,
+    },
+    remindText: { color: theme.text, fontSize: 14, fontWeight: '700' },
+    remindHint: { color: theme.textMuted, fontSize: 12, lineHeight: 17 },
+    remindRow: { flexDirection: 'row', gap: 8, marginTop: 2 },
+    remindButton: {
+      flex: 1,
+      height: 38,
+      borderRadius: 12,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: theme.surfaceAlt,
+    },
+    remindLabel: { color: theme.accent, fontSize: 13, fontWeight: '700' },
     column: { flex: 1, width: '100%', maxWidth: CONTENT_MAX_WIDTH, alignSelf: 'center' },
     actions: { flexDirection: 'row', alignItems: 'center', gap: 14 },
     iconButton: {
