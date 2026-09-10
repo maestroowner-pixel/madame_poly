@@ -14,9 +14,11 @@ import {
   METERING_INTERVAL_MS,
   MIN_SPEECH_MS,
   NOISE_FLOOR_MAX_DB,
+  NOISE_CALIBRATION_MS,
   NOISE_FLOOR_MIN_DB,
   NOISE_MARGIN_DB,
   NOISE_RISE,
+  NOISE_RISE_CALIBRATION,
   NOISE_RISE_SPEECH,
   SILENCE_HOLD_MS,
   SPEECH_LEVEL_DB,
@@ -123,11 +125,13 @@ export function useConversation() {
   const meteringSeenRef = useRef(false);
   /** Длительность записи для колбэков: пересоздавать их на каждый тик незачем. */
   const durationRef = useRef(0);
+  /** Начало реплики: первые доли секунды уходят на замер фона. */
+  const turnStartedAtRef = useRef(0);
   /**
    * Уровень фона. Оценивается по паузам в речи и живёт всю беседу: тихая
    * музыка или шум улицы могут появиться на середине разговора.
    */
-  const noiseFloorRef = useRef(NOISE_FLOOR_MIN_DB);
+  const noiseFloorRef = useRef<number | null>(null);
   const turnBusyRef = useRef(false);
   /** listen() вызывается из слушателя плеера — держим свежую версию в ref. */
   const listenRef = useRef<() => Promise<void>>(async () => {});
@@ -173,7 +177,9 @@ export function useConversation() {
       await recorder.prepareToRecordAsync();
       recorder.record();
       lastSoundAtRef.current = Date.now();
+      turnStartedAtRef.current = Date.now();
       speechMsRef.current = 0;
+      noiseFloorRef.current = null;
       setStatus('listening');
     } catch (e: unknown) {
       sessionRef.current = false;
@@ -323,24 +329,43 @@ export function useConversation() {
     durationRef.current = recorderState.durationMillis;
     const level = recorderState.metering ?? -160;
 
+    const clampFloor = (value: number) =>
+      Math.min(NOISE_FLOOR_MAX_DB, Math.max(NOISE_FLOOR_MIN_DB, value));
+
+    /**
+     * Первый отсчёт реплики задаёт точку отсчёта. Начинать с постоянной нельзя:
+     * если она ниже фона этого микрофона, речью становится всё подряд, фон
+     * подтягивается только на тишине — а тишины по такому порогу не бывает, и
+     * пауза не наступает никогда.
+     */
+    if (noiseFloorRef.current === null) {
+      noiseFloorRef.current = clampFloor(level);
+      return;
+    }
+
+    const calibrating = now - turnStartedAtRef.current < NOISE_CALIBRATION_MS;
     const floor = noiseFloorRef.current;
     const threshold = Math.max(SPEECH_LEVEL_DB, floor + NOISE_MARGIN_DB);
-    const isSpeech = level > threshold;
+    // Пока идёт замер, речь не считаем: иначе шум комнаты сойдёт за начало
+    // фразы и пауза после неё будет отсчитываться не от голоса.
+    const isSpeech = !calibrating && level > threshold;
 
     if (isSpeech) {
       lastSoundAtRef.current = now;
       speechMsRef.current += METERING_INTERVAL_MS;
     }
 
-    // Фон меряем прежде всего по тишине между словами: вниз сразу, вверх плавно.
-    // Во время речи фон тоже ползёт вверх, но на порядок медленнее — это
-    // страховка от шума, который появился громче порога и сошёл за речь.
-    const rise = isSpeech ? NOISE_RISE_SPEECH : NOISE_RISE;
+    // Фон меряем по тишине между словами: вниз сразу, вверх плавно. Во время
+    // речи он тоже ползёт вверх, но на порядок медленнее — страховка от шума,
+    // который появился громче порога и сошёл за речь. В окне замера подъём
+    // быстрый: оценке нужно догнать настоящий фон, пока человек молчит.
+    const rise = calibrating
+      ? NOISE_RISE_CALIBRATION
+      : isSpeech
+        ? NOISE_RISE_SPEECH
+        : NOISE_RISE;
     const next = !isSpeech && level < floor ? level : floor + (level - floor) * rise;
-    noiseFloorRef.current = Math.min(
-      NOISE_FLOOR_MAX_DB,
-      Math.max(NOISE_FLOOR_MIN_DB, next),
-    );
+    noiseFloorRef.current = clampFloor(next);
 
     const silentFor = now - lastSoundAtRef.current;
     const spokeEnough = speechMsRef.current >= MIN_SPEECH_MS;
@@ -383,7 +408,7 @@ export function useConversation() {
   const startSession = useCallback(async () => {
     setError(null);
     endAfterPlaybackRef.current = false;
-    noiseFloorRef.current = NOISE_FLOOR_MIN_DB;
+    noiseFloorRef.current = null;
     sessionRef.current = true;
     setSessionActive(true);
 
