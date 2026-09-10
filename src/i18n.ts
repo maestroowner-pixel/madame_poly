@@ -59,6 +59,8 @@ const en = {
   listeningAnswerFirst: 'Answer at least one question first.',
   badListening: 'Could not build the dictation. Try again.',
   badListeningCheck: 'Could not check the answers. Try again.',
+  tooQuiet: 'I heard no voice — speak a little louder, or turn AUTO off and press when you have finished.',
+  notRecognised: 'I could not make out the words — say it again.',
   listeningAverage: (percent: number, attempts: number) =>
     `Average ${percent}% over ${attempts} attempts`,
   listeningQuitTitle: 'Leave the dictation?',
@@ -207,6 +209,8 @@ const uk: Strings = {
   listeningAnswerFirst: 'Спершу дайте хоч одну відповідь.',
   badListening: 'Не вдалося скласти диктант. Спробуйте ще раз.',
   badListeningCheck: 'Не вдалося перевірити відповіді. Спробуйте ще раз.',
+  tooQuiet: 'Я не почула голосу — говоріть трохи гучніше або вимкніть АВТО і натисніть, коли договорите.',
+  notRecognised: 'Не розібрала слів — скажіть ще раз.',
   listeningAverage: (percent, attempts) =>
     `Середній бал ${percent}% за ${attempts} ${plural(attempts, 'спробу', 'спроби', 'спроб')}`,
   listeningQuitTitle: 'Вийти з диктанту?',
@@ -343,6 +347,8 @@ const es: Strings = {
   listeningAnswerFirst: 'Responde al menos a una pregunta.',
   badListening: 'No se pudo crear el dictado. Inténtalo de nuevo.',
   badListeningCheck: 'No se pudieron comprobar las respuestas. Inténtalo de nuevo.',
+  tooQuiet: 'No he oído tu voz: habla un poco más alto, o desactiva AUTO y pulsa al terminar.',
+  notRecognised: 'No he entendido las palabras: dilo otra vez.',
   listeningAverage: (percent, attempts) => `Media ${percent}% en ${attempts} intentos`,
   listeningQuitTitle: '¿Salir del dictado?',
   listeningQuitWarning:
@@ -478,6 +484,8 @@ const ru: Strings = {
   listeningAnswerFirst: 'Ответьте хотя бы на один вопрос.',
   badListening: 'Не получилось составить диктант. Попробуйте ещё раз.',
   badListeningCheck: 'Не получилось проверить ответы. Попробуйте ещё раз.',
+  tooQuiet: 'Не услышала голоса — говорите чуть громче или выключите АВТО и нажимайте, когда договорите.',
+  notRecognised: 'Не разобрала слов — скажите ещё раз.',
   listeningAverage: (percent, attempts) =>
     `Средний балл ${percent}% за ${attempts} ${plural(attempts, 'попытку', 'попытки', 'попыток')}`,
   listeningQuitTitle: 'Выйти из диктанта?',

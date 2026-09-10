@@ -203,15 +203,22 @@ export function useConversation() {
     turnBusyRef.current = true;
 
     try {
-      // Без уровня входа судить не о чем: считаем, что человек говорил, и
-      // отдаём запись Whisper — пусть решает он.
-      const spokeEnough = meteringSeenRef.current
-        ? speechMsRef.current >= MIN_SPEECH_MS
-        : durationRef.current >= MIN_SPEECH_MS;
+      /**
+       * В ручном режиме конец фразы отмечает человек — выбрасывать его запись
+       * как тишину нельзя, каким бы тихим ни вышел уровень. Порог по уровню
+       * остаётся авторежиму, где он бережёт Whisper от фонового шума; если
+       * уровень не приходит вовсе, судим по длительности.
+       */
+      const spokeEnough =
+        turnModeRef.current === 'manual' || !meteringSeenRef.current
+          ? durationRef.current >= MIN_SPEECH_MS
+          : speechMsRef.current >= MIN_SPEECH_MS;
       await recorder.stop();
 
-      // Тишина или посторонний шум — молча слушаем дальше, не тратя Whisper.
+      // Молчание не должно быть неотличимо от зависания: говорим, что не
+      // услышали, и слушаем дальше.
       if (!spokeEnough) {
+        setError(t.tooQuiet);
         turnBusyRef.current = false;
         await listenRef.current();
         return;
@@ -227,10 +234,14 @@ export function useConversation() {
       setStatus('transcribing');
       const text = await transcribe(uri, currentLanguage);
       if (!text) {
+        setError(t.notRecognised);
         turnBusyRef.current = false;
         await listenRef.current();
         return;
       }
+
+      // Реплика дошла — прежняя жалоба на слышимость больше не актуальна.
+      setError(null);
 
       const userMessage: Message = {
         id: nextId(),
