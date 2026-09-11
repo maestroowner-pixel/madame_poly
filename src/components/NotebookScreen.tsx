@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import type { ReactNode } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -14,6 +15,7 @@ import {
 } from 'react-native-safe-area-context';
 
 import { CheckIcon, CloseIcon, ShareIcon } from './icons';
+import { ScreenTitle } from './ScreenMenu';
 import { ZoomModal } from './ZoomModal';
 import { measureAnchor, type Anchor } from '../anchor';
 import { formatDate } from '../format';
@@ -25,13 +27,6 @@ import { loadNotebook, type NotebookEntry } from '../storage';
 import { useStyles, useTheme, type Theme } from '../theme';
 import { findTopic } from '../topics';
 import type { ExerciseKind } from '../types';
-
-interface Props {
-  visible: boolean;
-  /** Значок тетради в шапке: из него экран растёт и в него схлопывается. */
-  anchor: Anchor | null;
-  onClose: () => void;
-}
 
 const KIND_LABELS: Record<ExerciseKind, string> = {
   fill: t.kindFill,
@@ -49,7 +44,7 @@ function entryTitle(entry: NotebookEntry): string {
  * слишком много, чтобы листать. Сам список собирается из архива на лету:
  * хранить его отдельно значило бы чинить после каждого удаления беседы.
  */
-export function NotebookScreen({ visible, anchor, onClose }: Props) {
+export function NotebookScreen({ menu }: { menu: ReactNode }) {
   const { theme } = useTheme();
   const styles = useStyles(createStyles);
 
@@ -64,12 +59,11 @@ export function NotebookScreen({ visible, anchor, onClose }: Props) {
   const rowRefs = useRef(new Map<string, View>());
 
   useEffect(() => {
-    if (!visible) return;
     setError(null);
     setSelected(null);
     setOpened(null);
     void loadNotebook().then(setEntries);
-  }, [visible]);
+  }, []);
 
   const total = entries.reduce((sum, entry) => sum + entry.homework.exercises.length, 0);
   const selecting = selected !== null;
@@ -110,13 +104,14 @@ export function NotebookScreen({ visible, anchor, onClose }: Props) {
   const canShare = entries.length > 0 && (selected === null || selected.length > 0);
 
   return (
-    <ZoomModal visible={visible} anchor={anchor} onRequestClose={onClose}>
-      <SafeAreaProvider initialMetrics={initialWindowMetrics}>
-        <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
+    <View style={styles.screen}>
           <View style={styles.header}>
-            <Text style={styles.title}>
-              {selected === null ? t.notebookTitle : t.selectedCount(selected.length)}
-            </Text>
+            {menu}
+            {selected === null ? (
+              <ScreenTitle screen="book" />
+            ) : (
+              <Text style={styles.title}>{t.selectedCount(selected.length)}</Text>
+            )}
             <View style={styles.actions}>
               {canShare && (
                 <Pressable
@@ -134,16 +129,17 @@ export function NotebookScreen({ visible, anchor, onClose }: Props) {
                   )}
                 </Pressable>
               )}
-              <Pressable
-                // В режиме выбора крестик отменяет выбор, а не закрывает тетрадь.
-                onPress={selecting ? () => setSelected(null) : onClose}
-                hitSlop={12}
-                accessibilityRole="button"
-                accessibilityLabel={t.close}
-                style={styles.iconButton}
-              >
-                <CloseIcon size={20} color={theme.neon} />
-              </Pressable>
+              {selecting && (
+                <Pressable
+                  onPress={() => setSelected(null)}
+                  hitSlop={12}
+                  accessibilityRole="button"
+                  accessibilityLabel={t.cancel}
+                  style={styles.iconButton}
+                >
+                  <CloseIcon size={20} color={theme.neon} />
+                </Pressable>
+              )}
             </View>
           </View>
 
@@ -196,8 +192,6 @@ export function NotebookScreen({ visible, anchor, onClose }: Props) {
               </>
             )}
           </ScrollView>
-        </SafeAreaView>
-      </SafeAreaProvider>
 
       <LessonModal
         entry={opened}
@@ -205,7 +199,7 @@ export function NotebookScreen({ visible, anchor, onClose }: Props) {
         onClose={() => setOpened(null)}
         onShare={exportPdf}
       />
-    </ZoomModal>
+    </View>
   );
 }
 

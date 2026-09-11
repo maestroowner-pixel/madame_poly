@@ -9,6 +9,8 @@ interface Props {
   accessibilityLabel: string;
   children: ReactNode;
   disabled?: boolean;
+  /** Без подложки и свечения — для неактивных вкладок. */
+  quiet?: boolean;
 }
 
 /**
@@ -17,12 +19,12 @@ interface Props {
  * подсказывает, что она живая. В светлой теме свечения нет — на белом оно
  * выглядит грязью.
  */
-export function NeonButton({ onPress, accessibilityLabel, children, disabled }: Props) {
+export function NeonButton({ onPress, accessibilityLabel, children, disabled, quiet }: Props) {
   const { theme, scheme } = useTheme();
   const styles = useStyles(createStyles);
   const glow = useRef(new Animated.Value(0)).current;
 
-  const lit = scheme === 'dark' && !disabled;
+  const lit = scheme === 'dark' && !disabled && !quiet;
 
   useEffect(() => {
     if (!lit) {
@@ -57,7 +59,7 @@ export function NeonButton({ onPress, accessibilityLabel, children, disabled }: 
       hitSlop={8}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
-      style={[styles.button, disabled && styles.dimmed]}
+      style={[styles.button, quiet && styles.quiet, disabled && styles.dimmed]}
     >
       {lit && (
         <Animated.View
@@ -90,6 +92,7 @@ const createStyles = (theme: Theme) =>
       overflow: 'hidden',
       backgroundColor: theme.surfaceAlt,
     },
+    quiet: { backgroundColor: 'transparent' },
     dimmed: { opacity: 0.4 },
     /** Пятно шире значка и мягче кнопки — свет, а не вторая кнопка. */
     glow: {

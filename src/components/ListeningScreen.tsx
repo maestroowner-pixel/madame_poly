@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import type { ReactNode } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -11,20 +12,14 @@ import {
   View,
 } from 'react-native';
 import {
-  SafeAreaProvider,
-  SafeAreaView,
-  initialWindowMetrics,
-} from 'react-native-safe-area-context';
-import {
   RecordingPresets,
   setAudioModeAsync,
   useAudioPlayer,
   useAudioRecorder,
 } from 'expo-audio';
 
-import { CloseIcon } from './icons';
+import { ScreenTitle } from './ScreenMenu';
 import { TopicPicker } from './TopicPicker';
-import { ZOOM_CLOSE_MS, ZoomModal } from './ZoomModal';
 import { measureAnchor, type Anchor } from '../anchor';
 import { LISTENING_SPEED } from '../config';
 import { t } from '../i18n';
@@ -49,17 +44,16 @@ import type {
   ListeningVerdict,
 } from '../types';
 
-/** Что подтверждает человек: выход или смену темы. Оба бросают диктант. */
-type Pending = { kind: 'close' } | { kind: 'topic'; id: string | null };
+/** Смена темы бросает начатый диктант — её и подтверждают. */
+type Pending = { kind: 'topic'; id: string | null };
 
 interface Props {
-  visible: boolean;
-  anchor: Anchor | null;
+  /** Домик со списком разделов. */
+  menu: ReactNode;
   language: LanguageCode;
   level: Level;
   /** Тема беседы — с неё начинается выбор темы диктанта. */
   topicId: string | null;
-  onClose: () => void;
 }
 
 /**
@@ -68,28 +62,12 @@ interface Props {
  * аудиосессию iOS у беседы — там ответ переставал звучать. Размонтируем не
  * сразу: сперва должно доиграть схлопывание.
  */
-export function ListeningScreen(props: Props) {
-  const [mounted, setMounted] = useState(props.visible);
-
-  useEffect(() => {
-    if (props.visible) {
-      setMounted(true);
-      return;
-    }
-    const timer = setTimeout(() => setMounted(false), ZOOM_CLOSE_MS + 80);
-    return () => clearTimeout(timer);
-  }, [props.visible]);
-
-  if (!mounted) return null;
-  return <ListeningBody {...props} />;
-}
-
 /**
  * Аудирование: текст под уровень читается вслух, а вопросы к нему отвечаются
  * тремя способами — выбором, текстом и голосом. Сам текст до проверки скрыт,
  * иначе вопросы решаются чтением, а не на слух.
  */
-function ListeningBody({ visible, anchor, language, level, topicId, onClose }: Props) {
+export function ListeningScreen({ menu, language, level, topicId }: Props) {
   const { theme } = useTheme();
   const styles = useStyles(createStyles);
 
@@ -113,7 +91,6 @@ function ListeningBody({ visible, anchor, language, level, topicId, onClose }: P
   const topicRef = useRef<View>(null);
 
   useEffect(() => {
-    if (!visible) return;
     setError(null);
     void loadListeningStats(language).then(setStats);
     void loadListening(language).then((stored) => {
@@ -126,7 +103,7 @@ function ListeningBody({ visible, anchor, language, level, topicId, onClose }: P
       setVerdicts(null);
       setPending(null);
     });
-  }, [visible, language, topicId]);
+  }, [language, topicId]);
 
   const fail = (e: unknown) => setError(e instanceof Error ? e.message : String(e));
 
@@ -150,15 +127,6 @@ function ListeningBody({ visible, anchor, language, level, topicId, onClose }: P
     }
   };
 
-  /** Останавливаем всё, что звучит: экран уходит, а плеер бы доигрывал. */
-  const leave = () => {
-    hush();
-    if (speaking !== null) {
-      setSpeaking(null);
-      void recorder.stop().catch(() => {});
-    }
-    onClose();
-  };
 
   /**
    * Смена темы пересобирает диктант сразу: выбранная тема без нового текста —
@@ -175,22 +143,11 @@ function ListeningBody({ visible, anchor, language, level, topicId, onClose }: P
     void build(id);
   };
 
-  /**
-   * Паузы в аудировании нет: диктант либо доведён до проверки, либо брошен и
-   * идёт в средний балл нулём. Предупреждаем до того, как экран закроется.
-   */
-  const requestClose = () => {
-    if (abandoning) setPending({ kind: 'close' });
-    else leave();
-  };
-
-  /** Подтверждение рисуем в самом экране: системный алерт снимается вместе с
-      модалкой, и iOS терял одно из двух — кнопка «Выйти» не срабатывала. */
+  /** Подтверждение рисуем в самом экране: системный алерт съедал нажатие. */
   const accept = (choice: Pending) => {
     setPending(null);
     if (listening) void record(0, listening.questions.length, true);
-    if (choice.kind === 'close') leave();
-    else rebuild(choice.id);
+    rebuild(choice.id);
   };
 
   const build = async (subject: string | null) => {
@@ -307,28 +264,29 @@ function ListeningBody({ visible, anchor, language, level, topicId, onClose }: P
     verdicts === null &&
     (audioUri !== null || Object.keys(answers).length > 0);
 
+  /**
+   * Паузы в аудировании нет: диктант либо доведён до проверки, либо брошен и
+   * идёт в средний балл нулём. Спросить на уходе с вкладки не у кого, поэтому
+   * засчитываем молча — иначе балл держался бы высоким переключением вкладки.
+   */
+  const abandonRef = useRef<(() => void) | null>(null);
+  abandonRef.current = abandoning && listening
+    ? () => {
+        hush();
+        void record(0, listening.questions.length, true);
+      }
+    : null;
+
+  useEffect(() => () => abandonRef.current?.(), []);
+
   const score = verdicts ? verdicts.filter((verdict) => verdict.correct).length : 0;
 
   return (
-    <ZoomModal visible={visible} anchor={anchor} onRequestClose={requestClose}>
-      <SafeAreaProvider initialMetrics={initialWindowMetrics}>
-        <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
+    <View style={styles.screen}>
           <View style={styles.header}>
-            <Text style={styles.title} numberOfLines={1}>
-              {listening ? listening.title : t.listeningTitle}
-            </Text>
-            <View style={styles.actions}>
-              <Text style={styles.level}>{level}</Text>
-              <Pressable
-                onPress={requestClose}
-                hitSlop={12}
-                accessibilityRole="button"
-                accessibilityLabel={t.close}
-                style={styles.iconButton}
-              >
-                <CloseIcon size={20} color={theme.neon} />
-              </Pressable>
-            </View>
+            {menu}
+            <ScreenTitle screen="listen" title={listening?.title} />
+            <Text style={styles.level}>{level}</Text>
           </View>
 
           {/* Письменные ответы — те же поля, что и в аккаунте: без этого тап по
@@ -531,9 +489,7 @@ function ListeningBody({ visible, anchor, language, level, topicId, onClose }: P
             onSelect={changeTopic}
             onClose={() => setPickerOpen(false)}
           />
-        </SafeAreaView>
-      </SafeAreaProvider>
-    </ZoomModal>
+    </View>
   );
 }
 

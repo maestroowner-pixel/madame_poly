@@ -310,3 +310,136 @@ export function HomeIcon({ size, color }: Props) {
     </View>
   );
 }
+
+/** Реплика: скруглённый прямоугольник с хвостиком в нижнем углу. */
+export function ChatIcon({ size, color }: Props) {
+  const line = Math.max(1.6, size * 0.085);
+
+  return (
+    <View style={[styles.box, { width: size, height: size }]}>
+      <View
+        style={{
+          width: size * 0.86,
+          height: size * 0.66,
+          borderRadius: size * 0.18,
+          borderWidth: line,
+          borderColor: color,
+          marginBottom: size * 0.14,
+        }}
+      />
+      {/* Хвостик: квадрат о двух сторонах, повёрнутый углом вниз. */}
+      <View
+        style={{
+          position: 'absolute',
+          left: size * 0.24,
+          bottom: size * 0.1,
+          width: size * 0.2,
+          height: size * 0.2,
+          borderBottomWidth: line,
+          borderLeftWidth: line,
+          borderColor: color,
+          transform: [{ rotate: '-45deg' }],
+        }}
+      />
+    </View>
+  );
+}
+
+/** Слух: две дуги звука рядом с точкой — ухо в линиях читается хуже. */
+export function EarIcon({ size, color }: Props) {
+  const line = Math.max(1.6, size * 0.085);
+
+  return (
+    <View style={[styles.box, { width: size, height: size }]}>
+      <View
+        style={{
+          position: 'absolute',
+          left: size * 0.16,
+          width: size * 0.16,
+          height: size * 0.16,
+          borderRadius: size * 0.08,
+          backgroundColor: color,
+        }}
+      />
+      {[0.42, 0.66].map((scale, index) => (
+        <View
+          key={scale}
+          style={{
+            position: 'absolute',
+            left: size * (0.3 + index * 0.12),
+            width: size * scale,
+            height: size * scale,
+            borderRadius: size * scale * 0.5,
+            borderWidth: line,
+            borderColor: color,
+            // Оставляем только правую половину кольца — получается дуга.
+            borderLeftColor: 'transparent',
+            borderTopColor: 'transparent',
+            transform: [{ rotate: '-45deg' }],
+          }}
+        />
+      ))}
+    </View>
+  );
+}
+
+/** Перо: наклонная линия с остриём и черта строки под ним. */
+export function PenIcon({ size, color }: Props) {
+  const line = Math.max(1.6, size * 0.085);
+
+  return (
+    <View style={[styles.box, { width: size, height: size }]}>
+      <View
+        style={{
+          position: 'absolute',
+          top: size * 0.1,
+          left: size * 0.36,
+          width: size * 0.26,
+          height: size * 0.6,
+          borderWidth: line,
+          borderColor: color,
+          borderTopLeftRadius: size * 0.13,
+          borderTopRightRadius: size * 0.13,
+          transform: [{ rotate: '38deg' }],
+        }}
+      />
+      <View
+        style={{
+          position: 'absolute',
+          bottom: size * 0.08,
+          width: size * 0.74,
+          height: line,
+          borderRadius: line,
+          backgroundColor: color,
+        }}
+      />
+    </View>
+  );
+}
+
+/** Книга: две страницы, разделённые корешком. */
+export function BookIcon({ size, color }: Props) {
+  const line = Math.max(1.6, size * 0.085);
+
+  return (
+    <View style={[styles.box, { width: size, height: size }]}>
+      <View
+        style={{
+          width: size * 0.84,
+          height: size * 0.66,
+          borderWidth: line,
+          borderColor: color,
+          borderRadius: size * 0.06,
+        }}
+      />
+      <View
+        style={{
+          position: 'absolute',
+          width: line,
+          height: size * 0.66,
+          backgroundColor: color,
+        }}
+      />
+    </View>
+  );
+}
