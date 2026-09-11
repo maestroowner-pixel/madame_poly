@@ -61,6 +61,25 @@ export const TERMS_URL = `${SITE_URL}/#terms`;
 export const CONTACT_EMAIL = 'kukalab@icloud.com';
 export const COPYRIGHT = 'Mykhaylo Osypov · Kuka Lab · 2026';
 
+// --- Подписка ---
+
+/**
+ * Ключи RevenueCat. Публичные: они и предназначены для клиента, секретный ключ
+ * в приложение не попадает. Как и остальные, лежат в .env.
+ */
+export const REVENUECAT_IOS_KEY = process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY ?? '';
+export const REVENUECAT_ANDROID_KEY = process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY ?? '';
+
+/** Название права доступа в RevenueCat — по нему проверяется подписка. */
+export const PRO_ENTITLEMENT = 'pro';
+
+/**
+ * Сколько бесед в день без подписки. Аудирование, письмо и тетрадь лимита не
+ * знают: беседа дороже их всех вместе взятых, ограничивать остальное значило
+ * бы отпугнуть человека до того, как он поймёт, за что платит.
+ */
+export const FREE_TALKS_PER_DAY = 1;
+
 /** Автоматически проигрывать ответ ИИ после получения. */
 export const AUTOPLAY_TTS = true;
 

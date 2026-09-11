@@ -1,6 +1,6 @@
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -27,7 +27,9 @@ import {
   ScreenTitle,
   type Screen as Section,
 } from './src/components/ScreenMenu';
-import type { Anchor } from './src/anchor';
+import { measureAnchor, type Anchor } from './src/anchor';
+import { Paywall } from './src/components/Paywall';
+import { useSubscription } from './src/hooks/useSubscription';
 import { TalkHeader } from './src/components/TalkHeader';
 import { TutorStrip } from './src/components/TutorStrip';
 import { WritingScreen } from './src/components/WritingScreen';
@@ -59,6 +61,34 @@ function Screen() {
   const listRef = useRef<FlatList<Message>>(null);
   const [splashDone, setSplashDone] = useState(false);
   const [section, setSection] = useState<Section>('talk');
+
+  const subscription = useSubscription();
+  const [paywallOpen, setPaywallOpen] = useState(false);
+  const [paywallAnchor, setPaywallAnchor] = useState<Anchor | null>(null);
+  const recordRef = useRef<View>(null);
+
+  /**
+   * Лимит сторожит только начало беседы: остановить её нужно уметь всегда, а
+   * счётчик растёт в момент запуска, а не по завершении — иначе беседу можно
+   * было бы вести бесконечно, ни разу её не закрыв.
+   */
+  const toggleSession = useCallback(async () => {
+    if (conversation.sessionActive) {
+      await conversation.toggleSession();
+      return;
+    }
+
+    if (!subscription.canTalk) {
+      measureAnchor(recordRef, (point) => {
+        setPaywallAnchor(point);
+        setPaywallOpen(true);
+      });
+      return;
+    }
+
+    await subscription.useTalk();
+    await conversation.toggleSession();
+  }, [conversation, subscription]);
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuAnchor, setMenuAnchor] = useState<Anchor | null>(null);
 
@@ -221,12 +251,13 @@ function Screen() {
                 </View>
               )}
 
+              <View ref={recordRef} collapsable={false}>
               <RecordButton
                 status={conversation.status}
                 sessionActive={conversation.sessionActive}
                 durationMillis={conversation.durationMillis}
                 mode={conversation.turnMode}
-                onToggleSession={conversation.toggleSession}
+                onToggleSession={toggleSession}
                 onEndTurn={conversation.endTurn}
                 onBeginTurn={conversation.beginTurn}
                 inputLevel={conversation.inputLevel}
@@ -236,6 +267,7 @@ function Screen() {
                   )
                 }
               />
+              </View>
             </>
           )}
 
@@ -277,6 +309,12 @@ function Screen() {
               onSelectVariant={conversation.setEnglishVariant}
               accountEmail={account.email}
               onOpenAccount={accountScreen.show}
+              pro={subscription.pro}
+              talksLeft={subscription.left}
+              onOpenPaywall={(point) => {
+                setPaywallAnchor(point);
+                setPaywallOpen(true);
+              }}
             />
           )}
         </View>
@@ -331,6 +369,14 @@ function Screen() {
         syncedAt={account.syncedAt}
         onSync={account.sync}
         onClose={accountScreen.hide}
+      />
+
+      <Paywall
+        visible={paywallOpen}
+        anchor={paywallAnchor}
+        left={subscription.left}
+        onClose={() => setPaywallOpen(false)}
+        onBought={() => void subscription.refresh()}
       />
 
       {!splashDone && <Splash onDone={() => setSplashDone(true)} />}

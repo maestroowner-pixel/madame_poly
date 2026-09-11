@@ -40,6 +40,11 @@ interface Props {
   /** Почта вошедшего; null — вход не выполнен. */
   accountEmail: string | null;
   onOpenAccount: (anchor: Anchor | null) => void;
+  /** Есть ли подписка; null — ещё выясняем. */
+  pro: boolean | null;
+  /** Сколько бесплатных бесед осталось сегодня. */
+  talksLeft: number;
+  onOpenPaywall: (anchor: Anchor | null) => void;
 }
 
 /**
@@ -64,6 +69,9 @@ export function SettingsScreen({
   onSelectVariant,
   accountEmail,
   onOpenAccount,
+  pro,
+  talksLeft,
+  onOpenPaywall,
 }: Props) {
   const styles = useStyles(createStyles);
 
@@ -73,6 +81,7 @@ export function SettingsScreen({
   const profileRef = useRef<View>(null);
   const archiveRef = useRef<View>(null);
   const accountRef = useRef<View>(null);
+  const paywallRef = useRef<View>(null);
 
   const topic = findTopic(language, topicId);
 
@@ -175,6 +184,18 @@ export function SettingsScreen({
         <Text style={styles.topicCaption}>{t.account}</Text>
         <Text style={styles.topicValue} numberOfLines={1}>
           {accountEmail ?? t.accountOff}
+        </Text>
+        <Text style={styles.topicChevron}>›</Text>
+      </Pressable>
+
+      <Pressable
+        ref={paywallRef}
+        onPress={() => measureAnchor(paywallRef, onOpenPaywall)}
+        style={styles.topicButton}
+      >
+        <Text style={styles.topicCaption}>{t.subscription}</Text>
+        <Text style={styles.topicValue} numberOfLines={1}>
+          {pro === null ? '…' : pro ? t.paywallActive : t.paywallLeft(talksLeft)}
         </Text>
         <Text style={styles.topicChevron}>›</Text>
       </Pressable>

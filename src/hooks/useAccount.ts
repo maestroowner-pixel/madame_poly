@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { watchUser } from '../services/firebase';
+import { linkAccount } from '../services/purchases';
 import { synchronise } from '../services/sync';
 
 interface Account {
@@ -48,6 +49,9 @@ export function useAccount(onPulled: () => Promise<void>): Account {
   useEffect(() => {
     return watchUser((user) => {
       setEmail(user?.email ?? null);
+      // Подписка ходит за человеком, как и всё остальное: куплена на телефоне —
+      // действует и на планшете. Без входа она живёт на самом устройстве.
+      void linkAccount(user?.uid ?? null);
       // Вход — первый повод свести данные: на этом устройстве их может не быть.
       if (user) void run();
       else setSyncedAt(null);

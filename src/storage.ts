@@ -34,6 +34,7 @@ const keyListening = (language: LanguageCode) => `polyglotta:listening:${languag
 const keyListeningStats = (language: LanguageCode) => `polyglotta:listeningStats:${language}`;
 const keyWriting = (language: LanguageCode) => `polyglotta:writing:${language}`;
 const KEY_LESSONS = 'polyglotta:lessons';
+const KEY_USAGE = 'polyglotta:usage';
 
 /**
  * Любая запись отмечается временем — по нему синхронизация решает, чьи данные
@@ -380,4 +381,38 @@ export async function deleteArchived(id: string): Promise<ArchivedSession[]> {
   await AsyncStorage.multiRemove([keyArchived(id), keyHomework(id)]);
   await write(KEY_ARCHIVE, JSON.stringify(archive));
   return archive;
+}
+
+/** Сколько бесед начато сегодня. День хранится строкой, чтобы счётчик сам сбрасывался. */
+export interface Usage {
+  /** Местная дата в виде ГГГГ-ММ-ДД. */
+  day: string;
+  talks: number;
+}
+
+/**
+ * День берём по местному времени, а не по UTC: «сегодня» для человека — это его
+ * сегодня, и в Киеве лимит должен обнуляться в полночь по Киеву.
+ */
+function today(): string {
+  const now = new Date();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${now.getFullYear()}-${month}-${day}`;
+}
+
+export async function loadUsage(): Promise<Usage> {
+  const raw = await AsyncStorage.getItem(KEY_USAGE);
+  const stored = raw ? (JSON.parse(raw) as Usage) : null;
+
+  // Запись с чужого дня равна нулю: старый счётчик не переносим.
+  return stored && stored.day === today() ? stored : { day: today(), talks: 0 };
+}
+
+/** Отмечает начатую беседу и возвращает новое состояние счётчика. */
+export async function countTalk(): Promise<Usage> {
+  const usage = await loadUsage();
+  const next: Usage = { day: usage.day, talks: usage.talks + 1 };
+  await write(KEY_USAGE, JSON.stringify(next));
+  return next;
 }
