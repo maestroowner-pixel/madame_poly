@@ -4,6 +4,7 @@ import * as z from 'zod/v4';
 
 import { ANTHROPIC_API_KEY, CLAUDE_MAX_TOKENS, CLAUDE_MODEL, HISTORY_WINDOW } from '../config';
 import {
+  buildExplanationPrompt,
   buildHomeworkPrompt,
   buildListeningCheckPrompt,
   buildListeningPrompt,
@@ -35,11 +36,14 @@ const CorrectionSchema = z.object({
   details: z.string(),
 });
 
+/** В беседе разбор правила не просим: за ним ходим отдельно и по нажатию. */
+const TurnCorrectionSchema = CorrectionSchema.omit({ details: true });
+
 const TurnSchema = z.object({
   /** Реплика партнёра на изучаемом языке — она же уходит в TTS. */
   reply: z.string(),
   /** Ошибки в последней реплике пользователя. */
-  corrections: z.array(CorrectionSchema),
+  corrections: z.array(TurnCorrectionSchema),
   /** Человек попрощался: после этой реплики беседу пора закрывать. */
   farewell: z.boolean(),
 });
@@ -140,15 +144,45 @@ export async function respond(params: {
     .slice(-HISTORY_WINDOW)
     .map((message) => ({ role: message.role, content: message.text }));
 
+  /**
+   * Точка кэширования на последней реплике истории. Всё, что до неё, от хода к
+   * ходу не меняется, и повторное чтение стоит десятую часть обычного ввода —
+   * а пересылать беседу целиком приходится каждый раз. Кэш живёт пять минут:
+   * внутри живого разговора реплики идут чаще, так что он не остывает.
+   */
+  const cached: Anthropic.MessageParam[] =
+    context.length === 0
+      ? context
+      : [
+          ...context.slice(0, -1),
+          {
+            role: context[context.length - 1].role,
+            content: [
+              {
+                type: 'text',
+                text: context[context.length - 1].content as string,
+                cache_control: { type: 'ephemeral' },
+              },
+            ],
+          },
+        ];
+
   const ask = async () => {
     const response = await client.messages.parse({
       model: CLAUDE_MODEL,
       max_tokens: CLAUDE_MAX_TOKENS,
-      system: buildSystemPrompt(language, level, topic, name, variant),
+      // Системный промпт неизменен всю беседу — кэшируем и его.
+      system: [
+        {
+          type: 'text',
+          text: buildSystemPrompt(language, level, topic, name, variant),
+          cache_control: { type: 'ephemeral' },
+        },
+      ],
       // Разговорная латентность важнее глубины рассуждения: реплики короткие,
       // а пауза между «сказал» и «услышал ответ» ощущается сразу.
       thinking: { type: 'disabled' },
-      messages: [...context, { role: 'user', content: userText }],
+      messages: [...cached, { role: 'user', content: userText }],
       output_config: { format: zodOutputFormat(TurnSchema) },
     });
     return response.parsed_output;
@@ -181,6 +215,49 @@ export async function respond(params: {
     corrections,
     farewell: parsed.farewell,
   };
+}
+
+/**
+ * Разбор одного правила — по нажатию на «?», а не заранее. Раскрывают его
+ * редко, а в общем ответе он стоил бы выходных токенов на каждую ошибку в
+ * каждом ходе. Ответ обычным текстом: разбирать тут нечего, схема не нужна.
+ */
+export async function explainCorrection(params: {
+  correction: Correction;
+  language: LanguageCode;
+  level: Level;
+}): Promise<string> {
+  const { correction, language, level } = params;
+
+  if (!ANTHROPIC_API_KEY) throw new Error(t.noAnthropicKey);
+
+  const response = await client.messages.create({
+    model: CLAUDE_MODEL,
+    max_tokens: 512,
+    system: buildExplanationPrompt(language, level),
+    thinking: { type: 'disabled' },
+    messages: [
+      {
+        role: 'user',
+        content: [
+          `The learner said: "${correction.original}"`,
+          `The correct form is: "${correction.corrected}"`,
+          correction.rule ? `The rule is: ${correction.rule}` : '',
+          `They have already read this one-line note: ${correction.explanation}`,
+        ]
+          .filter(Boolean)
+          .join('\n'),
+      },
+    ],
+  });
+
+  const details = response.content
+    .map((block) => (block.type === 'text' ? block.text : ''))
+    .join('')
+    .trim();
+
+  if (!details) throw new Error(t.badTurn);
+  return details;
 }
 
 /**

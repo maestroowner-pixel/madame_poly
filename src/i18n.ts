@@ -120,6 +120,7 @@ const en = {
 
   // Лента
   tapToPlay: '▸ tap to listen',
+  ruleFailed: 'Could not load the rule — tap ? again',
   drilled: 'in task',
   emptyChat:
     'Press the button and speak — your partner answers aloud and mistakes appear under your lines. The AUTO button on the left: lit means the app catches the pause, off means you mark the end yourself.',
@@ -321,6 +322,7 @@ const uk: Strings = {
   speakingMicOff: 'Відповідає — мікрофон вимкнено',
 
   tapToPlay: '▸ торкніться, щоб прослухати',
+  ruleFailed: 'Не вдалося завантажити правило — натисніть ? ще раз',
   drilled: 'у завданні',
   emptyChat:
     'Натисніть кнопку і говоріть — співрозмовниця відповість голосом, помилки з’являться під вашими репліками. Кнопка «АВТО» ліворуч: світиться — паузу ловить застосунок, згасла — кінець фрази позначаєте ви.',
@@ -510,6 +512,7 @@ const es: Strings = {
   speakingMicOff: 'Responde — micrófono apagado',
 
   tapToPlay: '▸ toca para escuchar',
+  ruleFailed: 'No se pudo cargar la regla: toca ? de nuevo',
   drilled: 'en la tarea',
   emptyChat:
     'Pulsa el botón y habla: tu interlocutora responde en voz alta y los errores aparecen debajo de tus frases. El botón «AUTO» de la izquierda: encendido, la app detecta la pausa; apagado, marcas tú el final.',
@@ -702,6 +705,7 @@ const ru: Strings = {
   speakingMicOff: 'Отвечает — микрофон выключен',
 
   tapToPlay: '▸ нажми, чтобы прослушать',
+  ruleFailed: 'Правило не загрузилось — нажми ? ещё раз',
   drilled: 'в задании',
   emptyChat:
     'Нажми на кнопку и говори — партнёр ответит голосом, ошибки появятся под твоими репликами. Кнопка «АВТО» слева: подсвечена — паузу ловит приложение, погашена — конец фразы отмечаешь сам.',

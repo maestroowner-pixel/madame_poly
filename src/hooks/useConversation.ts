@@ -27,7 +27,7 @@ import {
   VOICE_RANGE_DB,
   WORK_RANGE_DB,
 } from '../config';
-import { generateHomework, openConversation, respond } from '../services/llm';
+import { explainCorrection, generateHomework, openConversation, respond } from '../services/llm';
 import { transcribe } from '../services/stt';
 import { synthesize } from '../services/tts';
 import {
@@ -186,6 +186,40 @@ export function useConversation() {
       return next;
     });
   }, []);
+
+  /**
+   * Разбор правила приходит не с ответом, а по нажатию на «?»: в беседе его
+   * раскрывают редко, и просить его заранее на каждую ошибку — платить за
+   * текст, который никто не прочтёт. Забранный разбор кладём в реплику, так
+   * что второй раз за ним не идём даже после перезапуска.
+   */
+  const explain = useCallback(
+    async (messageId: string, index: number): Promise<void> => {
+      const message = messagesRef.current.find((item) => item.id === messageId);
+      const correction = message?.corrections?.[index];
+      if (!correction || correction.details) return;
+
+      const details = await explainCorrection({
+        correction,
+        language: languageRef.current,
+        level: levelsRef.current?.[languageRef.current] ?? 'B1',
+      });
+
+      persist((previous) =>
+        previous.map((item) =>
+          item.id === messageId
+            ? {
+                ...item,
+                corrections: item.corrections?.map((entry, position) =>
+                  position === index ? { ...entry, details } : entry,
+                ),
+              }
+            : item,
+        ),
+      );
+    },
+    [persist],
+  );
 
   /**
    * Темп для озвучки. В режиме «как я» идём навстречу человеку: считаем его
@@ -728,6 +762,7 @@ export function useConversation() {
     setEnglishVariant,
     endTurn,
     beginTurn,
+    explain,
     makeHomework,
     replay,
     finishConversation,

@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { ActivityIndicator, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { t } from '../i18n';
 import { useStyles, useTheme, type Theme } from '../theme';
@@ -14,13 +14,22 @@ interface Props {
   /** Фразы, по которым уже составлены упражнения. */
   drilled?: ReadonlySet<string>;
   onReplay: (message: Message) => void;
+  /** Подгружает разбор правила — он приходит не с ответом, а по нажатию. */
+  onExplain?: (messageId: string, index: number) => Promise<void>;
 }
 
 /** Встроенная в строку — мельче отдельной: она стоит вровень с буквами. */
 const INLINE_AVATAR = 38;
 const CORNER_AVATAR = 52;
 
-export function MessageBubble({ message, profile, topicId, drilled, onReplay }: Props) {
+export function MessageBubble({
+  message,
+  profile,
+  topicId,
+  drilled,
+  onReplay,
+  onExplain,
+}: Props) {
   const { theme } = useTheme();
   const styles = useStyles(createStyles);
 
@@ -30,7 +39,32 @@ export function MessageBubble({ message, profile, topicId, drilled, onReplay }: 
   const isUser = message.role === 'user';
   const avatar = userSource(profile.avatarId, profile.photoUri);
   const corrections = message.corrections ?? [];
-  const hasRules = corrections.some((correction) => correction.rule ?? correction.details);
+  const hasRules = corrections.length > 0;
+
+  const [loading, setLoading] = useState(false);
+  const [failed, setFailed] = useState(false);
+  // Запрос уходит один раз на раскрытие: без флага эффект гоняет его по кругу.
+  const asked = useRef(false);
+
+  useEffect(() => {
+    if (!showRules || !onExplain || asked.current) return;
+    if (corrections.every((correction) => correction.details)) return;
+
+    asked.current = true;
+    setLoading(true);
+    setFailed(false);
+    void Promise.all(
+      corrections.map((correction, index) =>
+        correction.details ? undefined : onExplain(message.id, index),
+      ),
+    )
+      .catch(() => {
+        setFailed(true);
+        // Даём нажать ещё раз: осечка сети не должна запирать разбор навсегда.
+        asked.current = false;
+      })
+      .finally(() => setLoading(false));
+  }, [showRules, corrections, onExplain, message.id]);
 
   return (
     <View style={[styles.wrapper, isUser ? styles.wrapperUser : styles.wrapperAssistant]}>
@@ -82,10 +116,16 @@ export function MessageBubble({ message, profile, topicId, drilled, onReplay }: 
             )}
           </View>
 
-          {showRules && (correction.rule ?? correction.details) && (
+          {showRules && (
             <View style={styles.rule}>
               {correction.rule && <Text style={styles.ruleTitle}>{correction.rule}</Text>}
-              {correction.details && <Text style={styles.ruleText}>{correction.details}</Text>}
+              {correction.details ? (
+                <Text style={styles.ruleText}>{correction.details}</Text>
+              ) : loading ? (
+                <ActivityIndicator color={theme.neon} size="small" style={styles.ruleWait} />
+              ) : failed ? (
+                <Text style={styles.ruleText}>{t.ruleFailed}</Text>
+              ) : null}
             </View>
           )}
         </View>
@@ -96,6 +136,8 @@ export function MessageBubble({ message, profile, topicId, drilled, onReplay }: 
 
 const createStyles = (theme: Theme) =>
   StyleSheet.create({
+    ruleWait: { alignSelf: 'flex-start', marginTop: 4 },
+
     wrapper: { marginBottom: 14, maxWidth: '88%' },
     wrapperUser: { alignSelf: 'flex-end', alignItems: 'flex-end' },
     wrapperAssistant: { alignSelf: 'flex-start' },

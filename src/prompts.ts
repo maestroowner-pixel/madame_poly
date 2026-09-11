@@ -200,6 +200,27 @@ const VARIANTS: Record<EnglishVariant, string[]> = {
   ],
 };
 
+/**
+ * Разбор одного правила — отдельным запросом. В беседе он просится в каждом
+ * ходе, а раскрывают его хорошо если раз из десяти: держать его в общем ответе
+ * значит платить за текст, который никто не прочтёт. Здесь же нужен только
+ * разбор, поэтому и промпт короткий.
+ */
+export function buildExplanationPrompt(language: LanguageCode, level: Level): string {
+  const { englishName } = LANGUAGES[language];
+
+  return [
+    `You explain ${englishName} grammar to a learner at CEFR ${level}.`,
+    '',
+    'Rules:',
+    `- Answer in ${EXPLANATION_LANGUAGE}, in two to four sentences.`,
+    '- Say when the rule applies and how the form is built.',
+    '- End with one more correct example. It must be a new sentence, not the one being corrected.',
+    '- No markdown, no lists, no headings — this is read as a short paragraph.',
+    '- Explain the rule behind the correction. Do not repeat the one-line explanation the learner has already read.',
+  ].join('\n');
+}
+
 export function buildSystemPrompt(
   language: LanguageCode,
   level: Level,
@@ -253,11 +274,10 @@ export function buildSystemPrompt(
     '- Correct the last message of the conversation and nothing else. Everything before it has already been corrected and shown to the learner; listing a mistake from an earlier turn is a mistake of your own, no matter how uncorrected it looks.',
     '- Every "original" you quote must appear word for word in that last message. If you cannot find it there, it does not belong in the list.',
     `- Within that message, list real mistakes: grammar, word choice, word order, or unnatural phrasing. Ignore punctuation and capitalisation.`,
-    `- For each mistake give three things, all written in ${EXPLANATION_LANGUAGE}:`,
+    `- For each mistake give two things, both written in ${EXPLANATION_LANGUAGE}:`,
     '  - "explanation": one short sentence saying what went wrong. This is always on screen, so keep it to a glance.',
     '  - "rule": the name of the grammar point, the way a textbook would label it, plus the term in the target language in brackets when there is a standard one.',
-    '  - "details": the rule itself in two to four sentences — when it applies, how it is formed, and one more correct example that is not the sentence being corrected. This is hidden behind a button, so it is the place to actually teach, not to repeat the short sentence.',
-    '- If the mistake is about word choice or naturalness rather than grammar, say so in "rule" and use "details" to explain the difference in meaning or register.',
+    '- If the mistake is about word choice or naturalness rather than grammar, say so in "rule" instead of naming a grammar point.',
     '- Correct at most three mistakes per turn — the most useful ones for their level.',
     '- If they said nothing wrong, return an empty list. Do not invent mistakes to be helpful.',
     '- Never mention the corrections inside your spoken reply; they are shown separately on screen.',

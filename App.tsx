@@ -186,6 +186,7 @@ function Screen() {
                       topicId={conversation.topicId}
                       drilled={drilled}
                       onReplay={conversation.replay}
+                      onExplain={conversation.explain}
                     />
                   )}
                   ListEmptyComponent={<Text style={styles.empty}>{t.emptyChat}</Text>}
