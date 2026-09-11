@@ -13,6 +13,8 @@ import {
 } from 'react-native';
 
 import { ScreenTitle } from './ScreenMenu';
+import { TopicPicker } from './TopicPicker';
+import { measureAnchor, type Anchor } from '../anchor';
 import { t } from '../i18n';
 import { CONTENT_MAX_WIDTH } from '../layout';
 import { generateWritingTask, reviewWriting } from '../services/llm';
@@ -46,11 +48,22 @@ export function WritingScreen({ menu, language, level, topicId }: Props) {
   const [busy, setBusy] = useState(false);
   const [checking, setChecking] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /** Тема письма своя: писать про аптеку можно и посреди бесед о Риме. */
+  const [topic, setTopic] = useState<string | null>(topicId);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [pickerAnchor, setPickerAnchor] = useState<Anchor | null>(null);
+  /** Смена темы рвёт черновик — спрашиваем, пока текст не проверен. */
+  const [pending, setPending] = useState<string | null | undefined>(undefined);
+  const topicRef = useRef<View>(null);
 
   useEffect(() => {
     setError(null);
-    void loadWriting(language).then(setState);
-  }, [language]);
+    void loadWriting(language).then((stored) => {
+      setState(stored);
+      // Тема готового задания, а если его нет — тема беседы.
+      setTopic(stored.task ? stored.task.topicId : topicId);
+    });
+  }, [language, topicId]);
 
   /** Набранное сохраняем сами: раздел закроют, а текст должен пережить это. */
   const stateRef = useRef(state);
@@ -59,13 +72,13 @@ export function WritingScreen({ menu, language, level, topicId }: Props) {
 
   const fail = (e: unknown) => setError(e instanceof Error ? e.message : String(e));
 
-  const setTask = async () => {
+  const setTask = async (subject: string | null) => {
     if (busy) return;
     setBusy(true);
     setError(null);
     try {
-      const topic = findTopic(language, topicId);
-      const task = await generateWritingTask({ language, level, topic: topic ?? undefined });
+      const chosen = findTopic(language, subject);
+      const task = await generateWritingTask({ language, level, topic: chosen ?? undefined });
       const next = { task, text: '', review: null };
       setState(next);
       await saveWriting(language, next);
@@ -98,6 +111,17 @@ export function WritingScreen({ menu, language, level, topicId }: Props) {
     void saveWriting(language, next);
   };
 
+  /** Есть что терять: текст набран и ещё не проверен. */
+  const unsaved = state.text.trim().length > 0 && state.review === null;
+
+  const changeTopic = (id: string | null) => {
+    if (unsaved) setPending(id);
+    else {
+      setTopic(id);
+      void setTask(id);
+    }
+  };
+
   const words = countWords(state.text);
 
   return (
@@ -115,10 +139,29 @@ export function WritingScreen({ menu, language, level, topicId }: Props) {
         <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
           {error && <Text style={styles.error}>{error}</Text>}
 
+          {/* Тема из общего списка — та же, что у беседы и диктантов. */}
+          <View ref={topicRef} collapsable={false}>
+            <Pressable
+              onPress={() =>
+                measureAnchor(topicRef, (point) => {
+                  setPickerAnchor(point);
+                  setPickerOpen(true);
+                })
+              }
+              style={styles.topicButton}
+            >
+              <Text style={styles.topicCaption}>{t.topic}</Text>
+              <Text style={styles.topicValue} numberOfLines={1}>
+                {findTopic(language, topic)?.label ?? t.free}
+              </Text>
+              <Text style={styles.topicChevron}>›</Text>
+            </Pressable>
+          </View>
+
           {!state.task ? (
             <>
               <Text style={styles.intro}>{t.writingIntro}</Text>
-              <Pressable onPress={() => void setTask()} disabled={busy} style={styles.cta}>
+              <Pressable onPress={() => void setTask(topic)} disabled={busy} style={styles.cta}>
                 {busy ? (
                   <ActivityIndicator color={theme.ctaText} size="small" />
                 ) : (
@@ -184,7 +227,7 @@ export function WritingScreen({ menu, language, level, topicId }: Props) {
                 </>
               )}
 
-              <Pressable onPress={() => void setTask()} disabled={busy} style={styles.secondary}>
+              <Pressable onPress={() => void setTask(topic)} disabled={busy} style={styles.secondary}>
                 {busy ? (
                   <ActivityIndicator color={theme.neon} size="small" />
                 ) : (
@@ -195,6 +238,40 @@ export function WritingScreen({ menu, language, level, topicId }: Props) {
           )}
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {pending !== undefined && (
+        <View style={styles.confirmBackdrop}>
+          <View style={styles.confirmCard}>
+            <Text style={styles.confirmTitle}>{t.writingDropTitle}</Text>
+            <Text style={styles.confirmText}>{t.writingDropWarning}</Text>
+            <View style={styles.confirmRow}>
+              <Pressable onPress={() => setPending(undefined)} style={styles.confirmGhost}>
+                <Text style={styles.confirmGhostLabel}>{t.cancel}</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => {
+                  const id = pending;
+                  setPending(undefined);
+                  setTopic(id ?? null);
+                  void setTask(id ?? null);
+                }}
+                style={styles.confirmDanger}
+              >
+                <Text style={styles.confirmDangerLabel}>{t.writingDrop}</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      )}
+
+      <TopicPicker
+        visible={pickerOpen}
+        anchor={pickerAnchor}
+        language={language}
+        topicId={topic}
+        onSelect={changeTopic}
+        onClose={() => setPickerOpen(false)}
+      />
     </View>
   );
 }
@@ -224,6 +301,61 @@ const createStyles = (theme: Theme) =>
       gap: 12,
     },
     error: { color: theme.dangerText, fontSize: 12, lineHeight: 17 },
+    topicButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+      paddingVertical: 11,
+      paddingHorizontal: 14,
+      borderRadius: 14,
+      backgroundColor: theme.surfaceAlt,
+    },
+    topicCaption: { color: theme.textMuted, fontSize: 13 },
+    topicValue: { color: theme.text, fontSize: 14, fontWeight: '600', flex: 1 },
+    topicChevron: { color: theme.textMuted, fontSize: 18, lineHeight: 20 },
+
+    confirmBackdrop: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: 24,
+      backgroundColor: 'rgba(4,10,30,0.6)',
+    },
+    confirmCard: {
+      width: '100%',
+      maxWidth: 340,
+      gap: 10,
+      padding: 18,
+      borderRadius: 20,
+      backgroundColor: theme.surface,
+      borderWidth: 1,
+      borderColor: theme.border,
+    },
+    confirmTitle: { color: theme.text, fontSize: 17, fontWeight: '700' },
+    confirmText: { color: theme.textMuted, fontSize: 14, lineHeight: 20 },
+    confirmRow: { flexDirection: 'row', gap: 10, marginTop: 4 },
+    confirmGhost: {
+      flex: 1,
+      height: 44,
+      borderRadius: 12,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: theme.surfaceAlt,
+    },
+    confirmGhostLabel: { color: theme.text, fontSize: 15, fontWeight: '600' },
+    confirmDanger: {
+      flex: 1,
+      height: 44,
+      borderRadius: 12,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: theme.danger,
+    },
+    confirmDangerLabel: { color: '#FFFFFF', fontSize: 15, fontWeight: '700' },
     intro: { color: theme.textMuted, fontSize: 13, lineHeight: 19 },
 
     card: {
