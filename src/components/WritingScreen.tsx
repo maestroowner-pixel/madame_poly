@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import {
   ActivityIndicator,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -65,8 +66,17 @@ export function WritingScreen({ menu, language, level, topicId }: Props) {
   const [pending, setPending] = useState<string | null | undefined>(undefined);
   const topicRef = useRef<View>(null);
   const scrollRef = useRef<ScrollView>(null);
-  /** Где начинается поле ввода внутри списка — к нему и прокручиваем. */
-  const inputY = useRef(0);
+  /** Открыта ли клавиатура: при ней задание ужимается, чтобы поле не сдавило. */
+  const [typing, setTyping] = useState(false);
+
+  useEffect(() => {
+    const shown = Keyboard.addListener('keyboardDidShow', () => setTyping(true));
+    const hidden = Keyboard.addListener('keyboardDidHide', () => setTyping(false));
+    return () => {
+      shown.remove();
+      hidden.remove();
+    };
+  }, []);
 
   useEffect(() => {
     setError(null);
@@ -172,6 +182,8 @@ export function WritingScreen({ menu, language, level, topicId }: Props) {
   };
 
   const words = countWords(state.text);
+  /** Пишем — значит задание есть, а разбора ещё нет. */
+  const composing = state.task !== null && state.review === null;
 
   return (
     <View style={styles.screen}>
@@ -185,6 +197,70 @@ export function WritingScreen({ menu, language, level, topicId }: Props) {
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
+        {composing ? (
+          /**
+           * Пока человек пишет, поле не едет внутри списка, а занимает всё
+           * свободное место: клавиатура сжимает окно, вместе с ним сжимается
+           * поле — и оно остаётся на виду целиком, чего прокруткой добиться не
+           * удавалось.
+           */
+          <View style={styles.compose}>
+            <Pressable
+              onPress={() =>
+                measureAnchor(topicRef, (point) => {
+                  setPickerAnchor(point);
+                  setPickerOpen(true);
+                })
+              }
+              style={styles.topicButton}
+            >
+              <Text style={styles.topicCaption}>{t.topic}</Text>
+              <Text style={styles.topicValue} numberOfLines={1}>
+                {findTopic(language, topic)?.label ?? t.free}
+              </Text>
+              <Text style={styles.topicChevron}>›</Text>
+            </Pressable>
+
+            {error && <Text style={styles.error}>{error}</Text>}
+
+            {/* Задание прокручивается в своей рамке — длинное не съест поле. */}
+            <ScrollView
+              style={[styles.taskBox, typing && styles.taskBoxShort]}
+              contentContainerStyle={styles.taskInner}
+            >
+              <Text style={styles.prompt}>{state.task?.prompt}</Text>
+              <Text style={styles.hint}>{state.task?.hint}</Text>
+            </ScrollView>
+
+            <TextInput
+              value={state.text}
+              onChangeText={(text) => setState((current) => ({ ...current, text }))}
+              placeholder={t.writingPlaceholder}
+              placeholderTextColor={theme.textMuted}
+              style={styles.composer}
+              multiline
+              textAlignVertical="top"
+            />
+
+            <Text style={styles.words}>{t.writingWords(words, state.task?.words ?? 0)}</Text>
+
+            <Pressable onPress={() => void check()} disabled={checking} style={styles.cta}>
+              {checking ? (
+                <ActivityIndicator color={theme.ctaText} size="small" />
+              ) : (
+                <Text style={styles.ctaLabel}>{t.writingCheck}</Text>
+              )}
+            </Pressable>
+
+            <Pressable onPress={() => void setTask(topic)} disabled={busy} style={styles.secondary}>
+              {busy ? (
+                <ActivityIndicator color={theme.neon} size="small" />
+              ) : (
+                <Text style={styles.secondaryLabel}>{t.writingTaskNew}</Text>
+              )}
+            </Pressable>
+          </View>
+        ) : (
         <ScrollView
           ref={scrollRef}
           contentContainerStyle={styles.body}
@@ -275,34 +351,7 @@ export function WritingScreen({ menu, language, level, topicId }: Props) {
                   </Pressable>
                 </>
               ) : (
-                <>
-                  <TextInput
-                    value={state.text}
-                    onChangeText={(text) => setState((current) => ({ ...current, text }))}
-                    onLayout={(event) => {
-                      inputY.current = event.nativeEvent.layout.y;
-                    }}
-                    // Клавиатура закрывала поле снизу: уводим задание вверх, чтобы
-                    // поле начиналось у верхнего края и целиком осталось на виду.
-                    onFocus={() =>
-                      scrollRef.current?.scrollTo({ y: Math.max(0, inputY.current - 8), animated: true })
-                    }
-                    placeholder={t.writingPlaceholder}
-                    placeholderTextColor={theme.textMuted}
-                    style={styles.input}
-                    multiline
-                    textAlignVertical="top"
-                  />
-                  <Text style={styles.words}>{t.writingWords(words, state.task.words)}</Text>
-
-                  <Pressable onPress={() => void check()} disabled={checking} style={styles.cta}>
-                    {checking ? (
-                      <ActivityIndicator color={theme.ctaText} size="small" />
-                    ) : (
-                      <Text style={styles.ctaLabel}>{t.writingCheck}</Text>
-                    )}
-                  </Pressable>
-                </>
+                <></>
               )}
 
               <Pressable onPress={() => void setTask(topic)} disabled={busy} style={styles.secondary}>
@@ -315,6 +364,7 @@ export function WritingScreen({ menu, language, level, topicId }: Props) {
             </>
           )}
         </ScrollView>
+        )}
       </KeyboardAvoidingView>
 
       {pending !== undefined && (
@@ -450,13 +500,31 @@ const createStyles = (theme: Theme) =>
     caption: { color: theme.textMuted, fontSize: 12 },
     improved: { color: theme.text, fontSize: 15, lineHeight: 22 },
 
-    input: {
+    compose: {
+      flex: 1,
+      width: '100%',
+      maxWidth: CONTENT_MAX_WIDTH,
+      alignSelf: 'center',
+      gap: 10,
+      paddingHorizontal: 16,
+      paddingBottom: 12,
+    },
+    /** Задание не должно занимать больше трети экрана — дальше оно прокручивается. */
+    taskBox: {
+      maxHeight: 150,
+      borderRadius: 16,
+      backgroundColor: theme.surface,
+      borderWidth: 1,
+      borderColor: theme.border,
+    },
+    taskBoxShort: { maxHeight: 84 },
+    taskInner: { gap: 6, padding: 14 },
+    composer: {
+      flex: 1,
+      minHeight: 120,
       color: theme.text,
       fontSize: 15,
       lineHeight: 22,
-      // Высота постоянная, а не по содержимому: растущее поле уводило курсор
-      // под клавиатуру, а так текст прокручивается внутри самого поля.
-      height: 240,
       padding: 14,
       borderRadius: 16,
       backgroundColor: theme.surface,
