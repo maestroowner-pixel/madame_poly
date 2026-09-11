@@ -55,6 +55,9 @@ export function WritingScreen({ menu, language, level, topicId }: Props) {
   /** Смена темы рвёт черновик — спрашиваем, пока текст не проверен. */
   const [pending, setPending] = useState<string | null | undefined>(undefined);
   const topicRef = useRef<View>(null);
+  const scrollRef = useRef<ScrollView>(null);
+  /** Где начинается поле ввода внутри списка — к нему и прокручиваем. */
+  const inputY = useRef(0);
 
   useEffect(() => {
     setError(null);
@@ -136,7 +139,11 @@ export function WritingScreen({ menu, language, level, topicId }: Props) {
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
+        <ScrollView
+          ref={scrollRef}
+          contentContainerStyle={styles.body}
+          keyboardShouldPersistTaps="handled"
+        >
           {error && <Text style={styles.error}>{error}</Text>}
 
           {/* Тема из общего списка — та же, что у беседы и диктантов. */}
@@ -209,6 +216,14 @@ export function WritingScreen({ menu, language, level, topicId }: Props) {
                   <TextInput
                     value={state.text}
                     onChangeText={(text) => setState((current) => ({ ...current, text }))}
+                    onLayout={(event) => {
+                      inputY.current = event.nativeEvent.layout.y;
+                    }}
+                    // Клавиатура закрывала поле снизу: уводим задание вверх, чтобы
+                    // поле начиналось у верхнего края и целиком осталось на виду.
+                    onFocus={() =>
+                      scrollRef.current?.scrollTo({ y: Math.max(0, inputY.current - 8), animated: true })
+                    }
                     placeholder={t.writingPlaceholder}
                     placeholderTextColor={theme.textMuted}
                     style={styles.input}
@@ -376,7 +391,9 @@ const createStyles = (theme: Theme) =>
       color: theme.text,
       fontSize: 15,
       lineHeight: 22,
-      minHeight: 220,
+      // Высота постоянная, а не по содержимому: растущее поле уводило курсор
+      // под клавиатуру, а так текст прокручивается внутри самого поля.
+      height: 240,
       padding: 14,
       borderRadius: 16,
       backgroundColor: theme.surface,
