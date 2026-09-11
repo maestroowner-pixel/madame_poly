@@ -120,6 +120,10 @@ const en = {
 
   // Лента
   tapToPlay: '▸ tap to listen',
+  privacy: 'Privacy',
+  terms: 'Terms',
+  about: 'About',
+  writeUs: 'kukalab@icloud.com',
   ruleFailed: 'Could not load the rule — tap ? again',
   drilled: 'in task',
   emptyChat:
@@ -322,6 +326,10 @@ const uk: Strings = {
   speakingMicOff: 'Відповідає — мікрофон вимкнено',
 
   tapToPlay: '▸ торкніться, щоб прослухати',
+  privacy: 'Конфіденційність',
+  terms: 'Умови',
+  about: 'Про застосунок',
+  writeUs: 'kukalab@icloud.com',
   ruleFailed: 'Не вдалося завантажити правило — натисніть ? ще раз',
   drilled: 'у завданні',
   emptyChat:
@@ -512,6 +520,10 @@ const es: Strings = {
   speakingMicOff: 'Responde — micrófono apagado',
 
   tapToPlay: '▸ toca para escuchar',
+  privacy: 'Privacidad',
+  terms: 'Condiciones',
+  about: 'Acerca de',
+  writeUs: 'kukalab@icloud.com',
   ruleFailed: 'No se pudo cargar la regla: toca ? de nuevo',
   drilled: 'en la tarea',
   emptyChat:
@@ -705,6 +717,10 @@ const ru: Strings = {
   speakingMicOff: 'Отвечает — микрофон выключен',
 
   tapToPlay: '▸ нажми, чтобы прослушать',
+  privacy: 'Конфиденциальность',
+  terms: 'Условия',
+  about: 'О приложении',
+  writeUs: 'kukalab@icloud.com',
   ruleFailed: 'Правило не загрузилось — нажми ? ещё раз',
   drilled: 'в задании',
   emptyChat:

@@ -49,6 +49,16 @@ export const HISTORY_WINDOW = 60;
  */
 export const HISTORY_STEP = 20;
 
+/**
+ * Сайт приложения. Разделы правовой информации живут на нём вкладками, поэтому
+ * ссылки идут якорями — страница открывает нужную вкладку по якорю сама.
+ */
+export const SITE_URL = 'https://madamepoly.kuka-lab.com';
+export const PRIVACY_URL = `${SITE_URL}/#privacy`;
+export const TERMS_URL = `${SITE_URL}/#terms`;
+export const CONTACT_EMAIL = 'kukalab@icloud.com';
+export const COPYRIGHT = 'Mykhaylo Osypov · Kuka Lab · 2026';
+
 /** Автоматически проигрывать ответ ИИ после получения. */
 export const AUTOPLAY_TTS = true;
 

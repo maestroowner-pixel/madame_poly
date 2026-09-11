@@ -1,10 +1,17 @@
 import { useRef, useState } from 'react';
 import type { ReactNode } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { ScreenTitle } from './ScreenMenu';
 import { TopicPicker } from './TopicPicker';
 import { measureAnchor, type Anchor } from '../anchor';
+import {
+  CONTACT_EMAIL,
+  COPYRIGHT,
+  PRIVACY_URL,
+  SITE_URL,
+  TERMS_URL,
+} from '../config';
 import { t } from '../i18n';
 import { LANGUAGES, LANGUAGE_CODES } from '../languages';
 import { CONTENT_MAX_WIDTH } from '../layout';
@@ -198,6 +205,17 @@ export function SettingsScreen({
           );
         })}
       </View>
+      <View style={styles.footer}>
+        <View style={styles.footerLinks}>
+          <FooterLink label={t.privacy} url={PRIVACY_URL} />
+          <Text style={styles.footerDot}>·</Text>
+          <FooterLink label={t.terms} url={TERMS_URL} />
+          <Text style={styles.footerDot}>·</Text>
+          <FooterLink label={t.about} url={SITE_URL} />
+        </View>
+        <Text style={styles.footerLine}>{COPYRIGHT}</Text>
+        <FooterLink label={t.writeUs} url={`mailto:${CONTACT_EMAIL}`} />
+      </View>
       </ScrollView>
       <TopicPicker
         visible={pickerOpen}
@@ -208,6 +226,20 @@ export function SettingsScreen({
         onClose={() => setPickerOpen(false)}
       />
     </View>
+  );
+}
+
+/**
+ * Ссылка подвала. openURL может отказать — почтового клиента на устройстве
+ * может не быть вовсе, — и необработанный отказ уронил бы экран настроек.
+ */
+function FooterLink({ label, url }: { label: string; url: string }) {
+  const styles = useStyles(createStyles);
+
+  return (
+    <Pressable onPress={() => void Linking.openURL(url).catch(() => {})} hitSlop={8}>
+      <Text style={styles.footerLink}>{label}</Text>
+    </Pressable>
   );
 }
 
@@ -234,6 +266,12 @@ const createStyles = (theme: Theme) =>
       paddingBottom: 32,
     },
     row: { flexDirection: 'row', justifyContent: 'center', gap: 10 },
+
+    footer: { alignItems: 'center', gap: 6, paddingTop: 22 },
+    footerLinks: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    footerLink: { color: theme.neon, fontSize: 12 },
+    footerDot: { color: theme.textMuted, fontSize: 12 },
+    footerLine: { color: theme.textMuted, fontSize: 11 },
     tile: {
       width: 78,
       height: 78,
