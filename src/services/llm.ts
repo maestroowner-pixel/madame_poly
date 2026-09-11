@@ -2,7 +2,13 @@ import Anthropic from '@anthropic-ai/sdk';
 import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
 import * as z from 'zod/v4';
 
-import { ANTHROPIC_API_KEY, CLAUDE_MAX_TOKENS, CLAUDE_MODEL, HISTORY_WINDOW } from '../config';
+import {
+  ANTHROPIC_API_KEY,
+  CLAUDE_MAX_TOKENS,
+  CLAUDE_MODEL,
+  HISTORY_STEP,
+  HISTORY_WINDOW,
+} from '../config';
 import {
   buildExplanationPrompt,
   buildHomeworkPrompt,
@@ -116,6 +122,17 @@ function normalise(text: string): string {
     .trim();
 }
 
+/**
+ * Хвост беседы для контекста. Отрезаем голову ступенями: кэш опирается на то,
+ * что начало запроса не меняется, а срез по одному сообщению за ход менял бы
+ * его каждый раз. Так окно стоит на месте по десять ходов кряду.
+ */
+function windowed(history: Message[]): Message[] {
+  if (history.length <= HISTORY_WINDOW) return history;
+  const steps = Math.floor((history.length - HISTORY_WINDOW) / HISTORY_STEP) + 1;
+  return history.slice(steps * HISTORY_STEP);
+}
+
 export interface TurnResult {
   reply: string;
   corrections: Correction[];
@@ -140,9 +157,10 @@ export async function respond(params: {
 
   if (!ANTHROPIC_API_KEY) throw new Error(t.noAnthropicKey);
 
-  const context: Anthropic.MessageParam[] = history
-    .slice(-HISTORY_WINDOW)
-    .map((message) => ({ role: message.role, content: message.text }));
+  const context: Anthropic.MessageParam[] = windowed(history).map((message) => ({
+    role: message.role,
+    content: message.text,
+  }));
 
   /**
    * Точка кэширования на последней реплике истории. Всё, что до неё, от хода к
