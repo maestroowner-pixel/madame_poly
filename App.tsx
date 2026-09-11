@@ -58,7 +58,7 @@ function Screen() {
   const conversation = useConversation();
   const listRef = useRef<FlatList<Message>>(null);
   const [splashDone, setSplashDone] = useState(false);
-  const [section, setSection] = useState<Section>('write');
+  const [section, setSection] = useState<Section>('talk');
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuAnchor, setMenuAnchor] = useState<Anchor | null>(null);
 
