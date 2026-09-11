@@ -8,6 +8,8 @@ import {
   buildListeningCheckPrompt,
   buildListeningPrompt,
   buildSystemPrompt,
+  buildWritingPrompt,
+  buildWritingReviewPrompt,
   formatCorrections,
 } from '../prompts';
 import type { Topic } from '../topics';
@@ -20,6 +22,8 @@ import type {
   Listening,
   ListeningVerdict,
   Message,
+  WritingReview,
+  WritingTask,
 } from '../types';
 import { t } from '../i18n';
 
@@ -73,6 +77,18 @@ const ListeningSchema = z.object({
 const VerdictSchema = z.object({
   correct: z.boolean(),
   comment: z.string(),
+});
+
+const WritingTaskSchema = z.object({
+  prompt: z.string(),
+  hint: z.string(),
+  words: z.number(),
+});
+
+const WritingReviewSchema = z.object({
+  summary: z.string(),
+  corrections: z.array(CorrectionSchema),
+  improved: z.string(),
 });
 
 const CheckSchema = z.object({
@@ -309,4 +325,65 @@ export async function checkListeningAnswers(params: {
   if (!verdicts || verdicts.length !== answers.length) throw new Error(t.badListeningCheck);
 
   return verdicts;
+}
+
+/** Повод написать: письмо, отзыв, жалоба — под уровень и тему. */
+export async function generateWritingTask(params: {
+  language: LanguageCode;
+  level: Level;
+  topic?: Topic;
+}): Promise<WritingTask> {
+  const { language, level, topic } = params;
+
+  if (!ANTHROPIC_API_KEY) throw new Error(t.noAnthropicKey);
+
+  const response = await client.messages.parse({
+    model: CLAUDE_MODEL,
+    max_tokens: CLAUDE_MAX_TOKENS,
+    system: buildWritingPrompt(language, level, topic),
+    thinking: { type: 'disabled' },
+    messages: [{ role: 'user', content: 'Set the task.' }],
+    output_config: { format: zodOutputFormat(WritingTaskSchema) },
+  });
+
+  const parsed = response.parsed_output;
+  if (!parsed?.prompt.trim()) throw new Error(t.badWritingTask);
+
+  return { ...parsed, language, level, topicId: topic?.id ?? null, createdAt: Date.now() };
+}
+
+/** Разбор написанного: оценка, ошибки с цитатами и выправленный текст. */
+export async function reviewWriting(params: {
+  text: string;
+  task: WritingTask;
+}): Promise<WritingReview> {
+  const { text, task } = params;
+
+  if (!ANTHROPIC_API_KEY) throw new Error(t.noAnthropicKey);
+  if (!text.trim()) throw new Error(t.writingEmpty);
+
+  const response = await client.messages.parse({
+    model: CLAUDE_MODEL,
+    max_tokens: 8192,
+    system: buildWritingReviewPrompt(task.language, task.level),
+    thinking: { type: 'disabled' },
+    messages: [
+      { role: 'user', content: `Task:\n${task.prompt}\n\nWhat they wrote:\n${text}` },
+    ],
+    output_config: { format: zodOutputFormat(WritingReviewSchema) },
+  });
+
+  const parsed = response.parsed_output;
+  if (!parsed) throw new Error(t.badWritingReview);
+
+  // Как и в беседе, разборы без цитаты из текста до экрана не доходят.
+  const said = normalise(text);
+  return {
+    summary: parsed.summary.trim(),
+    corrections: parsed.corrections.filter((correction) =>
+      said.includes(normalise(correction.original)),
+    ),
+    improved: parsed.improved.trim(),
+    createdAt: Date.now(),
+  };
 }

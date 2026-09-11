@@ -10,6 +10,8 @@ import type {
   Level,
   Listening,
   ListeningStats,
+  WritingReview,
+  WritingTask,
   Message,
   EnglishVariant,
   Profile,
@@ -30,6 +32,7 @@ const keyArchived = (id: string) => `polyglotta:archive:${id}`;
 const keyHomework = (id: string) => `polyglotta:homework:${id}`;
 const keyListening = (language: LanguageCode) => `polyglotta:listening:${language}`;
 const keyListeningStats = (language: LanguageCode) => `polyglotta:listeningStats:${language}`;
+const keyWriting = (language: LanguageCode) => `polyglotta:writing:${language}`;
 
 /**
  * Любая запись отмечается временем — по нему синхронизация решает, чьи данные
@@ -204,6 +207,29 @@ export async function saveListeningStats(
   stats: ListeningStats,
 ): Promise<void> {
   await write(keyListeningStats(language), JSON.stringify(stats));
+}
+
+/** Черновик письма живёт целиком: задание, набранный текст и разбор. */
+export interface WritingState {
+  task: WritingTask | null;
+  text: string;
+  review: WritingReview | null;
+}
+
+export const EMPTY_WRITING: WritingState = { task: null, text: '', review: null };
+
+export async function loadWriting(language: LanguageCode): Promise<WritingState> {
+  const raw = await AsyncStorage.getItem(keyWriting(language));
+  if (!raw) return EMPTY_WRITING;
+  try {
+    return { ...EMPTY_WRITING, ...(JSON.parse(raw) as WritingState) };
+  } catch {
+    return EMPTY_WRITING;
+  }
+}
+
+export async function saveWriting(language: LanguageCode, state: WritingState): Promise<void> {
+  await write(keyWriting(language), JSON.stringify(state));
 }
 
 /** Последний диктант по языку: пережить перезапуск он должен, история — нет. */

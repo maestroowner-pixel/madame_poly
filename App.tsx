@@ -30,6 +30,7 @@ import {
 import type { Anchor } from './src/anchor';
 import { TalkHeader } from './src/components/TalkHeader';
 import { TutorStrip } from './src/components/TutorStrip';
+import { WritingScreen } from './src/components/WritingScreen';
 import { useAccount } from './src/hooks/useAccount';
 import { useConversation } from './src/hooks/useConversation';
 import { useZoomScreen } from './src/hooks/useZoomScreen';
@@ -239,6 +240,15 @@ function Screen() {
 
           {section === 'listen' && (
             <ListeningScreen
+              menu={menu}
+              language={conversation.language}
+              level={conversation.level}
+              topicId={conversation.topicId}
+            />
+          )}
+
+          {section === 'write' && (
+            <WritingScreen
               menu={menu}
               language={conversation.language}
               level={conversation.level}

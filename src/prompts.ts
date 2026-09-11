@@ -93,6 +93,65 @@ export function buildListeningCheckPrompt(language: LanguageCode, level: Level):
   ].join('\n');
 }
 
+/** Сколько слов просим написать на каждом уровне. */
+const WRITING_WORDS: Record<Level, number> = {
+  A1: 40,
+  A2: 60,
+  B1: 90,
+  B2: 130,
+  C1: 180,
+  C2: 220,
+};
+
+/**
+ * Задание на письмо. Просим не «сочинение на тему», а повод написать: письмо,
+ * отзыв, объявление, жалобу — то, что человек и правда однажды напишет.
+ */
+export function buildWritingPrompt(language: LanguageCode, level: Level, topic?: Topic): string {
+  const { englishName } = LANGUAGES[language];
+  const words = WRITING_WORDS[level];
+
+  return [
+    `You are a ${englishName} teacher setting a short writing task for a CEFR ${level} learner.`,
+    '',
+    'Rules:',
+    `- Level ${level} decides what you may ask for, and it comes before everything else. Asking an A1 learner for an opinion with reasons is a failed task, however good it looks:`,
+    '  - A1: name, family, where they live, what they did today, what they like to eat. Present or simple past, plain sentences, no opinions and no comparisons.',
+    '  - A2: a short note or message about last weekend, a plan for tomorrow, a simple description of a place or a person.',
+    '  - B1: a letter or a review where they give an opinion and one or two reasons for it.',
+    '  - B2: a piece where they compare, recommend or complain, and justify the choice.',
+    '  - C1 and C2: weigh two sides of a question, argue a case, or hold a set register — formal complaint, opinion column.',
+    topic
+      ? `- Subject: ${topic.label}. The task grows out of it and mentions it plainly.`
+      : '- Choose an everyday subject: work, travel, food, health, city life, study.',
+    `- "prompt" is the task itself, in ${englishName}, two or three sentences. Give a reason to write — a letter to a friend, a review, a complaint, a note, a post — and say what to cover.`,
+    `- "hint" is one sentence in ${EXPLANATION_LANGUAGE}: which structures or tenses the task is a chance to use.`,
+    `- "words" is ${words}.`,
+    '- Do not write the answer, and do not give an example sentence in the target language — that would hand them the wording.',
+  ].join('\n');
+}
+
+/**
+ * Разбор написанного. Отличие от беседы: текст перед глазами целиком, поэтому
+ * разбираем и связность, а не только отдельные фразы.
+ */
+export function buildWritingReviewPrompt(language: LanguageCode, level: Level): string {
+  const { englishName } = LANGUAGES[language];
+
+  return [
+    `You are a ${englishName} teacher marking a short piece of writing by a CEFR ${level} learner.`,
+    '',
+    'Rules:',
+    `- "summary" is two or three sentences in ${EXPLANATION_LANGUAGE}: what the piece does well and the one thing worth working on. Speak to the person, not about them.`,
+    '- "corrections" lists real mistakes: grammar, word choice, word order, unnatural phrasing, and — unlike speech — punctuation and paragraphing when they change the meaning.',
+    '- Every "original" must be quoted word for word from the text. Correct at most eight, the most useful ones for this level.',
+    `- For each: "explanation" one short sentence in ${EXPLANATION_LANGUAGE}; "rule" the name of the grammar point; "details" two to four sentences that teach the rule with a fresh example.`,
+    `- "improved" is the whole text rewritten as a ${englishName} speaker of this level would write it. Keep their content, their voice and their length — fix the language, do not replace the person.`,
+    '- The task is a starting point, not a rule. If they wrote about something else, correct that instead and mention the drift in half a sentence of "summary" — a teacher marks the language in front of them, not the obedience.',
+    '- Only when the text is empty or not in the target language at all: say so in "summary" and return an empty list. Anything else gets corrections and an "improved" version.',
+  ].join('\n');
+}
+
 /** Список ошибок беседы в том виде, в каком его получает составитель задания. */
 export function formatCorrections(corrections: Correction[]): string {
   return corrections

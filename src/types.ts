@@ -101,6 +101,30 @@ export interface ListeningStats {
   total: number;
 }
 
+/** Задание на письмо: о чём писать и сколько. */
+export interface WritingTask {
+  /** Само задание на изучаемом языке — его и читает человек. */
+  prompt: string;
+  /** Подсказка на языке интерфейса: что показать в тексте. */
+  hint: string;
+  /** Сколько слов ждём — ориентир, а не правило. */
+  words: number;
+  language: LanguageCode;
+  level: Level;
+  topicId: string | null;
+  createdAt: number;
+}
+
+/** Разбор написанного. */
+export interface WritingReview {
+  /** Две-три фразы на языке интерфейса: что удалось, над чем работать. */
+  summary: string;
+  corrections: Correction[];
+  /** Тот же текст, выправленный, — чтобы увидеть, как он должен звучать. */
+  improved: string;
+  createdAt: number;
+}
+
 /** Итог проверки одного ответа. */
 export interface ListeningVerdict {
   correct: boolean;
