@@ -2,9 +2,6 @@ import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import {
   ActivityIndicator,
-  Keyboard,
-  KeyboardAvoidingView,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -14,6 +11,7 @@ import {
 } from 'react-native';
 
 import { ScreenTitle } from './ScreenMenu';
+import { useKeyboardInset } from '../hooks/useKeyboardInset';
 import { TopicPicker } from './TopicPicker';
 import { measureAnchor, type Anchor } from '../anchor';
 import { t } from '../i18n';
@@ -66,17 +64,9 @@ export function WritingScreen({ menu, language, level, topicId }: Props) {
   const [pending, setPending] = useState<string | null | undefined>(undefined);
   const topicRef = useRef<View>(null);
   const scrollRef = useRef<ScrollView>(null);
-  /** Открыта ли клавиатура: при ней задание ужимается, чтобы поле не сдавило. */
-  const [typing, setTyping] = useState(false);
-
-  useEffect(() => {
-    const shown = Keyboard.addListener('keyboardDidShow', () => setTyping(true));
-    const hidden = Keyboard.addListener('keyboardDidHide', () => setTyping(false));
-    return () => {
-      shown.remove();
-      hidden.remove();
-    };
-  }, []);
+  /** Высота клавиатуры: на её месте экран сам отводит себе отступ. */
+  const keyboard = useKeyboardInset();
+  const typing = keyboard > 0;
 
   useEffect(() => {
     setError(null);
@@ -193,10 +183,7 @@ export function WritingScreen({ menu, language, level, topicId }: Props) {
         <Text style={styles.level}>{level}</Text>
       </View>
 
-      <KeyboardAvoidingView
-        style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
+      <View style={[styles.flex, { paddingBottom: keyboard }]}>
         {composing ? (
           /**
            * Пока человек пишет, поле не едет внутри списка, а занимает всё
@@ -365,7 +352,7 @@ export function WritingScreen({ menu, language, level, topicId }: Props) {
           )}
         </ScrollView>
         )}
-      </KeyboardAvoidingView>
+      </View>
 
       {pending !== undefined && (
         <View style={styles.confirmBackdrop}>

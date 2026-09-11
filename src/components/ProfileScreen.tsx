@@ -3,8 +3,6 @@ import * as ImagePicker from 'expo-image-picker';
 import { useEffect, useMemo, useState } from 'react';
 import {
   Image,
-  KeyboardAvoidingView,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -26,6 +24,7 @@ import { FONT_SCALES, useStyles, useTheme, type Theme, type FontScale } from '..
 import type { Profile } from '../types';
 import { UserAvatar } from './Avatar';
 import type { Anchor } from '../anchor';
+import { useKeyboardInset } from '../hooks/useKeyboardInset';
 import { t } from '../i18n';
 
 interface Props {
@@ -51,6 +50,8 @@ export function ProfileScreen({
 }: Props) {
   const { theme, fontScale, setFontScale } = useTheme();
   const styles = useStyles(createStyles);
+  /** Клавиатуру отмеряем сами: во весь экран Android окно не сжимает. */
+  const keyboard = useKeyboardInset();
 
   const [name, setName] = useState(profile.name);
   const [avatarId, setAvatarId] = useState<string | null>(profile.avatarId);
@@ -133,10 +134,7 @@ export function ProfileScreen({
             </Pressable>
           </View>
 
-          <KeyboardAvoidingView
-            style={styles.flex}
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          >
+          <View style={[styles.flex, { paddingBottom: keyboard }]}>
             <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
               <View style={styles.preview}>
                 <UserAvatar avatarId={avatarId} photoUri={photoUri} name={name} size={84} />
@@ -249,7 +247,7 @@ export function ProfileScreen({
                 </View>
               ))}
             </ScrollView>
-          </KeyboardAvoidingView>
+          </View>
         </SafeAreaView>
       </SafeAreaProvider>
     </ZoomModal>

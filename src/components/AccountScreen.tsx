@@ -1,8 +1,6 @@
 import { useState } from 'react';
 import {
   ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -20,6 +18,7 @@ import { CloseIcon } from './icons';
 import { ZoomModal } from './ZoomModal';
 import type { Anchor } from '../anchor';
 import { formatDate } from '../format';
+import { useKeyboardInset } from '../hooks/useKeyboardInset';
 import { t } from '../i18n';
 import { CONTENT_MAX_WIDTH } from '../layout';
 import { login, logout, register, resetPassword, syncAvailable } from '../services/firebase';
@@ -52,6 +51,8 @@ export function AccountScreen({
 }: Props) {
   const { theme } = useTheme();
   const styles = useStyles(createStyles);
+  /** Клавиатуру отмеряем сами: во весь экран Android окно не сжимает. */
+  const keyboard = useKeyboardInset();
 
   const [mail, setMail] = useState('');
   const [password, setPassword] = useState('');
@@ -105,10 +106,7 @@ export function AccountScreen({
 
           {/* Без этих двух вещей касание по полю не открывало клавиатуру:
               список перехватывал тап, а поле пряталось под ней. */}
-          <KeyboardAvoidingView
-            style={styles.flex}
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          >
+          <View style={[styles.flex, { paddingBottom: keyboard }]}>
             <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
             <Text style={styles.intro}>{t.accountIntro}</Text>
 
@@ -212,7 +210,7 @@ export function AccountScreen({
               </>
             )}
             </ScrollView>
-          </KeyboardAvoidingView>
+          </View>
         </SafeAreaView>
       </SafeAreaProvider>
     </ZoomModal>

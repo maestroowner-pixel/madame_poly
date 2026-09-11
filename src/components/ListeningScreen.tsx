@@ -2,8 +2,6 @@ import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import {
   ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -19,6 +17,7 @@ import {
 } from 'expo-audio';
 
 import { ScreenTitle } from './ScreenMenu';
+import { useKeyboardInset } from '../hooks/useKeyboardInset';
 import { TopicPicker } from './TopicPicker';
 import { measureAnchor, type Anchor } from '../anchor';
 import { LISTENING_SPEED } from '../config';
@@ -70,6 +69,8 @@ interface Props {
 export function ListeningScreen({ menu, language, level, topicId }: Props) {
   const { theme } = useTheme();
   const styles = useStyles(createStyles);
+  /** Клавиатуру отмеряем сами: во весь экран Android окно не сжимает. */
+  const keyboard = useKeyboardInset();
 
   const player = useAudioPlayer(null);
   const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
@@ -291,10 +292,7 @@ export function ListeningScreen({ menu, language, level, topicId }: Props) {
 
           {/* Письменные ответы — те же поля, что и в аккаунте: без этого тап по
               ним не открывал клавиатуру. */}
-          <KeyboardAvoidingView
-            style={styles.flex}
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          >
+          <View style={[styles.flex, { paddingBottom: keyboard }]}>
             <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
             {error && <Text style={styles.error}>{error}</Text>}
 
@@ -462,7 +460,7 @@ export function ListeningScreen({ menu, language, level, topicId }: Props) {
               </>
             )}
             </ScrollView>
-          </KeyboardAvoidingView>
+          </View>
 
           {pending && (
             <View style={styles.confirmBackdrop}>
