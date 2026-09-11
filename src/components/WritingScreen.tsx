@@ -17,8 +17,14 @@ import { TopicPicker } from './TopicPicker';
 import { measureAnchor, type Anchor } from '../anchor';
 import { t } from '../i18n';
 import { CONTENT_MAX_WIDTH } from '../layout';
-import { generateWritingTask, reviewWriting } from '../services/llm';
-import { EMPTY_WRITING, loadWriting, saveWriting, type WritingState } from '../storage';
+import { generateHomework, generateWritingTask, reviewWriting } from '../services/llm';
+import {
+  EMPTY_WRITING,
+  loadWriting,
+  saveLesson,
+  saveWriting,
+  type WritingState,
+} from '../storage';
 import { useStyles, useTheme, type Theme } from '../theme';
 import { findTopic } from '../topics';
 import type { LanguageCode, Level } from '../types';
@@ -47,6 +53,9 @@ export function WritingScreen({ menu, language, level, topicId }: Props) {
   const [state, setState] = useState<WritingState>(EMPTY_WRITING);
   const [busy, setBusy] = useState(false);
   const [checking, setChecking] = useState(false);
+  const [drilling, setDrilling] = useState(false);
+  /** Сколько упражнений уехало в тетрадь — показываем вместо кнопки. */
+  const [drilled, setDrilled] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   /** Тема письма своя: писать про аптеку можно и посреди бесед о Риме. */
   const [topic, setTopic] = useState<string | null>(topicId);
@@ -84,6 +93,7 @@ export function WritingScreen({ menu, language, level, topicId }: Props) {
       const task = await generateWritingTask({ language, level, topic: chosen ?? undefined });
       const next = { task, text: '', review: null };
       setState(next);
+      setDrilled(null);
       await saveWriting(language, next);
     } catch (e: unknown) {
       fail(e);
@@ -108,9 +118,45 @@ export function WritingScreen({ menu, language, level, topicId }: Props) {
     }
   };
 
+  /**
+   * Ошибки письма — такой же материал для упражнений, как ошибки речи. Кладём
+   * их в тетрадь отдельным занятием: оттуда они уходят в общий PDF вместе с
+   * остальными, и повторять экспорт отдельно для письма не нужно.
+   */
+  const drill = async () => {
+    if (!state.task || !state.review || drilling) return;
+    if (state.review.corrections.length === 0) return;
+
+    setDrilling(true);
+    setError(null);
+    try {
+      const homework = await generateHomework({
+        corrections: state.review.corrections,
+        language,
+        level,
+      });
+      await saveLesson(
+        {
+          id: `writing-${Date.now()}`,
+          language,
+          level,
+          topicId: state.task.topicId,
+          createdAt: homework.createdAt,
+        },
+        homework,
+      );
+      setDrilled(homework.exercises.length);
+    } catch (e: unknown) {
+      fail(e);
+    } finally {
+      setDrilling(false);
+    }
+  };
+
   const rewrite = () => {
     const next = { ...state, review: null };
     setState(next);
+    setDrilled(null);
     void saveWriting(language, next);
   };
 
@@ -206,6 +252,23 @@ export function WritingScreen({ menu, language, level, topicId }: Props) {
                     <Text style={styles.caption}>{t.writingImproved}</Text>
                     <Text style={styles.improved}>{state.review.improved}</Text>
                   </View>
+
+                  {state.review.corrections.length > 0 &&
+                    (drilled === null ? (
+                      <Pressable
+                        onPress={() => void drill()}
+                        disabled={drilling}
+                        style={styles.cta}
+                      >
+                        {drilling ? (
+                          <ActivityIndicator color={theme.ctaText} size="small" />
+                        ) : (
+                          <Text style={styles.ctaLabel}>{t.writingDrill}</Text>
+                        )}
+                      </Pressable>
+                    ) : (
+                      <Text style={styles.done}>{t.writingDrillDone(drilled)}</Text>
+                    ))}
 
                   <Pressable onPress={rewrite} style={styles.secondary}>
                     <Text style={styles.secondaryLabel}>{t.writingAgain}</Text>
@@ -401,6 +464,7 @@ const createStyles = (theme: Theme) =>
       borderColor: theme.border,
     },
     words: { color: theme.textMuted, fontSize: 12, textAlign: 'right' },
+    done: { color: theme.correctionText, fontSize: 13, textAlign: 'center', lineHeight: 18 },
 
     /** Разбор ошибки повторяет вид ленты: то же читается в беседе. */
     fix: {

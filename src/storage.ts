@@ -33,6 +33,7 @@ const keyHomework = (id: string) => `polyglotta:homework:${id}`;
 const keyListening = (language: LanguageCode) => `polyglotta:listening:${language}`;
 const keyListeningStats = (language: LanguageCode) => `polyglotta:listeningStats:${language}`;
 const keyWriting = (language: LanguageCode) => `polyglotta:writing:${language}`;
+const KEY_LESSONS = 'polyglotta:lessons';
 
 /**
  * Любая запись отмечается временем — по нему синхронизация решает, чьи данные
@@ -304,6 +305,36 @@ export interface NotebookEntry {
  * каждому языку. Собирается на лету, а не хранится отдельно, — иначе список
  * пришлось бы чинить после каждого удаления беседы.
  */
+/**
+ * Занятие, не привязанное к беседе, — например разбор написанного. Хранится
+ * списком описаний, сами упражнения лежат под общим ключом задания: так тетрадь
+ * собирает их тем же способом, что и остальные.
+ */
+export interface Lesson {
+  id: string;
+  language: LanguageCode;
+  level: Level;
+  topicId: string | null;
+  createdAt: number;
+}
+
+async function loadLessons(): Promise<Lesson[]> {
+  const raw = await AsyncStorage.getItem(KEY_LESSONS);
+  if (!raw) return [];
+  try {
+    return JSON.parse(raw) as Lesson[];
+  } catch {
+    return [];
+  }
+}
+
+/** Кладёт занятие в тетрадь: описание в список, упражнения — под его номер. */
+export async function saveLesson(lesson: Lesson, homework: Homework): Promise<void> {
+  const lessons = await loadLessons();
+  await saveHomework(lesson.id, homework);
+  await write(KEY_LESSONS, JSON.stringify([lesson, ...lessons]));
+}
+
 export async function loadNotebook(): Promise<NotebookEntry[]> {
   const entries: NotebookEntry[] = [];
 
@@ -334,6 +365,11 @@ export async function loadNotebook(): Promise<NotebookEntry[]> {
       createdAt: homework.createdAt,
       homework,
     });
+  }
+
+  for (const lesson of await loadLessons()) {
+    const homework = await loadHomework(lesson.id);
+    if (homework) entries.push({ ...lesson, homework });
   }
 
   return entries.sort((a, b) => b.createdAt - a.createdAt);
