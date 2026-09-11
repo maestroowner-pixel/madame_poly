@@ -9,6 +9,7 @@ import {
   CONTACT_EMAIL,
   COPYRIGHT,
   PRIVACY_URL,
+  SITE_LABEL,
   SITE_URL,
   TERMS_URL,
 } from '../config';
@@ -210,10 +211,13 @@ export function SettingsScreen({
           <FooterLink label={t.privacy} url={PRIVACY_URL} />
           <Text style={styles.footerDot}>·</Text>
           <FooterLink label={t.terms} url={TERMS_URL} />
-          <Text style={styles.footerDot}>·</Text>
-          <FooterLink label={t.about} url={SITE_URL} />
         </View>
-        <Text style={styles.footerLine}>{COPYRIGHT}</Text>
+
+        {/* Адрес сайта показан целиком: по подписи не видно, куда он ведёт. */}
+        <Text style={styles.footerLine}>{t.about}</Text>
+        <FooterLink label={SITE_LABEL} url={SITE_URL} />
+
+        <Text style={[styles.footerLine, styles.footerCopy]}>{COPYRIGHT}</Text>
         <FooterLink label={t.writeUs} url={`mailto:${CONTACT_EMAIL}`} />
       </View>
       </ScrollView>
@@ -264,14 +268,19 @@ const createStyles = (theme: Theme) =>
       gap: 10,
       paddingHorizontal: 16,
       paddingBottom: 32,
+      // Тянем содержимое на всю высоту, иначе подвалу не от чего оттолкнуться вниз.
+      flexGrow: 1,
     },
     row: { flexDirection: 'row', justifyContent: 'center', gap: 10 },
 
-    footer: { alignItems: 'center', gap: 6, paddingTop: 22 },
+    // marginTop: auto прижимает подвал к низу, когда настройки не заполнили
+    // экран, и оставляет его под ними, когда список длиннее экрана.
+    footer: { alignItems: 'center', gap: 6, paddingTop: 22, marginTop: 'auto' },
     footerLinks: { flexDirection: 'row', alignItems: 'center', gap: 8 },
     footerLink: { color: theme.neon, fontSize: 12 },
     footerDot: { color: theme.textMuted, fontSize: 12 },
     footerLine: { color: theme.textMuted, fontSize: 11 },
+    footerCopy: { marginTop: 8 },
     tile: {
       width: 78,
       height: 78,

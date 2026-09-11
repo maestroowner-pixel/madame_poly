@@ -54,6 +54,8 @@ export const HISTORY_STEP = 20;
  * ссылки идут якорями — страница открывает нужную вкладку по якорю сама.
  */
 export const SITE_URL = 'https://madamepoly.kuka-lab.com';
+/** Адрес, показанный человеку: со схемой он выглядит как строка из браузера. */
+export const SITE_LABEL = 'madamepoly.kuka-lab.com';
 export const PRIVACY_URL = `${SITE_URL}/#privacy`;
 export const TERMS_URL = `${SITE_URL}/#terms`;
 export const CONTACT_EMAIL = 'kukalab@icloud.com';
