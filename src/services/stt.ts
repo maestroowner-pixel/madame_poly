@@ -5,6 +5,7 @@ import { OPENAI_API_KEY } from '../config';
 import { LANGUAGES } from '../languages';
 import type { LanguageCode } from '../types';
 import { t } from '../i18n';
+import { assertBudget, charge, whisperCost } from './meter';
 
 const ENDPOINT = 'https://api.openai.com/v1/audio/transcriptions';
 
@@ -19,9 +20,11 @@ const ENDPOINT = 'https://api.openai.com/v1/audio/transcriptions';
  */
 export async function transcribe(fileUri: string, language: LanguageCode): Promise<string> {
   if (!OPENAI_API_KEY) throw new Error(t.noOpenAiKey);
+  await assertBudget();
 
+  const file = new File(fileUri);
   const form = new FormData();
-  form.append('file', new File(fileUri) as unknown as Blob);
+  form.append('file', file as unknown as Blob);
   form.append('model', 'whisper-1');
   // Подсказка языка заметно повышает точность и не даёт Whisper «переключиться».
   form.append('language', LANGUAGES[language].whisper);
@@ -36,6 +39,8 @@ export async function transcribe(fileUri: string, language: LanguageCode): Promi
   if (!response.ok) {
     throw new Error(`Whisper ${response.status}: ${await response.text()}`);
   }
+
+  await charge(whisperCost(file.size ?? 0));
 
   const { text } = (await response.json()) as { text: string };
   return text.trim();

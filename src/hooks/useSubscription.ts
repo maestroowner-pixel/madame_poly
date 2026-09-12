@@ -1,8 +1,16 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import { FREE_TALKS_PER_DAY } from '../config';
+import {
+  FREE_MONTHLY_BUDGET_USD,
+  FREE_TALKS_PER_DAY,
+  PRO_MONTHLY_BUDGET_USD,
+} from '../config';
+import { allowance, setBudget } from '../services/meter';
 import { isPro, startPurchases, watchPro } from '../services/purchases';
 import { countTalk, loadUsage } from '../storage';
+
+/** Что именно не даёт начать беседу. */
+export type Block = 'talks' | 'budget' | null;
 
 export interface Subscription {
   /** null, пока состояние подписки ещё не известно. */
@@ -11,23 +19,36 @@ export interface Subscription {
   talks: number;
   /** Сколько бесплатных бесед осталось на сегодня. */
   left: number;
+  /** Доля месячного объёма API, уже потраченная, 0…1. */
+  used: number;
+  /** Почему нельзя начать беседу прямо сейчас; null — можно. */
+  block: Block;
   /** Можно ли начать ещё одну беседу прямо сейчас. */
   canTalk: boolean;
   /** Отмечает начатую беседу. Вызывать только когда canTalk. */
   useTalk: () => Promise<void>;
-  /** Перечитать подписку — после покупки или восстановления. */
+  /** Перечитать подписку и счётчики — после покупки, восстановления, беседы. */
   refresh: () => Promise<void>;
 }
 
 /**
- * Подписка и дневной лимит бесед. Лимит держится на устройстве: переустановка
- * или перевод часов его обнулят. Честная проверка возможна только на сервере,
- * а его у приложения пока нет — ключи API лежат прямо в сборке. Когда появится
- * прокси-бэкенд, считать беседы нужно будет там же, где тратятся токены.
+ * Подписка, дневной лимит бесед и месячный объём API. Оба счётчика держатся
+ * на устройстве: переустановка или перевод часов их обнулят. Честная проверка
+ * возможна только на сервере, а его у приложения пока нет — ключи API лежат
+ * прямо в сборке. Когда появится прокси-бэкенд, считать нужно будет там же,
+ * где тратятся токены.
  */
 export function useSubscription(): Subscription {
   const [pro, setPro] = useState<boolean | null>(null);
   const [talks, setTalks] = useState(0);
+  const [used, setUsed] = useState(0);
+  const [exhausted, setExhausted] = useState(false);
+
+  const readSpend = useCallback(async () => {
+    const state = await allowance();
+    setUsed(state.share);
+    setExhausted(state.exhausted);
+  }, []);
 
   useEffect(() => {
     startPurchases();
@@ -44,6 +65,14 @@ export function useSubscription(): Subscription {
     };
   }, []);
 
+  // Объём тарифа задаётся счётчику, как только подписка известна, и
+  // перечитывается: доля от нового объёма другая.
+  useEffect(() => {
+    if (pro === null) return;
+    setBudget(pro ? PRO_MONTHLY_BUDGET_USD : FREE_MONTHLY_BUDGET_USD);
+    void readSpend();
+  }, [pro, readSpend]);
+
   const useTalk = useCallback(async () => {
     const usage = await countTalk();
     setTalks(usage.talks);
@@ -52,17 +81,22 @@ export function useSubscription(): Subscription {
   const refresh = useCallback(async () => {
     setPro(await isPro());
     setTalks((await loadUsage()).talks);
-  }, []);
+    await readSpend();
+  }, [readSpend]);
 
   const left = Math.max(0, FREE_TALKS_PER_DAY - talks);
+
+  // Пока подписка не известна, беседу не запрещаем: проверка занимает
+  // мгновение, а платящий человек не должен упереться в стену на запуске.
+  const block: Block = exhausted ? 'budget' : pro === false && left === 0 ? 'talks' : null;
 
   return {
     pro,
     talks,
     left,
-    // Пока подписка не известна, беседу не запрещаем: проверка занимает
-    // мгновение, а платящий человек не должен упереться в стену на запуске.
-    canTalk: pro !== false || left > 0,
+    used,
+    block,
+    canTalk: block === null,
     useTalk,
     refresh,
   };

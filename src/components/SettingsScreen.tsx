@@ -44,6 +44,8 @@ interface Props {
   pro: boolean | null;
   /** Сколько бесплатных бесед осталось сегодня. */
   talksLeft: number;
+  /** Доля месячного объёма, уже потраченная, 0…1. */
+  used: number;
   onOpenPaywall: (anchor: Anchor | null) => void;
 }
 
@@ -71,6 +73,7 @@ export function SettingsScreen({
   onOpenAccount,
   pro,
   talksLeft,
+  used,
   onOpenPaywall,
 }: Props) {
   const styles = useStyles(createStyles);
@@ -195,7 +198,7 @@ export function SettingsScreen({
       >
         <Text style={styles.topicCaption}>{t.subscription}</Text>
         <Text style={styles.topicValue} numberOfLines={1}>
-          {pro === null ? '…' : pro ? t.paywallActive : t.paywallLeft(talksLeft)}
+          {pro === null ? '…' : pro ? t.paywallUsed(used) : t.paywallLeft(talksLeft)}
         </Text>
         <Text style={styles.topicChevron}>›</Text>
       </Pressable>

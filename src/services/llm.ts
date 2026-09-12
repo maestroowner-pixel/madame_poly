@@ -19,6 +19,7 @@ import {
   buildWritingReviewPrompt,
   formatCorrections,
 } from '../prompts';
+import { assertBudget, charge, claudeCost } from './meter';
 import type { Topic } from '../topics';
 import type {
   Correction,
@@ -112,6 +113,14 @@ const client = new Anthropic({
   dangerouslyAllowBrowser: true,
 });
 
+/** Каждый запрос идёт через счётчик: проверка объёма до, запись расхода после. */
+async function metered<T extends { usage: Anthropic.Usage }>(request: () => Promise<T>): Promise<T> {
+  await assertBudget();
+  const response = await request();
+  await charge(claudeCost(response.usage));
+  return response;
+}
+
 /** Сравниваем без регистра, знаков и диакритики: модель цитирует не буква в букву. */
 function normalise(text: string): string {
   return text
@@ -186,23 +195,25 @@ export async function respond(params: {
         ];
 
   const ask = async () => {
-    const response = await client.messages.parse({
-      model: CLAUDE_MODEL,
-      max_tokens: CLAUDE_MAX_TOKENS,
-      // Системный промпт неизменен всю беседу — кэшируем и его.
-      system: [
-        {
-          type: 'text',
-          text: buildSystemPrompt(language, level, topic, name, variant),
-          cache_control: { type: 'ephemeral' },
-        },
-      ],
-      // Разговорная латентность важнее глубины рассуждения: реплики короткие,
-      // а пауза между «сказал» и «услышал ответ» ощущается сразу.
-      thinking: { type: 'disabled' },
-      messages: [...cached, { role: 'user', content: userText }],
-      output_config: { format: zodOutputFormat(TurnSchema) },
-    });
+    const response = await metered(() =>
+      client.messages.parse({
+        model: CLAUDE_MODEL,
+        max_tokens: CLAUDE_MAX_TOKENS,
+        // Системный промпт неизменен всю беседу — кэшируем и его.
+        system: [
+          {
+            type: 'text',
+            text: buildSystemPrompt(language, level, topic, name, variant),
+            cache_control: { type: 'ephemeral' },
+          },
+        ],
+        // Разговорная латентность важнее глубины рассуждения: реплики короткие,
+        // а пауза между «сказал» и «услышал ответ» ощущается сразу.
+        thinking: { type: 'disabled' },
+        messages: [...cached, { role: 'user', content: userText }],
+        output_config: { format: zodOutputFormat(TurnSchema) },
+      }),
+    );
     return response.parsed_output;
   };
 
@@ -249,25 +260,27 @@ export async function explainCorrection(params: {
 
   if (!ANTHROPIC_API_KEY) throw new Error(t.noAnthropicKey);
 
-  const response = await client.messages.create({
-    model: CLAUDE_MODEL,
-    max_tokens: 512,
-    system: buildExplanationPrompt(language, level),
-    thinking: { type: 'disabled' },
-    messages: [
-      {
-        role: 'user',
-        content: [
-          `The learner said: "${correction.original}"`,
-          `The correct form is: "${correction.corrected}"`,
-          correction.rule ? `The rule is: ${correction.rule}` : '',
-          `They have already read this one-line note: ${correction.explanation}`,
-        ]
-          .filter(Boolean)
-          .join('\n'),
-      },
-    ],
-  });
+  const response = await metered(() =>
+    client.messages.create({
+      model: CLAUDE_MODEL,
+      max_tokens: 512,
+      system: buildExplanationPrompt(language, level),
+      thinking: { type: 'disabled' },
+      messages: [
+        {
+          role: 'user',
+          content: [
+            `The learner said: "${correction.original}"`,
+            `The correct form is: "${correction.corrected}"`,
+            correction.rule ? `The rule is: ${correction.rule}` : '',
+            `They have already read this one-line note: ${correction.explanation}`,
+          ]
+            .filter(Boolean)
+            .join('\n'),
+        },
+      ],
+    }),
+  );
 
   const details = response.content
     .map((block) => (block.type === 'text' ? block.text : ''))
@@ -293,19 +306,21 @@ export async function generateHomework(params: {
   if (!ANTHROPIC_API_KEY) throw new Error(t.noAnthropicKey);
   if (corrections.length === 0) throw new Error(t.nothingToDrill);
 
-  const response = await client.messages.parse({
-    model: CLAUDE_MODEL,
-    max_tokens: 8192,
-    system: buildHomeworkPrompt(language, level),
-    thinking: { type: 'disabled' },
-    messages: [
-      {
-        role: 'user',
-        content: `Mistakes from the conversation:\n${formatCorrections(corrections)}`,
-      },
-    ],
-    output_config: { format: zodOutputFormat(HomeworkSchema) },
-  });
+  const response = await metered(() =>
+    client.messages.parse({
+      model: CLAUDE_MODEL,
+      max_tokens: 8192,
+      system: buildHomeworkPrompt(language, level),
+      thinking: { type: 'disabled' },
+      messages: [
+        {
+          role: 'user',
+          content: `Mistakes from the conversation:\n${formatCorrections(corrections)}`,
+        },
+      ],
+      output_config: { format: zodOutputFormat(HomeworkSchema) },
+    }),
+  );
 
   const parsed = response.parsed_output;
   if (!parsed) throw new Error(t.badHomework);
@@ -369,14 +384,16 @@ export async function generateListening(params: {
 
   if (!ANTHROPIC_API_KEY) throw new Error(t.noAnthropicKey);
 
-  const response = await client.messages.parse({
-    model: CLAUDE_MODEL,
-    max_tokens: 8192,
-    system: buildListeningPrompt(language, level, topic),
-    thinking: { type: 'disabled' },
-    messages: [{ role: 'user', content: 'Write the passage and the questions.' }],
-    output_config: { format: zodOutputFormat(ListeningSchema) },
-  });
+  const response = await metered(() =>
+    client.messages.parse({
+      model: CLAUDE_MODEL,
+      max_tokens: 8192,
+      system: buildListeningPrompt(language, level, topic),
+      thinking: { type: 'disabled' },
+      messages: [{ role: 'user', content: 'Write the passage and the questions.' }],
+      output_config: { format: zodOutputFormat(ListeningSchema) },
+    }),
+  );
 
   const parsed = response.parsed_output;
   if (!parsed || parsed.questions.length === 0) throw new Error(t.badListening);
@@ -407,14 +424,16 @@ export async function checkListeningAnswers(params: {
     )
     .join('\n');
 
-  const response = await client.messages.parse({
-    model: CLAUDE_MODEL,
-    max_tokens: CLAUDE_MAX_TOKENS,
-    system: buildListeningCheckPrompt(listening.language, listening.level),
-    thinking: { type: 'disabled' },
-    messages: [{ role: 'user', content: `Passage:\n${listening.text}\n\nItems:\n${items}` }],
-    output_config: { format: zodOutputFormat(CheckSchema) },
-  });
+  const response = await metered(() =>
+    client.messages.parse({
+      model: CLAUDE_MODEL,
+      max_tokens: CLAUDE_MAX_TOKENS,
+      system: buildListeningCheckPrompt(listening.language, listening.level),
+      thinking: { type: 'disabled' },
+      messages: [{ role: 'user', content: `Passage:\n${listening.text}\n\nItems:\n${items}` }],
+      output_config: { format: zodOutputFormat(CheckSchema) },
+    }),
+  );
 
   const verdicts = response.parsed_output?.verdicts;
   if (!verdicts || verdicts.length !== answers.length) throw new Error(t.badListeningCheck);
@@ -432,14 +451,16 @@ export async function generateWritingTask(params: {
 
   if (!ANTHROPIC_API_KEY) throw new Error(t.noAnthropicKey);
 
-  const response = await client.messages.parse({
-    model: CLAUDE_MODEL,
-    max_tokens: CLAUDE_MAX_TOKENS,
-    system: buildWritingPrompt(language, level, topic),
-    thinking: { type: 'disabled' },
-    messages: [{ role: 'user', content: 'Set the task.' }],
-    output_config: { format: zodOutputFormat(WritingTaskSchema) },
-  });
+  const response = await metered(() =>
+    client.messages.parse({
+      model: CLAUDE_MODEL,
+      max_tokens: CLAUDE_MAX_TOKENS,
+      system: buildWritingPrompt(language, level, topic),
+      thinking: { type: 'disabled' },
+      messages: [{ role: 'user', content: 'Set the task.' }],
+      output_config: { format: zodOutputFormat(WritingTaskSchema) },
+    }),
+  );
 
   const parsed = response.parsed_output;
   if (!parsed?.prompt.trim()) throw new Error(t.badWritingTask);
@@ -457,16 +478,18 @@ export async function reviewWriting(params: {
   if (!ANTHROPIC_API_KEY) throw new Error(t.noAnthropicKey);
   if (!text.trim()) throw new Error(t.writingEmpty);
 
-  const response = await client.messages.parse({
-    model: CLAUDE_MODEL,
-    max_tokens: 8192,
-    system: buildWritingReviewPrompt(task.language, task.level),
-    thinking: { type: 'disabled' },
-    messages: [
-      { role: 'user', content: `Task:\n${task.prompt}\n\nWhat they wrote:\n${text}` },
-    ],
-    output_config: { format: zodOutputFormat(WritingReviewSchema) },
-  });
+  const response = await metered(() =>
+    client.messages.parse({
+      model: CLAUDE_MODEL,
+      max_tokens: 8192,
+      system: buildWritingReviewPrompt(task.language, task.level),
+      thinking: { type: 'disabled' },
+      messages: [
+        { role: 'user', content: `Task:\n${task.prompt}\n\nWhat they wrote:\n${text}` },
+      ],
+      output_config: { format: zodOutputFormat(WritingReviewSchema) },
+    }),
+  );
 
   const parsed = response.parsed_output;
   if (!parsed) throw new Error(t.badWritingReview);

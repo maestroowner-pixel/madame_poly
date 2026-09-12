@@ -3,6 +3,7 @@ import { fetch } from 'expo/fetch';
 
 import { OPENAI_API_KEY, OPENAI_TTS_VOICE } from '../config';
 import { t } from '../i18n';
+import { assertBudget, charge, ttsCost } from './meter';
 
 /** Озвучка складывается в кэш — её всегда можно перегенерировать. */
 const AUDIO_DIR = new Directory(Paths.cache, 'tts');
@@ -40,6 +41,7 @@ async function readBytes(response: Response): Promise<Uint8Array> {
 
 async function synthesizeOpenAI(text: string, speed: number): Promise<Uint8Array> {
   if (!OPENAI_API_KEY) throw new Error(t.noOpenAiKey);
+  await assertBudget();
 
   const response = await fetch('https://api.openai.com/v1/audio/speech', {
     method: 'POST',
@@ -57,6 +59,7 @@ async function synthesizeOpenAI(text: string, speed: number): Promise<Uint8Array
   });
 
   if (!response.ok) throw new Error(`OpenAI TTS ${response.status}: ${await response.text()}`);
+  await charge(ttsCost(text));
   return readBytes(response as unknown as Response);
 }
 

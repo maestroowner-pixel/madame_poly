@@ -88,6 +88,8 @@ function Screen() {
 
     await subscription.useTalk();
     await conversation.toggleSession();
+    // Беседа кончилась — счётчик объёма ушёл вперёд, экрану пора его перечитать.
+    await subscription.refresh();
   }, [conversation, subscription]);
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuAnchor, setMenuAnchor] = useState<Anchor | null>(null);
@@ -311,6 +313,7 @@ function Screen() {
               onOpenAccount={accountScreen.show}
               pro={subscription.pro}
               talksLeft={subscription.left}
+              used={subscription.used}
               onOpenPaywall={(point) => {
                 setPaywallAnchor(point);
                 setPaywallOpen(true);
@@ -375,6 +378,8 @@ function Screen() {
         visible={paywallOpen}
         anchor={paywallAnchor}
         left={subscription.left}
+        used={subscription.used}
+        block={subscription.block}
         onClose={() => setPaywallOpen(false)}
         onBought={() => void subscription.refresh()}
       />

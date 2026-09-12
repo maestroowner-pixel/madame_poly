@@ -35,6 +35,7 @@ const keyListeningStats = (language: LanguageCode) => `polyglotta:listeningStats
 const keyWriting = (language: LanguageCode) => `polyglotta:writing:${language}`;
 const KEY_LESSONS = 'polyglotta:lessons';
 const KEY_USAGE = 'polyglotta:usage';
+const KEY_SPEND = 'polyglotta:spend';
 
 /**
  * Любая запись отмечается временем — по нему синхронизация решает, чьи данные
@@ -414,5 +415,37 @@ export async function countTalk(): Promise<Usage> {
   const usage = await loadUsage();
   const next: Usage = { day: usage.day, talks: usage.talks + 1 };
   await write(KEY_USAGE, JSON.stringify(next));
+  return next;
+}
+
+/** Расход API за месяц. Месяц хранится строкой, чтобы счётчик сам обнулялся. */
+export interface Spend {
+  /** Местный месяц в виде ГГГГ-ММ. */
+  month: string;
+  /** Доллары по ценам провайдеров. */
+  usd: number;
+}
+
+/**
+ * Календарный месяц, а не месяц с момента покупки: у RevenueCat дата продления
+ * есть, но на устройстве без сети её не спросить, а календарь есть всегда.
+ * Для человека «объём на сентябрь» и понятнее.
+ */
+function thisMonth(): string {
+  return today().slice(0, 7);
+}
+
+export async function loadSpend(): Promise<Spend> {
+  const raw = await AsyncStorage.getItem(KEY_SPEND);
+  const stored = raw ? (JSON.parse(raw) as Spend) : null;
+
+  return stored && stored.month === thisMonth() ? stored : { month: thisMonth(), usd: 0 };
+}
+
+/** Прибавляет расход одного запроса и возвращает новый итог. */
+export async function addSpend(usd: number): Promise<Spend> {
+  const spend = await loadSpend();
+  const next: Spend = { month: spend.month, usd: spend.usd + usd };
+  await write(KEY_SPEND, JSON.stringify(next));
   return next;
 }

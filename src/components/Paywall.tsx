@@ -10,6 +10,7 @@ import type { PurchasesPackage } from 'react-native-purchases';
 import { CloseIcon } from './icons';
 import { ZoomModal } from './ZoomModal';
 import type { Anchor } from '../anchor';
+import type { Block } from '../hooks/useSubscription';
 import { t } from '../i18n';
 import { CONTENT_MAX_WIDTH } from '../layout';
 import { buy, loadPackages, restore } from '../services/purchases';
@@ -20,6 +21,10 @@ interface Props {
   anchor: Anchor | null;
   /** Сколько бесплатных бесед осталось сегодня. */
   left: number;
+  /** Доля месячного объёма, уже потраченная, 0…1. */
+  used: number;
+  /** Что сейчас не даёт говорить: экран объясняет именно это. */
+  block: Block;
   onClose: () => void;
   /** Подписка появилась — экрану выше пора перечитать состояние. */
   onBought: () => void;
@@ -33,7 +38,7 @@ function periodLabel(item: PurchasesPackage): string | null {
   return null;
 }
 
-export function Paywall({ visible, anchor, left, onClose, onBought }: Props) {
+export function Paywall({ visible, anchor, left, used, block, onClose, onBought }: Props) {
   const { theme } = useTheme();
   const styles = useStyles(createStyles);
 
@@ -96,9 +101,12 @@ export function Paywall({ visible, anchor, left, onClose, onBought }: Props) {
           </View>
 
           <ScrollView contentContainerStyle={styles.body}>
-            <Text style={styles.left}>{t.paywallLeft(left)}</Text>
+            <Text style={styles.left}>
+              {block === 'budget' ? t.budgetOver : t.paywallLeft(left)}
+            </Text>
             <Text style={styles.intro}>{t.paywallIntro}</Text>
             <Text style={styles.pitch}>{t.paywallPitch}</Text>
+            <Text style={styles.intro}>{t.paywallUsed(used)}</Text>
 
             {error && <Text style={styles.error}>{error}</Text>}
 
