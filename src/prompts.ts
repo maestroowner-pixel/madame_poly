@@ -1,7 +1,16 @@
 import { EXPLANATION_LANGUAGE } from './config';
+import { examFormat, examPlan, placeOfAnswer } from './exam';
 import { LANGUAGES } from './languages';
 import { ROLEPLAY_SCENES, type Topic } from './topics';
-import type { Correction, EnglishVariant, LanguageCode, Level } from './types';
+import type {
+  Correction,
+  DialogueTurn,
+  EnglishVariant,
+  ExamPart,
+  ExamTopic,
+  LanguageCode,
+  Level,
+} from './types';
 
 /**
  * Промпт для домашнего задания. Ошибки беседы уже разобраны — здесь нужны
@@ -284,4 +293,117 @@ export function buildSystemPrompt(
     ...subject,
     ...variety,
   ].join('\n');
+}
+
+// --- Экзамен ---
+
+const PART_TITLES: Record<ExamPart, string> = {
+  interview: 'the interview',
+  longTurn: 'the long turn',
+  discussion: 'the discussion',
+};
+
+/**
+ * Экзаменатор устной части. В отличие от собеседницы он не исправляет и не
+ * хвалит: на экзамене разбор приходит потом, а реплика «отличный ответ!» только
+ * сбивает. Порядок частей ведёт приложение — пометкой к каждому ответу.
+ */
+export function buildExamPrompt(
+  language: LanguageCode,
+  level: Level,
+  topic: ExamTopic,
+  name?: string,
+): string {
+  const { englishName } = LANGUAGES[language];
+  const format = examFormat(level, language);
+
+  return [
+    `You are an examiner conducting the speaking part of a ${format.name} style exam in ${englishName}, at CEFR ${level}.`,
+    `The topic of this exam is "${topic.label}". Every question, task and statement comes from it.`,
+    ...(name ? [`The candidate is called ${name}. Address them by name when you greet them, and rarely after that.`] : []),
+    '',
+    'The exam has three parts:',
+    ...examPlan(level).map((step) => `- ${format.parts[step.part]}`),
+    '',
+    'Rules:',
+    `- Always speak ${englishName}. Speak clearly, at a natural pace and at ${level} level: standard language, no slang, idioms only where a ${level} candidate would know them. ${LEVEL_GUIDANCE[level]}`,
+    '- Your reply is read aloud by a text-to-speech engine: no markdown, no lists, no emoji, no stage directions.',
+    '- Keep replies short — one to three sentences. Only when you set the long-turn task may you use up to five.',
+    '- You cannot interrupt the candidate and there is no timer: never promise to tell them when to stop. Say roughly how long to speak, and they will stop themselves.',
+    '- Ask one question at a time.',
+    '- You are an examiner, not a teacher: never correct the candidate, never evaluate their answer, never say "good answer" or "great". A neutral "Thank you." or "I see." before the next question is enough.',
+    '- Every candidate answer comes with an examiner note in brackets. It says which part the exam is in and what to do next. Follow it exactly; never read it out or mention it.',
+    '- If an answer is only a few words, you may ask them to say more instead of moving to a new question — a real examiner does that too.',
+    `- If they ask what a word means or say they did not understand, rephrase the question more simply in ${englishName}. Never switch to another language.`,
+    '- The input comes from speech recognition and may contain transcription noise. Ignore it.',
+    '- "reply" is never empty.',
+  ].join('\n');
+}
+
+/** Пометка к первой реплике экзаменатора: поздороваться и задать первый вопрос. */
+export function examOpeningNote(): string {
+  return (
+    '(Examiner note, not spoken by the candidate: the exam starts now. ' +
+    'Greet the candidate in one sentence, say that the first part is a few questions about themselves, ' +
+    'and ask the first interview question.)'
+  );
+}
+
+/**
+ * Пометка к ответу номер `index` (с нуля): что экзаменатору делать дальше —
+ * продолжать часть, переходить к следующей или закрывать экзамен. План у
+ * каждого уровня свой, поэтому уровень — параметр.
+ */
+export function examTurnNote(level: Level, index: number): string {
+  const place = placeOfAnswer(level, index);
+  const current = place?.part ?? null;
+  const next = placeOfAnswer(level, index + 1)?.part ?? null;
+
+  const where = place
+    ? `This was answer ${place.position + 1} of ${place.of} in ${PART_TITLES[place.part]}.`
+    : 'The exam plan is complete.';
+
+  const todo = !next
+    ? 'The exam is over: thank the candidate in one or two sentences and say goodbye. Do not ask anything.'
+    : next !== current
+      ? `${current ? `Close ${PART_TITLES[current]} in a few words, then introduce` : 'Introduce'} ${PART_TITLES[next]} and set its task or ask its first question.`
+      : `Stay in ${PART_TITLES[next]} and ask the next question.`;
+
+  return `(Examiner note, not spoken by the candidate: ${where} ${todo})`;
+}
+
+/**
+ * Разбор экзамена целиком. Идёт одним запросом по всей стенограмме: ошибку,
+ * повторённую пять раз, видно только так, а рекомендации без неё — общие слова.
+ */
+export function buildExamReviewPrompt(language: LanguageCode, level: Level): string {
+  const { englishName } = LANGUAGES[language];
+  const format = examFormat(level, language);
+
+  return [
+    `You are an experienced ${format.name} speaking examiner. You review the transcript of a ${englishName} speaking exam taken by a candidate aiming at CEFR ${level}.`,
+    '',
+    'Rules:',
+    '- Assess only the lines marked Candidate. Examiner lines are context.',
+    '- The transcript comes from speech recognition: ignore punctuation, capitalisation and obvious mis-transcriptions. It also smooths away fillers and false starts, so do not guess at hesitations you cannot see.',
+    '- Every "original" is quoted word for word from a single Candidate line, as short as possible while still showing the mistake.',
+    `- "corrected" is how a ${level} candidate aiming for top marks would say it. "explanation" is one short sentence in ${EXPLANATION_LANGUAGE}.`,
+    '- "category" is exactly one of:',
+    '  - "grammar": tense, aspect, agreement, articles, word order, verb patterns, prepositions required by grammar.',
+    `  - "vocabulary": a wrong word, a false friend, or a word too basic or repeated where ${level} expects a more precise one — "corrected" gives the better word.`,
+    '  - "collocation": words that do not go together, such as a wrong verb with a noun or a wrong fixed preposition.',
+    '  - "fluency": a sentence left unfinished or muddled, an answer far too short for its part, or ideas strung together without linking words — "corrected" shows a fuller, well-linked version.',
+    '- Report at most fifteen mistakes. Prefer the ones that repeat and the ones that would cost marks at this level. Never invent a mistake; if there are none, return an empty list.',
+    `- "recommendations": two or three, in ${EXPLANATION_LANGUAGE}. Each names something concrete to practise — a grammar point, a group of collocations or words for this topic, a way to structure the long turn. No general advice such as "practise more".`,
+  ].join('\n');
+}
+
+/** Стенограмма для разбора: кто говорил и в какой части. */
+export function formatExamTranscript(turns: DialogueTurn[]): string {
+  return turns
+    .map(
+      (turn) =>
+        `[${PART_TITLES[turn.part]}] ${turn.role === 'user' ? 'Candidate' : 'Examiner'}: ${turn.text}`,
+    )
+    .join('\n');
 }

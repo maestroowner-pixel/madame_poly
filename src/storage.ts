@@ -5,6 +5,10 @@ import { LANGUAGE_CODES } from './languages';
 import { touch } from './services/sync';
 import type {
   ArchivedSession,
+  DialogueTurn,
+  ErrorReport,
+  ExamSession,
+  SessionReport,
   Homework,
   LanguageCode,
   Level,
@@ -36,6 +40,10 @@ const keyWriting = (language: LanguageCode) => `polyglotta:writing:${language}`;
 const KEY_LESSONS = 'polyglotta:lessons';
 const KEY_USAGE = 'polyglotta:usage';
 const KEY_SPEND = 'polyglotta:spend';
+const KEY_EXAMS = 'polyglotta:exams';
+const keyExamTurns = (id: string) => `polyglotta:exam:${id}`;
+const keyExamReport = (id: string) => `polyglotta:examReport:${id}`;
+const keyExamLevel = (language: LanguageCode) => `polyglotta:examLevel:${language}`;
 
 /**
  * Любая запись отмечается временем — по нему синхронизация решает, чьи данные
@@ -448,4 +456,73 @@ export async function addSpend(usd: number): Promise<Spend> {
   const next: Spend = { month: spend.month, usd: spend.usd + usd };
   await write(KEY_SPEND, JSON.stringify(next));
   return next;
+}
+
+// --- Экзамен ---
+
+function parse<T>(raw: string | null, fallback: T): T {
+  if (!raw) return fallback;
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    return fallback;
+  }
+}
+
+/**
+ * Уровень экзамена по языку; null — ещё не выбирали, и экран подставит
+ * ближайший к уровню беседы. Свой у каждого языка: B2 по-английски и B1
+ * по-немецки — обычное дело.
+ */
+export async function loadExamLevel(language: LanguageCode): Promise<Level | null> {
+  const raw = await AsyncStorage.getItem(keyExamLevel(language));
+  return raw === 'B1' || raw === 'B2' ? raw : null;
+}
+
+export async function saveExamLevel(language: LanguageCode, level: Level): Promise<void> {
+  await write(keyExamLevel(language), level);
+}
+
+/** История экзаменов, новые сверху. */
+export async function loadExamSessions(): Promise<ExamSession[]> {
+  return parse(await AsyncStorage.getItem(KEY_EXAMS), [] as ExamSession[]);
+}
+
+export async function loadSessionReport(id: string): Promise<SessionReport | null> {
+  const session = (await loadExamSessions()).find((item) => item.id === id);
+  if (!session) return null;
+
+  const [turns, report] = await Promise.all([
+    AsyncStorage.getItem(keyExamTurns(id)),
+    AsyncStorage.getItem(keyExamReport(id)),
+  ]);
+  return {
+    ...session,
+    turns: parse(turns, [] as DialogueTurn[]),
+    report: parse(report, null as ErrorReport | null),
+  };
+}
+
+/**
+ * Сохраняет сессию и возвращает обновлённую историю. Строка списка, реплики и
+ * разбор — три ключа: в облако каждый уходит отдельным документом, и длинная
+ * история не упрётся в предел размера одного.
+ */
+export async function saveSessionReport(full: SessionReport): Promise<ExamSession[]> {
+  const { turns, report, ...session } = full;
+  const others = (await loadExamSessions()).filter((item) => item.id !== session.id);
+  const list = [session, ...others].sort((a, b) => b.startedAt - a.startedAt);
+
+  await write(keyExamTurns(session.id), JSON.stringify(turns));
+  if (report) await write(keyExamReport(session.id), JSON.stringify(report));
+  await write(KEY_EXAMS, JSON.stringify(list));
+  return list;
+}
+
+export async function deleteExamSession(id: string): Promise<ExamSession[]> {
+  const list = (await loadExamSessions()).filter((item) => item.id !== id);
+  await drop(keyExamTurns(id));
+  await drop(keyExamReport(id));
+  await write(KEY_EXAMS, JSON.stringify(list));
+  return list;
 }

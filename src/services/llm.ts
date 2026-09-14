@@ -10,6 +10,8 @@ import {
   HISTORY_WINDOW,
 } from '../config';
 import {
+  buildExamPrompt,
+  buildExamReviewPrompt,
   buildExplanationPrompt,
   buildHomeworkPrompt,
   buildListeningCheckPrompt,
@@ -17,21 +19,29 @@ import {
   buildSystemPrompt,
   buildWritingPrompt,
   buildWritingReviewPrompt,
+  examOpeningNote,
+  examTurnNote,
   formatCorrections,
+  formatExamTranscript,
 } from '../prompts';
 import { assertBudget, charge, claudeCost } from './meter';
 import type { Topic } from '../topics';
-import type {
-  Correction,
-  EnglishVariant,
-  Homework,
-  LanguageCode,
-  Level,
-  Listening,
-  ListeningVerdict,
-  Message,
-  WritingReview,
-  WritingTask,
+import {
+  ERROR_CATEGORIES,
+  type Correction,
+  type DialogueTurn,
+  type EnglishVariant,
+  type ErrorCategory,
+  type ErrorReport,
+  type ExamTopic,
+  type Homework,
+  type LanguageCode,
+  type Level,
+  type Listening,
+  type ListeningVerdict,
+  type Message,
+  type WritingReview,
+  type WritingTask,
 } from '../types';
 import { t } from '../i18n';
 
@@ -104,6 +114,23 @@ const WritingReviewSchema = z.object({
 
 const CheckSchema = z.object({
   verdicts: z.array(VerdictSchema),
+});
+
+const ExaminerSchema = z.object({
+  /** Реплика экзаменатора — она же уходит в TTS. */
+  reply: z.string(),
+});
+
+const ExamReviewSchema = z.object({
+  errors: z.array(
+    z.object({
+      original: z.string(),
+      corrected: z.string(),
+      explanation: z.string(),
+      category: z.enum(ERROR_CATEGORIES as [ErrorCategory, ...ErrorCategory[]]),
+    }),
+  ),
+  recommendations: z.array(z.string()),
 });
 
 const client = new Anthropic({
@@ -502,6 +529,130 @@ export async function reviewWriting(params: {
       said.includes(normalise(correction.original)),
     ),
     improved: parsed.improved.trim(),
+    createdAt: Date.now(),
+  };
+}
+
+/**
+ * Реплика экзаменатора. Схема та же, что у беседы, только без разбора: на
+ * экзамене ошибки не показывают по ходу, их собирает разбор в конце — так и
+ * дешевле, и не сбивает человека посреди монолога.
+ *
+ * Пометка «что делать дальше» идёт вторым блоком последней реплики и в историю
+ * не попадает: история пересылается без неё, и начало запроса остаётся тем же,
+ * что было закэшировано на прошлом ходе.
+ */
+export async function examinerTurn(params: {
+  /** Реплики до ответа — без него. Пустая история значит начало экзамена. */
+  history: DialogueTurn[];
+  /** Ответ человека; null — экзамен только начинается. */
+  answer: string | null;
+  /** Сколько ответов было до этого — по нему пометка выбирает следующий шаг. */
+  answerIndex: number;
+  language: LanguageCode;
+  level: Level;
+  topic: ExamTopic;
+  name?: string;
+}): Promise<string> {
+  const { history, answer, answerIndex, language, level, topic, name } = params;
+
+  if (!ANTHROPIC_API_KEY) throw new Error(t.noAnthropicKey);
+
+  const context: Anthropic.MessageParam[] = windowed(history).map((turn, index, all) => ({
+    role: turn.role,
+    content:
+      index === all.length - 1
+        ? [{ type: 'text', text: turn.text, cache_control: { type: 'ephemeral' } }]
+        : turn.text,
+  }));
+
+  const note = answer === null ? examOpeningNote() : examTurnNote(level, answerIndex);
+  const last: Anthropic.MessageParam = {
+    role: 'user',
+    content: [
+      ...(answer === null ? [] : [{ type: 'text' as const, text: answer }]),
+      { type: 'text', text: note },
+    ],
+  };
+
+  const ask = async () => {
+    const response = await metered(() =>
+      client.messages.parse({
+        model: CLAUDE_MODEL,
+        max_tokens: CLAUDE_MAX_TOKENS,
+        system: [
+          {
+            type: 'text',
+            text: buildExamPrompt(language, level, topic, name),
+            cache_control: { type: 'ephemeral' },
+          },
+        ],
+        thinking: { type: 'disabled' },
+        messages: [...context, last],
+        output_config: { format: zodOutputFormat(ExaminerSchema) },
+      }),
+    );
+    return response.parsed_output?.reply.trim() ?? '';
+  };
+
+  /**
+   * Как и в беседе: пустой ответ — редкая осечка, просим ещё раз. На экзамене
+   * осечка приходила и не пустой, а строкой из точек, — её тоже не озвучиваем.
+   */
+  const spoken = (text: string) => (/\p{L}{2}/u.test(text) ? text : '');
+  const reply = spoken(await ask()) || spoken(await ask());
+  if (!reply) throw new Error(t.badTurn);
+  return reply;
+}
+
+/**
+ * Разбор экзамена по всей стенограмме: ошибки по категориям и что подтянуть.
+ * Счёт по категориям считаем сами, а не просим у модели, — иначе цифры
+ * расходились бы со списком под ними.
+ */
+export async function reviewExam(params: {
+  turns: DialogueTurn[];
+  language: LanguageCode;
+  level: Level;
+}): Promise<ErrorReport> {
+  const { turns, language, level } = params;
+
+  if (!ANTHROPIC_API_KEY) throw new Error(t.noAnthropicKey);
+  const answers = turns.filter((turn) => turn.role === 'user');
+  if (answers.length === 0) throw new Error(t.examNothingToReview);
+
+  const response = await metered(() =>
+    client.messages.parse({
+      model: CLAUDE_MODEL,
+      max_tokens: 8192,
+      system: buildExamReviewPrompt(language, level),
+      thinking: { type: 'disabled' },
+      messages: [{ role: 'user', content: `Transcript:\n${formatExamTranscript(turns)}` }],
+      output_config: { format: zodOutputFormat(ExamReviewSchema) },
+    }),
+  );
+
+  const parsed = response.parsed_output;
+  if (!parsed) throw new Error(t.examReviewFailed);
+
+  // Цитату сверяем с ответами человека: реплику экзаменатора в ошибки не пускаем.
+  const said = answers.map((turn) => normalise(turn.text));
+  const errors = parsed.errors.filter((error) => {
+    const quote = normalise(error.original);
+    return quote !== '' && said.some((text) => text.includes(quote));
+  });
+
+  const summary = Object.fromEntries(
+    ERROR_CATEGORIES.map((category) => [
+      category,
+      errors.filter((error) => error.category === category).length,
+    ]),
+  ) as Record<ErrorCategory, number>;
+
+  return {
+    errors,
+    summary,
+    recommendations: parsed.recommendations.map((line) => line.trim()).filter(Boolean),
     createdAt: Date.now(),
   };
 }

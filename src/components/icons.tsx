@@ -417,6 +417,50 @@ export function PenIcon({ size, color }: Props) {
   );
 }
 
+/** Экзамен: планшет экзаменатора — лист с зажимом сверху и строками ответов. */
+export function ExamIcon({ size, color }: Props) {
+  const line = Math.max(1.6, size * 0.085);
+
+  return (
+    <View style={[styles.box, { width: size, height: size }]}>
+      <View
+        style={{
+          position: 'absolute',
+          top: size * 0.12,
+          width: size * 0.66,
+          height: size * 0.8,
+          borderWidth: line,
+          borderColor: color,
+          borderRadius: size * 0.08,
+        }}
+      />
+      <View
+        style={{
+          position: 'absolute',
+          top: size * 0.04,
+          width: size * 0.3,
+          height: size * 0.16,
+          borderRadius: line,
+          backgroundColor: color,
+        }}
+      />
+      {[0.42, 0.58, 0.74].map((top) => (
+        <View
+          key={top}
+          style={{
+            position: 'absolute',
+            top: size * top,
+            width: size * 0.36,
+            height: line,
+            borderRadius: line,
+            backgroundColor: color,
+          }}
+        />
+      ))}
+    </View>
+  );
+}
+
 /** Книга: две страницы, разделённые корешком. */
 export function BookIcon({ size, color }: Props) {
   const line = Math.max(1.6, size * 0.085);

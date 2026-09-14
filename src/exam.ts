@@ -1,0 +1,276 @@
+import { locale, type UiLocale } from './i18n';
+import type { ExamPart, ExamTopic, LanguageCode, Level } from './types';
+
+/**
+ * Всё, чем экзамен на одном языке и уровне отличается от другого, — здесь:
+ * названия тем, на какой экзамен похож формат, как в нём звучит каждая часть и
+ * сколько ответов она занимает. Логика частей, промпты и экраны от языка и
+ * уровня не зависят — новый язык, уровень или тема добавляются в этом файле.
+ */
+
+/** Уровни, для которых описан формат экзамена. */
+export type ExamLevel = 'B1' | 'B2';
+
+export const EXAM_LEVELS: ExamLevel[] = ['B1', 'B2'];
+
+/**
+ * С какого уровня экзамена начать, пока человек не выбрал сам: ближайший к его
+ * уровню в беседе. На A2 честнее начинать с B1, на C1 — с B2.
+ */
+export function defaultExamLevel(level: Level): ExamLevel {
+  return level === 'A1' || level === 'A2' || level === 'B1' ? 'B1' : 'B2';
+}
+
+/** Уровень сессии из истории — на случай, если сохранён какой-то другой. */
+function asExamLevel(level: Level): ExamLevel {
+  return level === 'B1' ? 'B1' : 'B2';
+}
+
+/**
+ * Типовые темы устной части. Одни на оба уровня: на B1 о работе и экологии тоже
+ * спрашивают — меняются глубина вопросов и форма монолога, а не сами темы.
+ * Порядок — как в списке на экране.
+ */
+export const EXAM_TOPIC_IDS = [
+  'work',
+  'environment',
+  'technology',
+  'education',
+  'health',
+  'travel',
+  'culture',
+] as const;
+
+type ExamTopicId = (typeof EXAM_TOPIC_IDS)[number];
+
+/** Названия на изучаемом языке — экзаменатор получает тему в них. */
+const LABELS: Record<LanguageCode, Record<ExamTopicId, string>> = {
+  en: {
+    work: 'Work and careers',
+    environment: 'The environment',
+    technology: 'Technology',
+    education: 'Education',
+    health: 'Health and lifestyle',
+    travel: 'Travel and tourism',
+    culture: 'Culture and the arts',
+  },
+  de: {
+    work: 'Arbeit und Beruf',
+    environment: 'Umwelt',
+    technology: 'Technik und Digitalisierung',
+    education: 'Bildung',
+    health: 'Gesundheit und Lebensstil',
+    travel: 'Reisen und Tourismus',
+    culture: 'Kultur und Kunst',
+  },
+  fr: {
+    work: 'Le travail et la carrière',
+    environment: "L'environnement",
+    technology: 'Les nouvelles technologies',
+    education: "L'éducation",
+    health: 'La santé et le mode de vie',
+    travel: 'Les voyages et le tourisme',
+    culture: 'La culture et les arts',
+  },
+  es: {
+    work: 'El trabajo y la carrera profesional',
+    environment: 'El medio ambiente',
+    technology: 'La tecnología',
+    education: 'La educación',
+    health: 'La salud y el estilo de vida',
+    travel: 'Los viajes y el turismo',
+    culture: 'La cultura y las artes',
+  },
+};
+
+/** Названия на языке интерфейса — под названием темы в списке. */
+const GLOSSES: Record<ExamTopicId, Record<UiLocale, string>> = {
+  work: { en: 'Work and careers', uk: 'Робота та кар’єра', es: 'Trabajo y carrera', ru: 'Работа и карьера' },
+  environment: { en: 'The environment', uk: 'Довкілля', es: 'Medio ambiente', ru: 'Экология' },
+  technology: { en: 'Technology', uk: 'Технології', es: 'Tecnología', ru: 'Технологии' },
+  education: { en: 'Education', uk: 'Освіта', es: 'Educación', ru: 'Образование' },
+  health: { en: 'Health and lifestyle', uk: 'Здоров’я та спосіб життя', es: 'Salud y estilo de vida', ru: 'Здоровье и образ жизни' },
+  travel: { en: 'Travel and tourism', uk: 'Подорожі та туризм', es: 'Viajes y turismo', ru: 'Путешествия и туризм' },
+  culture: { en: 'Culture and the arts', uk: 'Культура та мистецтво', es: 'Cultura y artes', ru: 'Культура и искусство' },
+};
+
+export function examTopics(language: LanguageCode): ExamTopic[] {
+  return EXAM_TOPIC_IDS.map((id) => ({ id, label: LABELS[language][id] }));
+}
+
+export function findExamTopic(language: LanguageCode, id: string): ExamTopic | null {
+  return examTopics(language).find((topic) => topic.id === id) ?? null;
+}
+
+export function examTopicGloss(id: string): string {
+  return GLOSSES[id as ExamTopicId]?.[locale] ?? '';
+}
+
+/** Формат устной части: на какой экзамен похож и что происходит в каждой части. */
+export interface ExamFormat {
+  /** Название экзамена — показывается человеку и называется экзаменатору. */
+  name: string;
+  /** Что делает экзаменатор в каждой части. Уходит в промпт, поэтому по-английски. */
+  parts: Record<ExamPart, string>;
+}
+
+/**
+ * Три части у всех экзаменов одни и те же по сути — вопросы о себе, монолог,
+ * разговор, — а различаются формой монолога и разговора. Их и описываем.
+ * Картинок в голосовом приложении нет, поэтому задания с фотографиями заменены
+ * словесным описанием сцены. Где в настоящем экзамене части идут в другом
+ * порядке, это сказано прямо в описании.
+ */
+const EXAM_FORMATS: Record<ExamLevel, Record<LanguageCode, ExamFormat>> = {
+  B1: {
+    en: {
+      name: 'Cambridge B1 Preliminary',
+      parts: {
+        interview:
+          "Part 1 (Interview): simple questions about the candidate's everyday life connected to the topic — where they live, what they do, what they like. A sentence or two per answer is enough.",
+        longTurn:
+          'Part 2 (Long turn): in the real exam the candidate describes a photograph for about a minute. There are no pictures here, so describe an everyday scene related to the topic in two or three simple sentences, then ask the candidate to imagine it and talk about it on their own for about a minute: who is there, what the people are doing, and whether they would like to be there. After that, ask one short, simple question about what they said.',
+        discussion:
+          'Parts 3 and 4 (Discussion): describe a simple everyday situation with a few options — a present, a day out, an activity — and ask which they think is best and why. Then ask about their own habits, likes and experience connected to it.',
+      },
+    },
+    de: {
+      name: 'Goethe-Zertifikat B1',
+      parts: {
+        interview:
+          "Warm-up before the scored parts: a few simple questions about the candidate's own life connected to the topic.",
+        longTurn:
+          'Teil 2 (Ein Thema präsentieren): give the candidate a simple question on the topic and ask for a short presentation in the order of the real exam — introduce the topic, their own experience, the situation in their home country, advantages and disadvantages with their opinion, and a closing sentence. After the presentation, ask one simple question about it, as in Teil 3.',
+        discussion:
+          'Teil 1 (Gemeinsam etwas planen), which comes first in the real exam and closes it here: suggest planning something together that is connected to the topic — an outing, a party, a visit — and agree on when, where, what to take and who does what. Make suggestions, accept some and politely turn others down.',
+      },
+    },
+    fr: {
+      name: 'DELF B1',
+      parts: {
+        interview:
+          'Entretien dirigé: questions about the candidate — their life, studies or work and interests — connected to the topic.',
+        longTurn:
+          "Expression d'un point de vue, which comes last in the real exam: give a short, simple statement on the topic in one or two sentences, in the spirit of the real exam's document déclencheur, and ask the candidate to say what it is about and give their opinion with a couple of examples. After that, ask one question about their view.",
+        discussion:
+          'Exercice en interaction: a short role play in an everyday situation connected to the topic. You play the other person — a neighbour, a colleague, a shop assistant — and the candidate has to sort out a small problem, ask for something or persuade you. Stay in the role and raise one small difficulty.',
+      },
+    },
+    es: {
+      name: 'DELE B1',
+      parts: {
+        interview:
+          'Short introduction: a few simple questions about the candidate and their everyday life connected to the topic.',
+        longTurn:
+          'Tarea 1 (presentación de un tema): give the candidate a simple question on the topic with three or four points to cover — their own experience, what they like and dislike, how it is in their country — and ask them to speak on their own for two or three minutes. Afterwards, as in Tarea 2, ask one question about the presentation.',
+        discussion:
+          'Tarea 4 (situación simulada): a short role play in an everyday situation connected to the topic. You are the other person — a travel agent, a colleague, a friend — and the candidate has to explain what they need and agree on a solution with you.',
+      },
+    },
+  },
+  B2: {
+    en: {
+      name: 'Cambridge B2 First',
+      parts: {
+        interview:
+          "Part 1 (Interview): short questions about the candidate's own life connected to the topic — their work or studies, habits, likes and plans. Two or three sentences per answer are expected.",
+        longTurn:
+          'Part 2 (Long turn): in the real exam the candidate compares two photographs. There are no pictures here, so describe two contrasting situations related to the topic in one sentence each, then ask the candidate to compare them and say which they prefer and why, speaking on their own for about a minute. After the long turn, ask one short follow-up question about it.',
+        discussion:
+          'Parts 3 and 4 (Discussion): ask for their opinion on broader questions about the topic — causes and consequences, advantages and disadvantages, what should change. Now and then challenge their view politely and ask them to justify it.',
+      },
+    },
+    de: {
+      name: 'Goethe-Zertifikat B2',
+      parts: {
+        interview:
+          "Warm-up before the scored parts: a few short questions about the candidate's own experience with the topic.",
+        longTurn:
+          'Teil 1 (Vortrag halten): give the candidate a concrete question on the topic and ask for a short presentation — the situation, their own experience or that of people they know, advantages and disadvantages, and their opinion. After the presentation, ask one question about it, as the examiner does in the real exam.',
+        discussion:
+          'Teil 2 (Diskussion): put a debatable question about the topic and discuss it. Take a different view now and then so they have to argue, react to your points and move towards a conclusion.',
+      },
+    },
+    fr: {
+      name: 'DELF B2',
+      parts: {
+        interview:
+          'Short introduction before the main task: a few questions about the candidate and their own connection to the topic.',
+        longTurn:
+          "Monologue suivi: give a short statement on the topic in one or two sentences, in the spirit of the real exam's document déclencheur, and ask the candidate to identify the issue it raises and to present and defend a point of view with arguments and examples.",
+        discussion:
+          "Exercice en interaction: debate the candidate's point of view. Take the opposite side at times and ask them to clarify, nuance and defend their position.",
+      },
+    },
+    es: {
+      name: 'DELE B2',
+      parts: {
+        interview:
+          'Short introduction: a few questions about the candidate and their own experience of the topic.',
+        longTurn:
+          'Tarea 1 (valorar propuestas): describe a problem related to the topic and give three or four proposed solutions in one sentence each. Ask the candidate to evaluate them — advantages, drawbacks, which one they would choose — speaking on their own for a couple of minutes. Afterwards ask one question about their evaluation.',
+        discussion:
+          'Conversation, as at the end of Tarea 1 and in Tarea 3: ask their opinion on wider questions about the topic, with follow-up questions and a counter-argument now and then.',
+      },
+    },
+  },
+};
+
+export function examFormat(level: Level, language: LanguageCode): ExamFormat {
+  return EXAM_FORMATS[asExamLevel(level)][language];
+}
+
+type ExamPlan = { part: ExamPart; answers: number }[];
+
+/**
+ * Сколько ответов человека уходит на каждую часть. Части считает приложение, а
+ * не модель: модель, которой сказали «переходи, когда сочтёшь нужным», то
+ * застревала бы на знакомстве, то проскакивала монолог. Счёт по ответам, а не
+ * по минутам: паузу на раздумье минута засчитала бы как ответ.
+ *
+ * На B1 разговор короче: ответы проще, и четвёртый круг спора о том же на этом
+ * уровне превращается в повтор уже сказанного.
+ */
+const EXAM_PLANS: Record<ExamLevel, ExamPlan> = {
+  B1: [
+    { part: 'interview', answers: 3 },
+    // Монолог и один вопрос по нему.
+    { part: 'longTurn', answers: 2 },
+    { part: 'discussion', answers: 3 },
+  ],
+  B2: [
+    { part: 'interview', answers: 3 },
+    { part: 'longTurn', answers: 2 },
+    { part: 'discussion', answers: 4 },
+  ],
+};
+
+export function examPlan(level: Level): ExamPlan {
+  return EXAM_PLANS[asExamLevel(level)];
+}
+
+/** Сколько ответов ждёт план уровня целиком. */
+export function examAnswers(level: Level): number {
+  return examPlan(level).reduce((total, step) => total + step.answers, 0);
+}
+
+/**
+ * Где в плане ответ с этим номером (с нуля): часть и место внутри неё — «вопрос
+ * 2 из 3» в пометке экзаменатору. null — план исчерпан.
+ */
+export function placeOfAnswer(
+  level: Level,
+  index: number,
+): { part: ExamPart; position: number; of: number } | null {
+  let left = index;
+  for (const step of examPlan(level)) {
+    if (left < step.answers) return { part: step.part, position: left, of: step.answers };
+    left -= step.answers;
+  }
+  return null;
+}
+
+/** К какой части относится ответ с этим номером (с нуля); null — план исчерпан. */
+export function partOfAnswer(level: Level, index: number): ExamPart | null {
+  return placeOfAnswer(level, index)?.part ?? null;
+}

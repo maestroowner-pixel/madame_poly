@@ -1,34 +1,16 @@
-import {
-  AudioModule,
-  RecordingPresets,
-  setAudioModeAsync,
-  useAudioPlayer,
-  useAudioRecorder,
-  useAudioRecorderState,
-} from 'expo-audio';
+import { AudioModule } from 'expo-audio';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import {
-  AUTOPLAY_TTS,
-  MAX_TURN_MS,
-  METERING_INTERVAL_MS,
-  MIN_SPEECH_MS,
-  PEAK_DECAY_DB,
-  QUIET_RISE_DB,
-  SILENCE_FLOOR_DB,
   SILENCE_HOLD_MS,
   SPEECH_MATCH_SHARE,
   SPEECH_RATE_MAX,
   SPEECH_RATE_MIN,
   SPEECH_REFERENCE_WPM,
-  SPEECH_SHARE,
   WPM_BLEND,
   type SpeechMode,
-  VOICE_RANGE_DB,
-  WORK_RANGE_DB,
 } from '../config';
 import { explainCorrection, generateHomework, openConversation, respond } from '../services/llm';
-import { transcribe } from '../services/stt';
 import { synthesize } from '../services/tts';
 import {
   archiveSession,
@@ -70,33 +52,18 @@ import type {
   TurnMode,
 } from '../types';
 import { t } from '../i18n';
+import { useVoiceLoop, type Reply } from './useVoiceLoop';
 
-export type Status = 'idle' | 'listening' | 'transcribing' | 'thinking' | 'speaking';
+export type { Status } from './useVoiceLoop';
 
 let messageCounter = 0;
-const nextId = () => `${Date.now()}-${messageCounter++}`;
-
-/** Переводит dBFS в 0…1 для индикатора уровня. */
-function levelToUnit(db: number | undefined): number {
-  if (db === undefined) return 0;
-  return Math.max(0, Math.min(1, (db + 60) / 60));
-}
+export const nextId = () => `${Date.now()}-${messageCounter++}`;
 
 export function useConversation() {
-  // Метеринг нужен, чтобы услышать паузу и закончить реплику без тапа.
-  const recorder = useAudioRecorder({
-    ...RecordingPresets.HIGH_QUALITY,
-    isMeteringEnabled: true,
-  });
-  const recorderState = useAudioRecorderState(recorder, METERING_INTERVAL_MS);
-  const player = useAudioPlayer(null);
-
   const [ready, setReady] = useState(false);
   const [language, setLanguage] = useState<LanguageCode>('en');
   const [levels, setLevels] = useState<LevelMap | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
-  const [status, setStatus] = useState<Status>('idle');
-  const [sessionActive, setSessionActive] = useState(false);
   const [topicId, setTopicId] = useState<string | null>(null);
   const [archive, setArchive] = useState<ArchivedSession[]>([]);
   const [profile, setProfileState] = useState<Profile>(EMPTY_PROFILE);
@@ -126,28 +93,6 @@ export function useConversation() {
   const userWpmRef = useRef<number | null>(null);
   const variantRef = useRef<EnglishVariant>(englishVariant);
   variantRef.current = englishVariant;
-  const sessionRef = useRef(false);
-
-  // Состояние определения границы реплики.
-  const lastSoundAtRef = useRef(0);
-  const speechMsRef = useRef(0);
-  /**
-   * Приходил ли вообще уровень входа. Без него речь не измерить, и каждая
-   * реплика уходила бы в тишину — на iPhone так и случилось.
-   */
-  const meteringSeenRef = useRef(false);
-  /** Длительность записи для колбэков: пересоздавать их на каждый тик незачем. */
-  const durationRef = useRef(0);
-  /** Шкала текущей реплики: самое громкое и самое тихое, что в ней слышали. */
-  const peakRef = useRef(-160);
-  const quietRef = useRef(0);
-  /** Наибольший разброс за реплику — по нему судим, был ли вообще голос. */
-  const rangeMaxRef = useRef(0);
-  const turnBusyRef = useRef(false);
-  /** listen() вызывается из слушателя плеера — держим свежую версию в ref. */
-  const listenRef = useRef<() => Promise<void>>(async () => {});
-  /** Человек попрощался: доиграть ответ и закончить, а не слушать снова. */
-  const endAfterPlaybackRef = useRef(false);
 
   /**
    * Читает всё сохранённое в память. Вызывается при запуске и после
@@ -255,90 +200,39 @@ export function useConversation() {
     void saveUserWpm(next);
   }, []);
 
-  /** Начинает слушать следующую реплику. */
-  const listen = useCallback(async () => {
-    if (!sessionRef.current) {
-      setStatus('idle');
-      return;
-    }
-    try {
-      await setAudioModeAsync({ playsInSilentMode: true, allowsRecording: true });
-      await recorder.prepareToRecordAsync();
-      recorder.record();
-      lastSoundAtRef.current = Date.now();
-      speechMsRef.current = 0;
-      peakRef.current = -160;
-      quietRef.current = 0;
-      rangeMaxRef.current = 0;
-      setStatus('listening');
-    } catch (e: unknown) {
-      sessionRef.current = false;
-      setSessionActive(false);
-      setError(e instanceof Error ? e.message : String(e));
-      setStatus('idle');
-    }
-  }, [recorder]);
-  listenRef.current = listen;
+  /** Ответ партнёра кладём в ленту сразу, озвучку — когда она будет готова. */
+  const addReply = useCallback(
+    (text: string, farewell: boolean): Reply => {
+      const assistantMessage: Message = {
+        id: nextId(),
+        role: 'assistant',
+        text,
+        createdAt: Date.now(),
+      };
+      persist((previous) => [...previous, assistantMessage]);
 
-  const play = useCallback(
-    async (uri: string) => {
-      // На iOS режим записи приглушает воспроизведение — переключаем перед play.
-      await setAudioModeAsync({ playsInSilentMode: true, allowsRecording: false });
-      player.replace({ uri });
-      player.play();
+      return {
+        text,
+        farewell,
+        onVoiced: (audioUri) =>
+          persist((previous) =>
+            previous.map((message) =>
+              message.id === assistantMessage.id ? { ...message, audioUri } : message,
+            ),
+          ),
+      };
     },
-    [player],
+    [persist],
   );
 
-  /**
-   * Завершает реплику: останавливает запись и гонит её через Whisper → Claude →
-   * TTS. Слушать снова начинаем после того, как ответ доиграет.
-   */
-  const finishTurn = useCallback(async () => {
-    if (turnBusyRef.current || !sessionRef.current) return;
-    turnBusyRef.current = true;
-
-    try {
-      /**
-       * В ручном режиме конец фразы отмечает человек — выбрасывать его запись
-       * как тишину нельзя, каким бы тихим ни вышел уровень. Порог по уровню
-       * остаётся авторежиму, где он бережёт Whisper от фонового шума; если
-       * уровень не приходит вовсе, судим по длительности.
-       */
-      const spokeEnough =
-        turnModeRef.current === 'manual' || !meteringSeenRef.current
-          ? durationRef.current >= MIN_SPEECH_MS
-          : speechMsRef.current >= MIN_SPEECH_MS;
-      await recorder.stop();
-
-      // Молчание не должно быть неотличимо от зависания: говорим, что не
-      // услышали, и слушаем дальше.
-      if (!spokeEnough) {
-        setError(t.tooQuiet);
-        turnBusyRef.current = false;
-        await listenRef.current();
-        return;
-      }
-
-      const uri = recorder.uri;
-      if (!uri) throw new Error(t.recordingLost);
-
+  /** Реплика распознана: в ленту, к партнёру, его ответ — обратно в ленту. */
+  const onHeard = useCallback(
+    async (text: string, durationMs: number): Promise<Reply> => {
       const currentLanguage = languageRef.current;
       const currentLevels = levelsRef.current;
       if (!currentLevels) throw new Error(t.levelsNotReady);
 
-      setStatus('transcribing');
-      const text = await transcribe(uri, currentLanguage);
-      if (!text) {
-        setError(t.notRecognised);
-        turnBusyRef.current = false;
-        await listenRef.current();
-        return;
-      }
-
-      // Реплика дошла — прежняя жалоба на слышимость больше не актуальна.
-      setError(null);
-      measurePace(text, durationRef.current);
+      measurePace(text, durationMs);
 
       const userMessage: Message = {
         id: nextId(),
@@ -349,7 +243,6 @@ export function useConversation() {
       const history = messagesRef.current;
       persist((previous) => [...previous, userMessage]);
 
-      setStatus('thinking');
       const turn = await respond({
         history,
         userText: text,
@@ -366,211 +259,19 @@ export function useConversation() {
         ),
       );
 
-      const assistantMessage: Message = {
-        id: nextId(),
-        role: 'assistant',
-        text: turn.reply,
-        createdAt: Date.now(),
-      };
-      persist((previous) => [...previous, assistantMessage]);
+      return addReply(turn.reply, turn.farewell);
+    },
+    [persist, measurePace, addReply],
+  );
 
-      setStatus('speaking');
-      const audioUri = await synthesize(turn.reply, voiceRate());
-      persist((previous) =>
-        previous.map((message) =>
-          message.id === assistantMessage.id ? { ...message, audioUri } : message,
-        ),
-      );
-
-      turnBusyRef.current = false;
-      // Кнопку «остановить» могли нажать, пока реплика ходила по сети. Ответ уже
-      // сохранён в ленте, но озвучивать его вдогонку и открывать микрофон нельзя.
-      if (!sessionRef.current) {
-        setStatus('idle');
-        return;
-      }
-
-      // Прощание не обрываем на полуслове: сначала даём ответу доиграть.
-      endAfterPlaybackRef.current = turn.farewell;
-
-      if (AUTOPLAY_TTS) {
-        await play(audioUri);
-      } else if (turn.farewell) {
-        sessionRef.current = false;
-        setSessionActive(false);
-        setStatus('idle');
-      } else {
-        await listenRef.current();
-      }
-    } catch (e: unknown) {
-      turnBusyRef.current = false;
-      sessionRef.current = false;
-      setSessionActive(false);
-      setError(e instanceof Error ? e.message : String(e));
-      setStatus('idle');
-    }
-  }, [persist, play, recorder]);
-
-  /**
-   * Граница реплики по спаду уровня. Абсолютных порогов здесь нет намеренно:
-   * один и тот же голос на разных микрофонах даёт разные децибелы, и порог,
-   * подобранный на одном устройстве, на другом не слышит либо голоса, либо
-   * пауз. Речь же всегда громче собственных пауз — на это и опираемся.
-   */
-  useEffect(() => {
-    if (status !== 'listening') return;
-
-    const now = Date.now();
-    if (typeof recorderState.metering === 'number') meteringSeenRef.current = true;
-    durationRef.current = recorderState.durationMillis;
-    const level = recorderState.metering ?? -160;
-
-    // Пустые отсчёты в начале записи не сообщают о комнате ничего — пропускаем,
-    // иначе они станут «самым тихим» и перекосят всю шкалу реплики.
-    if (level <= SILENCE_FLOOR_DB) return;
-
-    // Пик оседает, отметка тишины падает сразу и ползёт вверх: так шкала
-    // подстраивается под комнату и не застревает на случайном хлопке.
-    peakRef.current = Math.max(peakRef.current - PEAK_DECAY_DB, level);
-    quietRef.current =
-      level < quietRef.current ? level : quietRef.current + QUIET_RISE_DB;
-
-    // Границу речи берём долей от разброса, а не в децибелах: тихую фразу на
-    // сжатом микрофоне фиксированный отступ от пика уже не признавал речью.
-    const range = peakRef.current - quietRef.current;
-    rangeMaxRef.current = Math.max(rangeMaxRef.current, range);
-    const isSpeech = range >= WORK_RANGE_DB && level > quietRef.current + range * SPEECH_SHARE;
-
-    /**
-     * Был ли в реплике голос, судим по наибольшему разбросу за всю реплику, а
-     * не по нынешнему: у тихой фразы разброс во время речи мал и расширяется
-     * только на паузе после неё. Проверять в тот же миг значило бы никогда не
-     * признать её речью.
-     */
-    const hasVoice = rangeMaxRef.current >= VOICE_RANGE_DB;
-
-    if (isSpeech) {
-      lastSoundAtRef.current = now;
-      speechMsRef.current += METERING_INTERVAL_MS;
-    }
-
-    const silentFor = now - lastSoundAtRef.current;
-    const spokeEnough = speechMsRef.current >= MIN_SPEECH_MS;
-    const tooLong = recorderState.durationMillis >= MAX_TURN_MS;
-
-    // Паузу ловим только в авторежиме; потолок реплики работает всегда —
-    // он страхует от записи, которую забыли остановить.
-    const pauseEnds =
-      turnModeRef.current === 'auto' && hasVoice && spokeEnough && silentFor >= SILENCE_HOLD_MS;
-
-    if (pauseEnds || tooLong) {
-      void finishTurn();
-    }
-  }, [recorderState, status, finishTurn]);
-
-  /** Ответ доиграл — слушаем следующую реплику или закрываем беседу. */
-  useEffect(() => {
-    const subscription = player.addListener('playbackStatusUpdate', (playback) => {
-      if (!playback.didJustFinish) return;
-
-      if (endAfterPlaybackRef.current) {
-        endAfterPlaybackRef.current = false;
-        sessionRef.current = false;
-        setSessionActive(false);
-        setStatus('idle');
-        return;
-      }
-
-      // В ручном режиме микрофон открывает нажатие: человеку нужно время
-      // прочитать ответ и придумать свой, а не отвечать сразу после гудка.
-      if (turnModeRef.current === 'manual') {
-        setStatus('idle');
-        return;
-      }
-
-      void listenRef.current();
-    });
-    return () => subscription.remove();
-  }, [player]);
-
-  const startSession = useCallback(async () => {
-    setError(null);
-    endAfterPlaybackRef.current = false;
-    sessionRef.current = true;
-    setSessionActive(true);
-
-    const topic = findTopic(languageRef.current, topicRef.current);
-    const levelMap = levelsRef.current;
-
-    // С выбранной темой первым говорит партнёр — иначе непонятно, с чего начать.
-    if (topic && levelMap && messagesRef.current.length === 0) {
-      try {
-        setStatus('thinking');
-        const reply = await openConversation({
-          language: languageRef.current,
-          level: levelMap[languageRef.current],
-          topic,
-          name: profileRef.current.name || undefined,
-          variant: variantRef.current,
-        });
-
-        const opening: Message = {
-          id: nextId(),
-          role: 'assistant',
-          text: reply,
-          createdAt: Date.now(),
-        };
-        persist((previous) => [...previous, opening]);
-
-        setStatus('speaking');
-        const audioUri = await synthesize(reply, voiceRate());
-        persist((previous) =>
-          previous.map((message) =>
-            message.id === opening.id ? { ...message, audioUri } : message,
-          ),
-        );
-
-        // Слушать начнём, когда реплика доиграет — этим займётся слушатель плеера.
-        await play(audioUri);
-        return;
-      } catch (e: unknown) {
-        sessionRef.current = false;
-        setSessionActive(false);
-        setError(e instanceof Error ? e.message : String(e));
-        setStatus('idle');
-        return;
-      }
-    }
-
-    await listen();
-  }, [listen, persist, play]);
-
-  const stopSession = useCallback(async () => {
-    endAfterPlaybackRef.current = false;
-    sessionRef.current = false;
-    setSessionActive(false);
-    player.pause();
-    if (recorderState.isRecording) {
-      try {
-        await recorder.stop();
-      } catch {
-        // Запись могла уже остановиться сама — состояние всё равно сбрасываем.
-      }
-    }
-    setStatus('idle');
-  }, [player, recorder, recorderState.isRecording]);
-
-  /** Ручное начало реплики: человек готов отвечать. */
-  const beginTurn = useCallback(async () => {
-    if (!sessionRef.current || turnBusyRef.current) return;
-    await listen();
-  }, [listen]);
-
-  /** Ручное окончание реплики. */
-  const endTurn = useCallback(async () => {
-    if (!sessionRef.current) return;
-    await finishTurn();
-  }, [finishTurn]);
+  const voice = useVoiceLoop({
+    language: () => languageRef.current,
+    turnMode,
+    rate: voiceRate,
+    onHeard,
+    onError: setError,
+  });
+  const { isActive } = voice;
 
   const setEnglishVariant = useCallback(async (next: EnglishVariant) => {
     setVariantState(next);
@@ -591,13 +292,31 @@ export function useConversation() {
   }, []);
 
   const toggleSession = useCallback(async () => {
-    if (sessionRef.current) await stopSession();
-    else await startSession();
-  }, [startSession, stopSession]);
+    if (voice.isActive()) {
+      await voice.stop();
+      return;
+    }
+
+    // С выбранной темой первым говорит партнёр — иначе непонятно, с чего начать.
+    await voice.start(async () => {
+      const topic = findTopic(languageRef.current, topicRef.current);
+      const levelMap = levelsRef.current;
+      if (!topic || !levelMap || messagesRef.current.length > 0) return null;
+
+      const reply = await openConversation({
+        language: languageRef.current,
+        level: levelMap[languageRef.current],
+        topic,
+        name: profileRef.current.name || undefined,
+        variant: variantRef.current,
+      });
+      return addReply(reply, false);
+    });
+  }, [voice.isActive, voice.start, voice.stop, addReply]);
 
   const switchLanguage = useCallback(
     async (next: LanguageCode) => {
-      if (next === language || sessionRef.current) return;
+      if (next === language || isActive()) return;
       setLanguage(next);
       languageRef.current = next;
       await saveLanguage(next);
@@ -607,7 +326,7 @@ export function useConversation() {
       setTopicId(await loadTopic(next));
       setHomework(await loadHomework(next));
     },
-    [language],
+    [language, isActive],
   );
 
   const setLevel = useCallback(
@@ -624,12 +343,12 @@ export function useConversation() {
   /** Выбор темы: null — свободный разговор. */
   const setTopic = useCallback(
     async (next: string | null) => {
-      if (sessionRef.current) return;
+      if (isActive()) return;
       setTopicId(next);
       topicRef.current = next;
       await saveTopic(language, next);
     },
-    [language],
+    [language, isActive],
   );
 
   /**
@@ -637,7 +356,7 @@ export function useConversation() {
    * незачем — разбор ошибок и есть то, ради чего к беседе возвращаются.
    */
   const finishConversation = useCallback(async () => {
-    if (sessionRef.current) return;
+    if (isActive()) return;
 
     const current = messagesRef.current;
     if (current.length === 0) return;
@@ -673,7 +392,7 @@ export function useConversation() {
     await clearHistory(language);
     messagesRef.current = [];
     setMessages([]);
-  }, [homework, language]);
+  }, [homework, language, isActive]);
 
   /** Собирает упражнения по всем ошибкам текущей беседы. */
   const makeHomework = useCallback(async () => {
@@ -716,7 +435,7 @@ export function useConversation() {
   /** Переслушать ответ партнёра вне беседы. */
   const replay = useCallback(
     async (message: Message) => {
-      if (sessionRef.current) return;
+      if (isActive()) return;
       try {
         const uri = message.audioUri ?? (await synthesize(message.text, voiceRate()));
         if (!message.audioUri) {
@@ -724,12 +443,12 @@ export function useConversation() {
             previous.map((m) => (m.id === message.id ? { ...m, audioUri: uri } : m)),
           );
         }
-        await play(uri);
+        await voice.play(uri);
       } catch (e: unknown) {
         setError(e instanceof Error ? e.message : String(e));
       }
     },
-    [language, persist, play],
+    [persist, voice.play, voiceRate, isActive],
   );
 
   return {
@@ -744,12 +463,12 @@ export function useConversation() {
     englishVariant,
     homework,
     homeworkBusy,
-    status,
-    sessionActive,
+    status: voice.status,
+    sessionActive: voice.sessionActive,
     error,
-    durationMillis: recorderState.durationMillis,
+    durationMillis: voice.durationMillis,
     /** Уровень входного сигнала 0…1 — для индикатора «тебя слышно». */
-    inputLevel: status === 'listening' ? levelToUnit(recorderState.metering) : 0,
+    inputLevel: voice.inputLevel,
     reload,
     toggleSession,
     switchLanguage,
@@ -760,8 +479,8 @@ export function useConversation() {
     setSpeechRate,
     setTurnMode,
     setEnglishVariant,
-    endTurn,
-    beginTurn,
+    endTurn: voice.endTurn,
+    beginTurn: voice.beginTurn,
     explain,
     makeHomework,
     replay,

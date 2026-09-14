@@ -169,3 +169,71 @@ export interface Message {
   /** Локальный путь к mp3 с озвучкой ответа ИИ, если она уже сгенерирована. */
   audioUri?: string;
 }
+
+// --- Экзамен ---
+
+/** Три части устного экзамена: знакомство, монолог, обсуждение. */
+export type ExamPart = 'interview' | 'longTurn' | 'discussion';
+
+/** Тема экзамена: одна на все языки, названия — в `exam.ts`. */
+export interface ExamTopic {
+  id: string;
+  /** Название на изучаемом языке — его же получает экзаменатор. */
+  label: string;
+}
+
+/**
+ * Реплика экзамена. Та же, что в беседе, плюс часть, к которой она относится:
+ * по ней разбор понимает, где человек отвечал коротко, а где держал монолог.
+ */
+export interface DialogueTurn extends Message {
+  part: ExamPart;
+}
+
+export type ErrorCategory = 'grammar' | 'vocabulary' | 'collocation' | 'fluency';
+
+export const ERROR_CATEGORIES: ErrorCategory[] = ['grammar', 'vocabulary', 'collocation', 'fluency'];
+
+/** Одна ошибка из разбора экзамена. */
+export interface ErrorItem {
+  original: string;
+  corrected: string;
+  /** Пояснение на языке интерфейса. */
+  explanation: string;
+  category: ErrorCategory;
+}
+
+/** Разбор всей сессии: ошибки, их счёт по категориям и что подтянуть. */
+export interface ErrorReport {
+  errors: ErrorItem[];
+  summary: Record<ErrorCategory, number>;
+  recommendations: string[];
+  createdAt: number;
+}
+
+/**
+ * Строка истории экзаменов. Реплики и разбор лежат отдельно и грузятся по
+ * нажатию: список открывается сразу, сколько бы сессий ни накопилось.
+ */
+export interface ExamSession {
+  id: string;
+  language: LanguageCode;
+  level: Level;
+  topicId: string;
+  startedAt: number;
+  endedAt: number;
+  /** Сколько раз говорил человек. */
+  answerCount: number;
+  /** Сколько ошибок нашёл разбор; null — разбора ещё нет. */
+  errorCount: number | null;
+}
+
+/**
+ * Сессия целиком: реплики и разбор. Сохраняется с первого ответа и после
+ * каждого следующего — ни перезапуск, ни сбой сети не стоят человеку ответов,
+ * а разбор можно запросить заново из истории.
+ */
+export interface SessionReport extends ExamSession {
+  turns: DialogueTurn[];
+  report: ErrorReport | null;
+}

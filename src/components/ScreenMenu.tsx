@@ -1,19 +1,20 @@
 import { useEffect, useRef } from 'react';
 import { Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { BookIcon, ChatIcon, EarIcon, HomeIcon, PenIcon } from './icons';
+import { BookIcon, ChatIcon, EarIcon, ExamIcon, HomeIcon, PenIcon } from './icons';
 import { NeonButton } from './NeonButton';
 import { measureAnchor, type Anchor } from '../anchor';
 import { t } from '../i18n';
 import { useStyles, useTheme, type Theme } from '../theme';
 
-/** Пять разделов приложения. Порядок — от ежедневного к редкому. */
-export type Screen = 'talk' | 'listen' | 'write' | 'book' | 'settings';
+/** Шесть разделов приложения. Порядок — от ежедневного к редкому. */
+export type Screen = 'talk' | 'listen' | 'write' | 'exam' | 'book' | 'settings';
 
 export const SCREEN_ICONS = {
   talk: ChatIcon,
   listen: EarIcon,
   write: PenIcon,
+  exam: ExamIcon,
   book: BookIcon,
   settings: HomeIcon,
 };
@@ -23,6 +24,7 @@ export function screenLabels(): Record<Screen, string> {
     talk: t.tabTalk,
     listen: t.tabListen,
     write: t.tabWrite,
+    exam: t.tabExam,
     book: t.tabBook,
     settings: t.tabSettings,
   };

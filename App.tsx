@@ -13,6 +13,7 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 import { AccountScreen } from './src/components/AccountScreen';
 import { ArchiveScreen } from './src/components/ArchiveScreen';
+import { ExamScreen } from './src/components/ExamScreen';
 import { HomeworkScreen } from './src/components/HomeworkScreen';
 import { ListeningScreen } from './src/components/ListeningScreen';
 import { MessageBubble } from './src/components/MessageBubble';
@@ -91,6 +92,20 @@ function Screen() {
     // Беседа кончилась — счётчик объёма ушёл вперёд, экрану пора его перечитать.
     await subscription.refresh();
   }, [conversation, subscription]);
+  /**
+   * Экзамен стоит столько же, сколько беседа, и считается тем же лимитом. Якоря
+   * у него нет: тема выбирается из списка, и экран покупки растёт из центра.
+   */
+  const allowExam = useCallback(async () => {
+    if (!subscription.canTalk) {
+      setPaywallAnchor(null);
+      setPaywallOpen(true);
+      return false;
+    }
+    await subscription.useTalk();
+    return true;
+  }, [subscription]);
+
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuAnchor, setMenuAnchor] = useState<Anchor | null>(null);
 
@@ -288,6 +303,25 @@ function Screen() {
               language={conversation.language}
               level={conversation.level}
               topicId={conversation.topicId}
+            />
+          )}
+
+          {section === 'exam' && (
+            <ExamScreen
+              menu={menu}
+              language={conversation.language}
+              level={conversation.level}
+              profile={conversation.profile}
+              turnMode={conversation.turnMode}
+              onToggleMode={() =>
+                void conversation.setTurnMode(
+                  conversation.turnMode === 'auto' ? 'manual' : 'auto',
+                )
+              }
+              speechRate={conversation.speechRate}
+              talkBusy={conversation.sessionActive}
+              onBeforeStart={allowExam}
+              onSessionEnd={() => void subscription.refresh()}
             />
           )}
 
