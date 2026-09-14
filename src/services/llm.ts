@@ -599,7 +599,9 @@ export async function examinerTurn(params: {
    * Как и в беседе: пустой ответ — редкая осечка, просим ещё раз. На экзамене
    * осечка приходила и не пустой, а строкой из точек, — её тоже не озвучиваем.
    */
-  const spoken = (text: string) => (/\p{L}{2}/u.test(text) ? text : '');
+  const spoken = (text: string) =>
+    // Реплика с запятой или точкой впереди тоже приходила — знаки перед первым словом срезаем.
+    /\p{L}{2}/u.test(text) ? text.replace(/^[^\p{L}\p{N}«"(¿¡]+/u, '') : '';
   const reply = spoken(await ask()) || spoken(await ask());
   if (!reply) throw new Error(t.badTurn);
   return reply;
