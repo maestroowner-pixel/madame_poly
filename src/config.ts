@@ -1,4 +1,4 @@
-import type { Level } from './types';
+import type { LanguageCode, Level } from './types';
 
 import { EXPLANATION_LANGUAGE_NAME, locale } from './i18n';
 
@@ -122,6 +122,12 @@ export const PRO_PRICE_EUR = 7;
  */
 export const PRO_MONTHLY_BUDGET_USD = 5;
 export const FREE_MONTHLY_BUDGET_USD = 1;
+
+/**
+ * Языки, для которых открыт раздел «Слова». Списки генерируются под любой язык,
+ * но проверены пока на двух — остальные подключаются добавлением кода сюда.
+ */
+export const VOCABULARY_LANGUAGES: LanguageCode[] = ['en', 'es'];
 
 /** Автоматически проигрывать ответ ИИ после получения. */
 export const AUTOPLAY_TTS = true;

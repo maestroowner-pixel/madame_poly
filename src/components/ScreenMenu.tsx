@@ -1,19 +1,20 @@
 import { useEffect, useRef } from 'react';
 import { Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { BookIcon, ChatIcon, EarIcon, ExamIcon, HomeIcon, PenIcon } from './icons';
+import { BookIcon, ChatIcon, EarIcon, ExamIcon, HomeIcon, PenIcon, WordsIcon } from './icons';
 import { NeonButton } from './NeonButton';
 import { measureAnchor, type Anchor } from '../anchor';
 import { t } from '../i18n';
 import { useStyles, useTheme, type Theme } from '../theme';
 
-/** Шесть разделов приложения. Порядок — от ежедневного к редкому. */
-export type Screen = 'talk' | 'listen' | 'write' | 'exam' | 'book' | 'settings';
+/** Семь разделов приложения. Порядок — от ежедневного к редкому. */
+export type Screen = 'talk' | 'listen' | 'write' | 'words' | 'exam' | 'book' | 'settings';
 
 export const SCREEN_ICONS = {
   talk: ChatIcon,
   listen: EarIcon,
   write: PenIcon,
+  words: WordsIcon,
   exam: ExamIcon,
   book: BookIcon,
   settings: HomeIcon,
@@ -24,6 +25,7 @@ export function screenLabels(): Record<Screen, string> {
     talk: t.tabTalk,
     listen: t.tabListen,
     write: t.tabWrite,
+    words: t.tabWords,
     exam: t.tabExam,
     book: t.tabBook,
     settings: t.tabSettings,
@@ -99,6 +101,8 @@ export function ScreenTitle({ screen, title }: { screen: Screen; title?: string 
 
 interface MenuProps {
   current: Screen;
+  /** Разделы, закрытые для текущего языка, — в списке их нет. */
+  hidden?: Screen[];
   /** Где стоит домик — под ним и раскрывается список. */
   anchor: Anchor | null;
   onSelect: (screen: Screen) => void;
@@ -110,7 +114,7 @@ interface MenuProps {
  * она отнимала бы полоску экрана у ленты, а внизу и без того живёт кнопка
  * беседы — главный орган управления.
  */
-export function ScreenMenu({ current, anchor, onSelect, onClose }: MenuProps) {
+export function ScreenMenu({ current, hidden = [], anchor, onSelect, onClose }: MenuProps) {
   const { theme } = useTheme();
   const styles = useStyles(createStyles);
   const labels = screenLabels();
@@ -121,7 +125,9 @@ export function ScreenMenu({ current, anchor, onSelect, onClose }: MenuProps) {
       <Pressable style={styles.backdrop} onPress={onClose} />
 
       <View style={[styles.card, anchor ? { top: anchor.y + 28 } : null]}>
-        {(Object.keys(SCREEN_ICONS) as Screen[]).map((screen) => {
+        {(Object.keys(SCREEN_ICONS) as Screen[])
+          .filter((screen) => !hidden.includes(screen))
+          .map((screen) => {
           const Icon = SCREEN_ICONS[screen];
           const active = screen === current;
           return (

@@ -16,6 +16,7 @@ import {
   buildHomeworkPrompt,
   buildListeningCheckPrompt,
   buildListeningPrompt,
+  buildVocabularyPrompt,
   buildSystemPrompt,
   buildWritingPrompt,
   buildWritingReviewPrompt,
@@ -40,6 +41,7 @@ import {
   type Listening,
   type ListeningVerdict,
   type Message,
+  type Vocabulary,
   type WritingReview,
   type WritingTask,
 } from '../types';
@@ -131,6 +133,20 @@ const ExamReviewSchema = z.object({
     }),
   ),
   recommendations: z.array(z.string()),
+});
+
+const VocabularySchema = z.object({
+  title: z.string(),
+  sections: z.array(
+    z.object({
+      title: z.string(),
+      gloss: z.string(),
+      kind: z.enum(['words', 'phrases']),
+      entries: z.array(z.object({ term: z.string(), translation: z.string() })),
+    }),
+  ),
+  dialogue: z.array(z.string()),
+  examples: z.array(z.string()),
 });
 
 const client = new Anthropic({
@@ -655,6 +671,63 @@ export async function reviewExam(params: {
     errors,
     summary,
     recommendations: parsed.recommendations.map((line) => line.trim()).filter(Boolean),
+    createdAt: Date.now(),
+  };
+}
+
+/**
+ * Тематический список слов. Самый длинный ответ в приложении — сотня записей,
+ * диалог и примеры, — поэтому и потолок токенов выше остальных.
+ */
+export async function generateVocabulary(params: {
+  language: LanguageCode;
+  level: Level;
+  topic?: Topic;
+}): Promise<Vocabulary> {
+  const { language, level, topic } = params;
+
+  if (!ANTHROPIC_API_KEY) throw new Error(t.noAnthropicKey);
+
+  const response = await metered(() =>
+    client.messages.parse({
+      model: CLAUDE_MODEL,
+      max_tokens: 16384,
+      system: buildVocabularyPrompt(language, level, topic),
+      thinking: { type: 'disabled' },
+      messages: [{ role: 'user', content: 'Compile the sheet.' }],
+      output_config: { format: zodOutputFormat(VocabularySchema) },
+    }),
+  );
+
+  const parsed = response.parsed_output;
+  if (!parsed || parsed.sections.length === 0) throw new Error(t.badVocabulary);
+
+  // Повторы и пустые строки режем сами: заучивать одно слово дважды незачем.
+  const seen = new Set<string>();
+  const sections = parsed.sections
+    .map((section) => ({
+      ...section,
+      title: section.title.trim(),
+      gloss: section.gloss.trim(),
+      entries: section.entries
+        .map((entry) => ({ term: entry.term.trim(), translation: entry.translation.trim() }))
+        .filter((entry) => {
+          const key = entry.term.toLowerCase();
+          if (!entry.term || !entry.translation || seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        }),
+    }))
+    .filter((section) => section.entries.length > 0);
+
+  return {
+    title: parsed.title.trim(),
+    language,
+    level,
+    topicId: topic?.id ?? null,
+    sections,
+    dialogue: parsed.dialogue.map((line) => line.trim()).filter(Boolean),
+    examples: parsed.examples.map((line) => line.trim()).filter(Boolean),
     createdAt: Date.now(),
   };
 }

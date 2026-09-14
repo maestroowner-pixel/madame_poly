@@ -33,6 +33,7 @@ import { Paywall } from './src/components/Paywall';
 import { useSubscription } from './src/hooks/useSubscription';
 import { TalkHeader } from './src/components/TalkHeader';
 import { TutorStrip } from './src/components/TutorStrip';
+import { VocabularyScreen } from './src/components/VocabularyScreen';
 import { WritingScreen } from './src/components/WritingScreen';
 import { useAccount } from './src/hooks/useAccount';
 import { useConversation } from './src/hooks/useConversation';
@@ -40,6 +41,7 @@ import { useZoomScreen } from './src/hooks/useZoomScreen';
 import { locale, t } from './src/i18n';
 import { LANGUAGES } from './src/languages';
 import { CONTENT_MAX_WIDTH } from './src/layout';
+import { VOCABULARY_LANGUAGES } from './src/config';
 import { ThemeProvider, useStyles, useTheme, type Theme } from './src/theme';
 import { findTopic } from './src/topics';
 import type { Message } from './src/types';
@@ -172,6 +174,12 @@ function Screen() {
     userScrolled.current = false;
     listRef.current?.scrollToEnd({ animated: true });
   }, [conversation.messages.length]);
+
+  useEffect(() => {
+    if (section === 'words' && !VOCABULARY_LANGUAGES.includes(conversation.language)) {
+      setSection('talk');
+    }
+  }, [section, conversation.language]);
 
   // Начали беседу — возвращаемся к ней и убираем всё открытое поверх.
   useEffect(() => {
@@ -306,6 +314,15 @@ function Screen() {
             />
           )}
 
+          {section === 'words' && (
+            <VocabularyScreen
+              menu={menu}
+              language={conversation.language}
+              level={conversation.level}
+              topicId={conversation.topicId}
+            />
+          )}
+
           {section === 'exam' && (
             <ExamScreen
               menu={menu}
@@ -359,6 +376,8 @@ function Screen() {
         {menuOpen && (
           <ScreenMenu
             current={section}
+            // Слова открыты не для всех языков — закрытые из списка убираем.
+            hidden={VOCABULARY_LANGUAGES.includes(conversation.language) ? [] : ['words']}
             anchor={menuAnchor}
             onSelect={setSection}
             onClose={() => setMenuOpen(false)}

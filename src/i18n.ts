@@ -244,6 +244,23 @@ const en = {
   rateMatchHint: 'She listens to how quickly you speak and moves towards your pace — never all the way, a slightly livelier voice is worth hearing.',
   badHomework: 'Claude returned a task that did not match the schema',
 
+  // Слова
+  tabWords: 'Words',
+  wordsIntro: 'A vocabulary sheet for the level and the subject: words in groups, ready-made phrases, a dialogue and example sentences. Tap a word to hear it, tick the ones you know.',
+  wordsBuild: 'Compile the sheet',
+  wordsRebuild: 'Compile it again',
+  wordsBuilding: 'Compiling…',
+  wordsHide: 'Hide translations',
+  wordsShow: 'Show translations',
+  wordsKnown: (n: number, total: number) => `${n} of ${total} known`,
+  wordsDialogue: 'Dialogue',
+  wordsExamples: 'Example sentences',
+  wordsSaved: 'My sheets',
+  wordsEntries: (n: number) => `${n} ${n === 1 ? 'entry' : 'entries'}`,
+  wordsRebuildTitle: 'Compile the sheet again?',
+  wordsRebuildWarning: 'The current sheet will be replaced by a new one. The words you have ticked stay ticked.',
+  badVocabulary: 'Could not compile the sheet. Try again.',
+
   // Экзамен
   tabExam: 'Exam',
   examIntro: (exam: string) =>
@@ -491,6 +508,23 @@ const uk: Strings = {
   rateMatchHint: 'Вона зважає на те, як швидко говорите ви, і йде назустріч — але не до кінця: трохи жвавішу мову корисно чути.',
   badHomework: 'Claude повернув завдання, яке не розібралося за схемою',
 
+  // Слова
+  tabWords: 'Слова',
+  wordsIntro: 'Список лексики під рівень і тему: слова групами, готові фрази, діалог і речення-приклади. Торкніться слова, щоб почути його; відмічайте ті, що вже знаєте.',
+  wordsBuild: 'Скласти список',
+  wordsRebuild: 'Скласти заново',
+  wordsBuilding: 'Складаю…',
+  wordsHide: 'Сховати переклад',
+  wordsShow: 'Показати переклад',
+  wordsKnown: (n, total) => `Знаю ${n} з ${total}`,
+  wordsDialogue: 'Діалог',
+  wordsExamples: 'Речення-приклади',
+  wordsSaved: 'Мої списки',
+  wordsEntries: (n) => `${n} ${plural(n, 'запис', 'записи', 'записів')}`,
+  wordsRebuildTitle: 'Скласти список заново?',
+  wordsRebuildWarning: 'Теперішній список буде замінено новим. Відмічені слова залишаться відміченими.',
+  badVocabulary: 'Не вдалося скласти список. Спробуйте ще раз.',
+
   // Экзамен
   tabExam: 'Іспит',
   examIntro: (exam) =>
@@ -731,6 +765,23 @@ const es: Strings = {
   rateMatch: 'Como yo',
   rateMatchHint: 'Se fija en la rapidez con la que hablas y se acerca a tu ritmo, aunque no del todo: conviene oír una voz algo más ágil.',
   badHomework: 'Claude devolvió una tarea que no encaja con el esquema',
+
+  // Слова
+  tabWords: 'Palabras',
+  wordsIntro: 'Una hoja de vocabulario para tu nivel y el tema: palabras por grupos, frases hechas, un diálogo y oraciones de ejemplo. Toca una palabra para oírla y marca las que ya conoces.',
+  wordsBuild: 'Preparar la hoja',
+  wordsRebuild: 'Preparar otra',
+  wordsBuilding: 'Preparando…',
+  wordsHide: 'Ocultar traducciones',
+  wordsShow: 'Mostrar traducciones',
+  wordsKnown: (n, total) => `Conozco ${n} de ${total}`,
+  wordsDialogue: 'Diálogo',
+  wordsExamples: 'Oraciones de ejemplo',
+  wordsSaved: 'Mis hojas',
+  wordsEntries: (n) => `${n} ${n === 1 ? 'entrada' : 'entradas'}`,
+  wordsRebuildTitle: '¿Preparar la hoja de nuevo?',
+  wordsRebuildWarning: 'La hoja actual se sustituirá por una nueva. Las palabras marcadas seguirán marcadas.',
+  badVocabulary: 'No se pudo preparar la hoja. Inténtalo de nuevo.',
 
   // Экзамен
   tabExam: 'Examen',
@@ -975,6 +1026,23 @@ const ru: Strings = {
   rateMatch: 'Как я',
   rateMatchHint: 'Она замечает, как быстро говорите вы, и идёт навстречу — но не до конца: чуть более беглую речь полезно слышать.',
   badHomework: 'Claude вернул задание, которое не разобралось по схеме',
+
+  // Слова
+  tabWords: 'Слова',
+  wordsIntro: 'Список лексики под уровень и тему: слова группами, готовые фразы, диалог и предложения-примеры. Нажмите на слово, чтобы услышать его; отмечайте те, что уже знаете.',
+  wordsBuild: 'Составить список',
+  wordsRebuild: 'Составить заново',
+  wordsBuilding: 'Составляю…',
+  wordsHide: 'Скрыть перевод',
+  wordsShow: 'Показать перевод',
+  wordsKnown: (n, total) => `Знаю ${n} из ${total}`,
+  wordsDialogue: 'Диалог',
+  wordsExamples: 'Предложения-примеры',
+  wordsSaved: 'Мои списки',
+  wordsEntries: (n) => `${n} ${plural(n, 'запись', 'записи', 'записей')}`,
+  wordsRebuildTitle: 'Составить список заново?',
+  wordsRebuildWarning: 'Нынешний список заменится новым. Отмеченные слова останутся отмеченными.',
+  badVocabulary: 'Не удалось составить список. Попробуйте ещё раз.',
 
   // Экзамен
   tabExam: 'Экзамен',

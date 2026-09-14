@@ -237,3 +237,50 @@ export interface SessionReport extends ExamSession {
   turns: DialogueTurn[];
   report: ErrorReport | null;
 }
+
+// --- Слова ---
+
+/** Слово или фраза с переводом на язык интерфейса. */
+export interface VocabularyEntry {
+  /** На изучаемом языке; существительные с артиклем. */
+  term: string;
+  translation: string;
+}
+
+/** Группа слов или фраз: «части тела», «у врача», «как спросить о самочувствии». */
+export interface VocabularySection {
+  /** Название на изучаемом языке. */
+  title: string;
+  /** То же на языке интерфейса. */
+  gloss: string;
+  /** Слова и устойчивые сочетания — или целые фразы для разговора. */
+  kind: 'words' | 'phrases';
+  entries: VocabularyEntry[];
+}
+
+/** Тематический список лексики: группы слов, диалог и предложения-примеры. */
+export interface Vocabulary {
+  /** Название темы на изучаемом языке. */
+  title: string;
+  language: LanguageCode;
+  level: Level;
+  /** Тема из общего списка; null — общая лексика уровня. */
+  topicId: string | null;
+  sections: VocabularySection[];
+  /** Диалог на тему, реплики по очереди. */
+  dialogue: string[];
+  /** Полные предложения с этой лексикой. */
+  examples: string[];
+  createdAt: number;
+}
+
+/** Строка списка сохранённых наборов — сам набор грузится по нажатию. */
+export interface VocabularyIndexEntry {
+  language: LanguageCode;
+  level: Level;
+  topicId: string | null;
+  title: string;
+  /** Сколько слов и фраз внутри. */
+  count: number;
+  createdAt: number;
+}

@@ -410,3 +410,45 @@ export function formatExamTranscript(turns: DialogueTurn[]): string {
     )
     .join('\n');
 }
+
+// --- Слова ---
+
+/**
+ * Чем отличается список по уровням: объём, какие слова и какие обороты. На A1
+ * «сбалансированная диета» неуместна, на C1 «голова» и «нога» — тоже.
+ */
+const VOCABULARY_GUIDANCE: Record<Level, string> = {
+  A1: 'Four or five sections, six to nine entries each. The most common concrete nouns and verbs, present tense phrases, greetings and simple questions. No idioms.',
+  A2: 'Five or six sections, eight to ten entries each. Everyday nouns and verbs, simple collocations, phrases for shops, offices and calls, past and future forms.',
+  B1: 'Eight to ten sections, eight to twelve entries each. Verb-noun collocations, phrasal expressions, fixed phrases for describing, asking, advising, complaining. Both formal and informal register.',
+  B2: 'Nine to eleven sections, ten to fourteen entries each. Precise vocabulary, common idioms, phrases for arguing, comparing and reporting, register differences, the words a native speaker would expect at this level.',
+  C1: 'Ten to twelve sections, ten to fourteen entries each. Nuanced and idiomatic vocabulary, collocations that separate fluent from native-like speech, phrases for hedging, emphasis and irony, formal and technical terms of the field.',
+  C2: 'Ten to twelve sections, twelve to sixteen entries each. Low-frequency and figurative vocabulary, proverbs and set expressions, jargon and slang of the field, the shades of meaning between near-synonyms.',
+};
+
+/**
+ * Тематический список лексики: группы слов, разговорные фразы, диалог и
+ * предложения. Образец — учительский список «Salud, B1»: части тела, симптомы,
+ * у врача, в аптеке, здоровый образ жизни, как спросить о самочувствии, диалог
+ * у врача целиком и предложения-примеры.
+ */
+export function buildVocabularyPrompt(language: LanguageCode, level: Level, topic?: Topic): string {
+  const { englishName } = LANGUAGES[language];
+
+  return [
+    `You are a ${englishName} teacher compiling a thematic vocabulary sheet for a CEFR ${level} learner.`,
+    'The sheet is what a good teacher hands out before a unit: words grouped by sub-topic, then ready-made phrases for the situations the topic brings, then a short dialogue and example sentences.',
+    '',
+    'Rules:',
+    topic
+      ? `- Topic: ${topic.label}. Every section is a sub-topic of it; cover the topic from several sides — things, actions, places, people, situations, feelings.`
+      : `- No topic was chosen: compile the general vocabulary a ${level} learner needs across everyday life — people, home, food, work or study, city, time, feelings.`,
+    `- Level ${level}: ${VOCABULARY_GUIDANCE[level]}`,
+    `- Sections come in two kinds. "words": single words and short collocations — ${language === 'en' ? 'nouns without an article' : 'nouns with their article'}, verbs in the infinitive, adjectives in the base form. "phrases": complete sentences and questions a person would actually say in a situation of the topic — describing, asking, answering, advising, dealing with an emergency. Put the "words" sections first, then the "phrases" sections; have at least two of each.`,
+    `- "term" is in ${englishName}; "translation" is in ${EXPLANATION_LANGUAGE}, short and natural, not a dictionary list of every meaning. Where two forms are interchangeable, give both in one entry separated by " / ", like "el oído / la oreja".`,
+    `- "title" of a section is in ${englishName}; "gloss" is the same in ${EXPLANATION_LANGUAGE}. The sheet "title" is the topic named in ${englishName}.`,
+    '- No entry appears twice across sections. Every term must be correct, natural, spelled as in a dictionary and in use today — a learner will memorise it as is.',
+    `- "dialogue": one conversation of ten to fourteen lines in ${englishName} between two people in a typical situation of the topic, turns alternating, each line a full utterance without speaker labels. It reuses words and phrases from the sections.`,
+    `- "examples": ten to fourteen full sentences in ${englishName}, each using one or two entries from the sections in a natural context, at the level's grammar — past, future, conditions, reported speech as the level allows.`,
+  ].join('\n');
+}

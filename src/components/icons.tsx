@@ -417,6 +417,37 @@ export function PenIcon({ size, color }: Props) {
   );
 }
 
+/** Слова: три строки разной длины с точкой-маркером перед каждой. */
+export function WordsIcon({ size, color }: Props) {
+  const line = Math.max(1.6, size * 0.085);
+  const dot = Math.max(3, size * 0.14);
+
+  return (
+    <View style={[styles.box, { width: size, height: size }]}>
+      {[
+        { top: 0.2, width: 0.5 },
+        { top: 0.46, width: 0.62 },
+        { top: 0.72, width: 0.4 },
+      ].map((row) => (
+        <View
+          key={row.top}
+          style={{
+            position: 'absolute',
+            top: size * row.top,
+            left: size * 0.12,
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: size * 0.1,
+          }}
+        >
+          <View style={{ width: dot, height: dot, borderRadius: dot / 2, backgroundColor: color }} />
+          <View style={{ width: size * row.width, height: line, borderRadius: line, backgroundColor: color }} />
+        </View>
+      ))}
+    </View>
+  );
+}
+
 /** Экзамен: планшет экзаменатора — лист с зажимом сверху и строками ответов. */
 export function ExamIcon({ size, color }: Props) {
   const line = Math.max(1.6, size * 0.085);

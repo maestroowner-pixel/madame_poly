@@ -9,6 +9,8 @@ import type {
   ErrorReport,
   ExamSession,
   SessionReport,
+  Vocabulary,
+  VocabularyIndexEntry,
   Homework,
   LanguageCode,
   Level,
@@ -43,6 +45,10 @@ const KEY_SPEND = 'polyglotta:spend';
 const KEY_EXAMS = 'polyglotta:exams';
 const keyExamTurns = (id: string) => `polyglotta:exam:${id}`;
 const keyExamReport = (id: string) => `polyglotta:examReport:${id}`;
+const KEY_VOCABULARIES = 'polyglotta:vocabularies';
+const keyVocabulary = (language: LanguageCode, level: Level, topicId: string | null) =>
+  `polyglotta:vocabulary:${language}:${level}:${topicId ?? 'free'}`;
+const keyVocabKnown = (language: LanguageCode) => `polyglotta:vocabKnown:${language}`;
 const keyExamLevel = (language: LanguageCode) => `polyglotta:examLevel:${language}`;
 
 /**
@@ -525,4 +531,61 @@ export async function deleteExamSession(id: string): Promise<ExamSession[]> {
   await drop(keyExamReport(id));
   await write(KEY_EXAMS, JSON.stringify(list));
   return list;
+}
+
+// --- Слова ---
+
+/**
+ * Список составленных наборов, новые сверху. Сами наборы лежат отдельно, по
+ * ключу языка, уровня и темы: один и тот же набор не составляется дважды, а
+ * список открывается мгновенно, сколько бы наборов ни накопилось.
+ */
+export async function loadVocabularyIndex(): Promise<VocabularyIndexEntry[]> {
+  return parse(await AsyncStorage.getItem(KEY_VOCABULARIES), [] as VocabularyIndexEntry[]);
+}
+
+export async function loadVocabulary(
+  language: LanguageCode,
+  level: Level,
+  topicId: string | null,
+): Promise<Vocabulary | null> {
+  return parse(await AsyncStorage.getItem(keyVocabulary(language, level, topicId)), null as Vocabulary | null);
+}
+
+const sameSet = (a: VocabularyIndexEntry, b: VocabularyIndexEntry) =>
+  a.language === b.language && a.level === b.level && a.topicId === b.topicId;
+
+export async function saveVocabulary(vocabulary: Vocabulary): Promise<VocabularyIndexEntry[]> {
+  const entry: VocabularyIndexEntry = {
+    language: vocabulary.language,
+    level: vocabulary.level,
+    topicId: vocabulary.topicId,
+    title: vocabulary.title,
+    count: vocabulary.sections.reduce((sum, section) => sum + section.entries.length, 0),
+    createdAt: vocabulary.createdAt,
+  };
+  const index = [entry, ...(await loadVocabularyIndex()).filter((item) => !sameSet(item, entry))];
+
+  await write(keyVocabulary(entry.language, entry.level, entry.topicId), JSON.stringify(vocabulary));
+  await write(KEY_VOCABULARIES, JSON.stringify(index));
+  return index;
+}
+
+export async function deleteVocabulary(entry: VocabularyIndexEntry): Promise<VocabularyIndexEntry[]> {
+  const index = (await loadVocabularyIndex()).filter((item) => !sameSet(item, entry));
+  await drop(keyVocabulary(entry.language, entry.level, entry.topicId));
+  await write(KEY_VOCABULARIES, JSON.stringify(index));
+  return index;
+}
+
+/**
+ * Выученные слова — по языку, а не по набору: «la cabeza» одна и та же в
+ * списке о здоровье и в списке о спорте, и отмечать её дважды незачем.
+ */
+export async function loadKnownWords(language: LanguageCode): Promise<Set<string>> {
+  return new Set(parse(await AsyncStorage.getItem(keyVocabKnown(language)), [] as string[]));
+}
+
+export async function saveKnownWords(language: LanguageCode, known: Set<string>): Promise<void> {
+  await write(keyVocabKnown(language), JSON.stringify([...known]));
 }
