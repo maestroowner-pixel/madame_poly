@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { t } from '../i18n';
-import { REVIEW_REMINDER_TIMES, formatTime, syncReminders } from '../services/reminders';
-import { loadReminderSettings, saveReminderSettings } from '../storage';
+import { formatTime, syncReminders } from '../services/reminders';
+import { DEFAULT_REMINDERS, loadReminderSettings, saveReminderSettings } from '../storage';
 import { useStyles, type Theme } from '../theme';
 import type { ClockTime, ReminderSettings } from '../types';
 
@@ -16,10 +16,27 @@ const shift = ({ hour, minute }: ClockTime, step: number): ClockTime => {
   return { hour: Math.floor(total / 60), minute: total % 60 };
 };
 
+/** Время со стрелками по бокам: на полчаса назад и вперёд, по кругу через полночь. */
+function TimeStepper({ value, onChange }: { value: ClockTime; onChange: (next: ClockTime) => void }) {
+  const styles = useStyles(createStyles);
+  return (
+    <View style={styles.stepper}>
+      <Pressable onPress={() => onChange(shift(value, -STEP_MINUTES))} hitSlop={8} style={styles.arrow}>
+        <Text style={styles.arrowText}>‹</Text>
+      </Pressable>
+      <Text style={styles.value}>{formatTime(value)}</Text>
+      <Pressable onPress={() => onChange(shift(value, STEP_MINUTES))} hitSlop={8} style={styles.arrow}>
+        <Text style={styles.arrowText}>›</Text>
+      </Pressable>
+    </View>
+  );
+}
+
 /**
- * Две строки в настройках: «повторить слова» — включено или нет, время
- * фиксировано, и «позаниматься» — своё время, стрелки двигают его на полчаса.
- * Строки сами хранят настройки и перестраивают расписание в системе.
+ * Напоминания в настройках: «повторить слова» — два времени, утро и вечер,
+ * и «позаниматься» — одно. Нажатие на название включает и выключает,
+ * стрелки двигают время на полчаса. Строки сами хранят настройки и
+ * перестраивают расписание в системе.
  */
 export function ReminderRows() {
   const styles = useStyles(createStyles);
@@ -37,48 +54,47 @@ export function ReminderRows() {
 
   if (!settings) return null;
 
-  const practice = settings.practice;
+  const { review, practice } = settings;
 
   return (
     <View style={styles.block}>
       <Text style={styles.caption}>{t.reminders}</Text>
 
-      <Pressable onPress={() => apply({ ...settings, review: !settings.review })} style={styles.row}>
-        <Text style={styles.label}>{t.remindReview}</Text>
-        <Text style={[styles.value, !settings.review && styles.valueOff]}>
-          {settings.review ? REVIEW_REMINDER_TIMES.map(formatTime).join(' · ') : t.remindOff}
-        </Text>
-      </Pressable>
+      <View style={[styles.row, review ? styles.rowTall : null]}>
+        <Pressable
+          onPress={() => apply({ ...settings, review: review ? null : DEFAULT_REMINDERS.review })}
+          style={styles.head}
+        >
+          <Text style={styles.label}>{t.remindReview}</Text>
+          {!review && <Text style={[styles.value, styles.valueOff]}>{t.remindOff}</Text>}
+        </Pressable>
+        {review && (
+          <View style={styles.pair}>
+            {review.map((time, position) => (
+              <TimeStepper
+                key={position}
+                value={time}
+                onChange={(next) => {
+                  const times = [...review] as [ClockTime, ClockTime];
+                  times[position] = next;
+                  apply({ ...settings, review: times });
+                }}
+              />
+            ))}
+          </View>
+        )}
+      </View>
 
       <View style={styles.row}>
         <Pressable
-          onPress={() => apply({ ...settings, practice: practice ? null : { hour: 18, minute: 0 } })}
-          style={styles.grow}
+          onPress={() => apply({ ...settings, practice: practice ? null : DEFAULT_REMINDERS.practice })}
+          style={styles.head}
         >
           <Text style={styles.label}>{t.remindPractice}</Text>
+          {!practice && <Text style={[styles.value, styles.valueOff]}>{t.remindOff}</Text>}
         </Pressable>
-        {practice ? (
-          <View style={styles.stepper}>
-            <Pressable
-              onPress={() => apply({ ...settings, practice: shift(practice, -STEP_MINUTES) })}
-              hitSlop={8}
-              style={styles.arrow}
-            >
-              <Text style={styles.arrowText}>‹</Text>
-            </Pressable>
-            <Text style={styles.value}>{formatTime(practice)}</Text>
-            <Pressable
-              onPress={() => apply({ ...settings, practice: shift(practice, STEP_MINUTES) })}
-              hitSlop={8}
-              style={styles.arrow}
-            >
-              <Text style={styles.arrowText}>›</Text>
-            </Pressable>
-          </View>
-        ) : (
-          <Pressable onPress={() => apply({ ...settings, practice: { hour: 18, minute: 0 } })}>
-            <Text style={[styles.value, styles.valueOff]}>{t.remindOff}</Text>
-          </Pressable>
+        {practice && (
+          <TimeStepper value={practice} onChange={(next) => apply({ ...settings, practice: next })} />
         )}
       </View>
 
@@ -101,10 +117,13 @@ const createStyles = (theme: Theme) =>
       borderRadius: 14,
       backgroundColor: theme.surfaceAlt,
     },
-    grow: { flex: 1, justifyContent: 'center', minHeight: 34 },
+    /** Два времени в ряд с названием не помещаются — ставим их строкой ниже. */
+    rowTall: { flexDirection: 'column', alignItems: 'stretch', gap: 6 },
+    head: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 34 },
     label: { color: theme.text, fontSize: 14, fontWeight: '600', flex: 1 },
     value: { color: theme.neon, fontSize: 14, fontWeight: '700' },
     valueOff: { color: theme.textMuted, fontWeight: '600' },
+    pair: { flexDirection: 'row', justifyContent: 'space-around', paddingBottom: 2 },
     stepper: { flexDirection: 'row', alignItems: 'center', gap: 6 },
     arrow: {
       width: 30,

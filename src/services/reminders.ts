@@ -5,12 +5,6 @@ import { LANGUAGE_CODES } from '../languages';
 import { loadReminderSettings, loadReviewCards } from '../storage';
 import type { ClockTime } from '../types';
 
-/** Слова напоминаем повторить дважды в день — утром и вечером. */
-export const REVIEW_REMINDER_TIMES: ClockTime[] = [
-  { hour: 10, minute: 0 },
-  { hour: 19, minute: 0 },
-];
-
 const CHANNEL = 'reminders';
 
 /** Часы:минуты для подписи в настройках. */
@@ -96,7 +90,7 @@ export async function syncReminders(): Promise<boolean> {
   if (!Notifications) return true;
 
   const settings = await loadReminderSettings();
-  const review = settings.review && (await hasReviewCards());
+  const review = settings.review && (await hasReviewCards()) ? settings.review : null;
   const practice = settings.practice;
 
   await Notifications.cancelAllScheduledNotificationsAsync();
@@ -111,7 +105,7 @@ export async function syncReminders(): Promise<boolean> {
   }
 
   if (review) {
-    for (const time of REVIEW_REMINDER_TIMES) {
+    for (const time of review) {
       await schedule(Notifications, t.notifyReviewTitle, t.notifyReviewBody, time);
     }
   }

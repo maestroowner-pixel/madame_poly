@@ -619,10 +619,21 @@ export async function saveCardDirection(direction: CardDirection): Promise<void>
 // --- Напоминания ---
 
 /** По умолчанию оба напоминания включены: за ними приложение и ставят. */
-export const DEFAULT_REMINDERS: ReminderSettings = { review: true, practice: { hour: 18, minute: 0 } };
+export const DEFAULT_REMINDERS: ReminderSettings = {
+  review: [
+    { hour: 10, minute: 0 },
+    { hour: 19, minute: 0 },
+  ],
+  practice: { hour: 18, minute: 0 },
+};
 
 export async function loadReminderSettings(): Promise<ReminderSettings> {
-  return parse(await AsyncStorage.getItem(KEY_REMINDERS), DEFAULT_REMINDERS);
+  const stored = parse(await AsyncStorage.getItem(KEY_REMINDERS), DEFAULT_REMINDERS);
+  // Первая версия хранила «повторить» флагом, время было зашито.
+  const review = stored.review as unknown;
+  if (review === true) return { ...stored, review: DEFAULT_REMINDERS.review };
+  if (review === false) return { ...stored, review: null };
+  return stored;
 }
 
 export async function saveReminderSettings(settings: ReminderSettings): Promise<void> {

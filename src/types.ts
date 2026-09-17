@@ -314,8 +314,8 @@ export interface ClockTime {
 }
 
 export interface ReminderSettings {
-  /** Повторить слова — два раза в день, в фиксированные часы. */
-  review: boolean;
+  /** Повторить слова — два раза в день, утром и вечером; null — выключено. */
+  review: [ClockTime, ClockTime] | null;
   /** Позаниматься — раз в день, во время по выбору; null — выключено. */
   practice: ClockTime | null;
 }
