@@ -22,12 +22,13 @@ import { locale, t } from '../i18n';
 import { LANGUAGES } from '../languages';
 import { CONTENT_MAX_WIDTH } from '../layout';
 import { dueCards, newCard } from '../review';
-import { generateVocabulary } from '../services/llm';
+import { generateVocabulary, transcribeVocabulary } from '../services/llm';
 import { exportVocabularyPdf } from '../services/pdf';
 import { synthesize } from '../services/tts';
 import {
   deleteVocabulary,
   loadCardDirection,
+  loadEnglishVariant,
   loadKnownWords,
   loadReviewCards,
   loadVocabulary,
@@ -81,6 +82,9 @@ export function VocabularyScreen({ menu, language, level, topicId }: Props) {
   const [tab, setTab] = useState<Tab>('list');
   const [busy, setBusy] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [transcribing, setTranscribing] = useState(false);
+  /** Наборы, для которых транскрипцию уже запрашивали, — второй раз за ней не ходим. */
+  const transcribed = useRef(new Set<number>());
   const [hideTranslations, setHideTranslations] = useState(false);
   /** Записи, чей перевод показан поверх скрытия, — по нажатию на перевод. */
   const [peeked, setPeeked] = useState<Set<string>>(new Set());
@@ -120,6 +124,46 @@ export function VocabularyScreen({ menu, language, level, topicId }: Props) {
     });
   }, [language, level, topic]);
 
+  /** Английский транскрибируем в выбранном варианте — RP или General American. */
+  const variantFor = async () => (language === 'en' ? loadEnglishVariant() : undefined);
+
+  // Наборы, составленные до транскрипции, получают её при первом открытии
+  // карточек или теста — одним запросом на весь лист.
+  useEffect(() => {
+    if (!vocabulary || tab === 'list' || transcribing) return;
+    const missing = vocabulary.sections.some((section) =>
+      section.entries.some((entry) => !entry.transcription),
+    );
+    if (!missing || transcribed.current.has(vocabulary.createdAt)) return;
+    transcribed.current.add(vocabulary.createdAt);
+    setTranscribing(true);
+    void (async () => {
+      try {
+        const next = await transcribeVocabulary(vocabulary, await variantFor());
+        setVocabulary(next);
+        setIndex(await saveVocabulary(next));
+        // Карточкам в очереди повторения транскрипция тоже пригодится.
+        const notes = new Map(
+          next.sections.flatMap((section) =>
+            section.entries.map((entry) => [entry.term, entry.transcription] as const),
+          ),
+        );
+        if (review.some((card) => !card.transcription && notes.get(card.term))) {
+          storeReview(
+            review.map((card) =>
+              card.transcription ? card : { ...card, transcription: notes.get(card.term) },
+            ),
+          );
+        }
+      } catch (e: unknown) {
+        fail(e);
+      } finally {
+        setTranscribing(false);
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vocabulary, tab]);
+
   const build = async () => {
     if (busy) return;
     setBusy(true);
@@ -127,7 +171,12 @@ export function VocabularyScreen({ menu, language, level, topicId }: Props) {
     setConfirmRebuild(false);
     try {
       const chosen = findTopic(language, topic);
-      const next = await generateVocabulary({ language, level, topic: chosen ?? undefined });
+      const next = await generateVocabulary({
+        language,
+        level,
+        topic: chosen ?? undefined,
+        variant: await variantFor(),
+      });
       setVocabulary(next);
       setCollapsed(new Set());
       setPeeked(new Set());

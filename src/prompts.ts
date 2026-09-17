@@ -432,7 +432,18 @@ const VOCABULARY_GUIDANCE: Record<Level, string> = {
  * у врача, в аптеке, здоровый образ жизни, как спросить о самочувствии, диалог
  * у врача целиком и предложения-примеры.
  */
-export function buildVocabularyPrompt(language: LanguageCode, level: Level, topic?: Topic): string {
+/** Какое произношение писать в транскрипции: словари дают RP, американцу — GA. */
+export function pronunciationName(language: LanguageCode, variant?: EnglishVariant): string {
+  if (language !== 'en') return `standard ${LANGUAGES[language].englishName}`;
+  return variant === 'american' ? 'General American' : 'British Received Pronunciation';
+}
+
+export function buildVocabularyPrompt(
+  language: LanguageCode,
+  level: Level,
+  topic?: Topic,
+  variant?: EnglishVariant,
+): string {
   const { englishName } = LANGUAGES[language];
 
   return [
@@ -446,9 +457,22 @@ export function buildVocabularyPrompt(language: LanguageCode, level: Level, topi
     `- Level ${level}: ${VOCABULARY_GUIDANCE[level]}`,
     `- Sections come in two kinds. "words": single words and short collocations — ${language === 'en' ? 'nouns without an article' : 'nouns with their article'}, verbs in the infinitive, adjectives in the base form. "phrases": complete sentences and questions a person would actually say in a situation of the topic — describing, asking, answering, advising, dealing with an emergency. Put the "words" sections first, then the "phrases" sections; have at least two of each.`,
     `- "term" is in ${englishName}; "translation" is in ${EXPLANATION_LANGUAGE}, short and natural, not a dictionary list of every meaning. Where two forms are interchangeable, give both in one entry separated by " / ", like "el oído / la oreja".`,
+    `- "transcription" is the pronunciation of the whole term in IPA between slashes, ${pronunciationName(language, variant)}, with stress marks, like /kaˈβeθa/ or /ˈhedeɪk/. For a phrase transcribe the whole phrase, connected speech, no pauses marked.`,
     `- "title" of a section is in ${englishName}; "gloss" is the same in ${EXPLANATION_LANGUAGE}. The sheet "title" is the topic named in ${englishName}.`,
     '- No entry appears twice across sections. Every term must be correct, natural, spelled as in a dictionary and in use today — a learner will memorise it as is.',
     `- "dialogue": one conversation of ten to fourteen lines in ${englishName} between two people in a typical situation of the topic, turns alternating, each line a full utterance without speaker labels. It reuses words and phrases from the sections.`,
     `- "examples": ten to fourteen full sentences in ${englishName}, each using one or two entries from the sections in a natural context, at the level's grammar — past, future, conditions, reported speech as the level allows.`,
+  ].join('\n');
+}
+
+/**
+ * Транскрипция для набора, составленного до того, как она появилась: один
+ * запрос на весь лист, чтобы не платить за каждое слово отдельно.
+ */
+export function buildTranscriptionPrompt(language: LanguageCode, variant?: EnglishVariant): string {
+  return [
+    `You are a ${LANGUAGES[language].englishName} pronunciation dictionary.`,
+    `For every term in the list give its pronunciation in IPA between slashes, ${pronunciationName(language, variant)}, with stress marks, like /kaˈβeθa/ or /ˈhedeɪk/. For a phrase transcribe the whole phrase as connected speech.`,
+    'Return the terms in the same order and spelled exactly as given, one transcription per term.',
   ].join('\n');
 }

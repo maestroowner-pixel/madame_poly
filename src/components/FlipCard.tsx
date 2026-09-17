@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { EarIcon } from './icons';
+import { SpeakerIcon } from './icons';
 import { t } from '../i18n';
 import { useStyles, useTheme, type Theme } from '../theme';
 import type { CardDirection } from '../types';
@@ -9,6 +9,9 @@ import type { CardDirection } from '../types';
 interface Props {
   front: string;
   back: string;
+  /** Транскрипция под словом — на той стороне, где оно. */
+  frontNote?: string;
+  backNote?: string;
   flipped: boolean;
   onFlip: () => void;
   /** Озвучить слово — кнопка в углу, нажатие на неё карточку не переворачивает. */
@@ -24,7 +27,7 @@ const FLIP_MS = 320;
  * в каждый момент видна ровно одна. Поворот ведёт нативный поток, чтобы
  * анимация не спотыкалась о загрузку озвучки.
  */
-export function FlipCard({ front, back, flipped, onFlip, onSpeak, speaking }: Props) {
+export function FlipCard({ front, back, frontNote, backNote, flipped, onFlip, onSpeak, speaking }: Props) {
   const { theme } = useTheme();
   const styles = useStyles(createStyles);
   const turn = useRef(new Animated.Value(flipped ? 1 : 0)).current;
@@ -54,7 +57,7 @@ export function FlipCard({ front, back, flipped, onFlip, onSpeak, speaking }: Pr
       accessibilityLabel={t.tabListen}
       style={styles.speaker}
     >
-      <EarIcon size={20} color={speaking ? theme.neon : theme.textMuted} />
+      <SpeakerIcon size={22} color={speaking ? theme.neon : theme.textMuted} />
     </Pressable>
   );
 
@@ -62,6 +65,7 @@ export function FlipCard({ front, back, flipped, onFlip, onSpeak, speaking }: Pr
     <Pressable onPress={onFlip} style={styles.box}>
       <Animated.View style={[styles.face, { transform: [{ perspective: 1000 }, { rotateY: frontSpin }] }]}>
         <Text style={styles.frontText}>{front}</Text>
+        {frontNote && <Text style={styles.note}>{frontNote}</Text>}
         <Text style={styles.hint}>{t.wordsFlipHint}</Text>
         {speaker}
       </Animated.View>
@@ -76,6 +80,7 @@ export function FlipCard({ front, back, flipped, onFlip, onSpeak, speaking }: Pr
           {front}
         </Text>
         <Text style={styles.backText}>{back}</Text>
+        {backNote && <Text style={styles.note}>{backNote}</Text>}
         {speaker}
       </Animated.View>
     </Pressable>
@@ -139,13 +144,14 @@ const createStyles = (theme: Theme) =>
     frontText: { color: theme.text, fontSize: 24, fontWeight: '700', textAlign: 'center' },
     backText: { color: theme.text, fontSize: 22, fontWeight: '600', textAlign: 'center' },
     backCaption: { color: theme.textMuted, fontSize: 13 },
+    note: { color: theme.textMuted, fontSize: 16, textAlign: 'center' },
     hint: { color: theme.textMuted, fontSize: 12 },
     speaker: {
       position: 'absolute',
       top: 10,
       right: 10,
-      width: 34,
-      height: 34,
+      width: 38,
+      height: 38,
       alignItems: 'center',
       justifyContent: 'center',
     },

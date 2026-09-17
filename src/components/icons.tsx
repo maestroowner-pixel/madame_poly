@@ -571,3 +571,59 @@ export function EyeIcon({ size, color, closed, cutout }: EyeProps) {
     </View>
   );
 }
+
+/**
+ * Динамик: корпус, раструб и две дуги звука. Раструб — треугольник из
+ * прозрачных рамок, дуги — правая кромка скруглённой рамки.
+ */
+export function SpeakerIcon({ size, color }: Props) {
+  const line = Math.max(1.6, size * 0.085);
+  const cone = size * 0.62;
+
+  const wave = (height: number, left: number) => (
+    <View
+      style={{
+        position: 'absolute',
+        left,
+        width: height / 2,
+        height,
+        borderWidth: line,
+        borderColor: 'transparent',
+        borderRightColor: color,
+        borderTopRightRadius: height / 2,
+        borderBottomRightRadius: height / 2,
+      }}
+    />
+  );
+
+  return (
+    <View style={[styles.box, { width: size, height: size }]}>
+      <View
+        style={{
+          position: 'absolute',
+          left: size * 0.16,
+          width: 0,
+          height: 0,
+          borderTopWidth: cone / 2,
+          borderBottomWidth: cone / 2,
+          borderRightWidth: size * 0.36,
+          borderTopColor: 'transparent',
+          borderBottomColor: 'transparent',
+          borderRightColor: color,
+        }}
+      />
+      <View
+        style={{
+          position: 'absolute',
+          left: size * 0.06,
+          width: size * 0.22,
+          height: size * 0.32,
+          borderRadius: size * 0.04,
+          backgroundColor: color,
+        }}
+      />
+      {wave(size * 0.4, size * 0.56)}
+      {wave(size * 0.72, size * 0.66)}
+    </View>
+  );
+}

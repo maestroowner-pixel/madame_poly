@@ -16,6 +16,7 @@ import {
   buildHomeworkPrompt,
   buildListeningCheckPrompt,
   buildListeningPrompt,
+  buildTranscriptionPrompt,
   buildVocabularyPrompt,
   buildSystemPrompt,
   buildWritingPrompt,
@@ -142,7 +143,7 @@ const VocabularySchema = z.object({
       title: z.string(),
       gloss: z.string(),
       kind: z.enum(['words', 'phrases']),
-      entries: z.array(z.object({ term: z.string(), translation: z.string() })),
+      entries: z.array(z.object({ term: z.string(), translation: z.string(), transcription: z.string() })),
     }),
   ),
   dialogue: z.array(z.string()),
@@ -683,8 +684,9 @@ export async function generateVocabulary(params: {
   language: LanguageCode;
   level: Level;
   topic?: Topic;
+  variant?: EnglishVariant;
 }): Promise<Vocabulary> {
-  const { language, level, topic } = params;
+  const { language, level, topic, variant } = params;
 
   if (!ANTHROPIC_API_KEY) throw new Error(t.noAnthropicKey);
 
@@ -692,7 +694,7 @@ export async function generateVocabulary(params: {
     client.messages.parse({
       model: CLAUDE_MODEL,
       max_tokens: 16384,
-      system: buildVocabularyPrompt(language, level, topic),
+      system: buildVocabularyPrompt(language, level, topic, variant),
       thinking: { type: 'disabled' },
       messages: [{ role: 'user', content: 'Compile the sheet.' }],
       output_config: { format: zodOutputFormat(VocabularySchema) },
@@ -710,7 +712,11 @@ export async function generateVocabulary(params: {
       title: section.title.trim(),
       gloss: section.gloss.trim(),
       entries: section.entries
-        .map((entry) => ({ term: entry.term.trim(), translation: entry.translation.trim() }))
+        .map((entry) => ({
+          term: entry.term.trim(),
+          translation: entry.translation.trim(),
+          transcription: entry.transcription.trim() || undefined,
+        }))
         .filter((entry) => {
           const key = entry.term.toLowerCase();
           if (!entry.term || !entry.translation || seen.has(key)) return false;
@@ -729,5 +735,48 @@ export async function generateVocabulary(params: {
     dialogue: parsed.dialogue.map((line) => line.trim()).filter(Boolean),
     examples: parsed.examples.map((line) => line.trim()).filter(Boolean),
     createdAt: Date.now(),
+  };
+}
+
+const TranscriptionSchema = z.object({
+  transcriptions: z.array(z.string()),
+});
+
+/**
+ * Транскрипция для набора без неё — составленного до того, как карточки стали
+ * её показывать. Один запрос на весь лист; ответ подходит, только если строк
+ * столько же, сколько слов, — иначе они разъедутся.
+ */
+export async function transcribeVocabulary(
+  vocabulary: Vocabulary,
+  variant?: EnglishVariant,
+): Promise<Vocabulary> {
+  if (!ANTHROPIC_API_KEY) throw new Error(t.noAnthropicKey);
+
+  const terms = vocabulary.sections.flatMap((section) => section.entries.map((entry) => entry.term));
+  const response = await metered(() =>
+    client.messages.parse({
+      model: CLAUDE_MODEL,
+      max_tokens: 8192,
+      system: buildTranscriptionPrompt(vocabulary.language, variant),
+      thinking: { type: 'disabled' },
+      messages: [{ role: 'user', content: terms.map((term, i) => `${i + 1}. ${term}`).join('\n') }],
+      output_config: { format: zodOutputFormat(TranscriptionSchema) },
+    }),
+  );
+
+  const list = response.parsed_output?.transcriptions;
+  if (!list || list.length !== terms.length) throw new Error(t.badVocabulary);
+
+  let position = 0;
+  return {
+    ...vocabulary,
+    sections: vocabulary.sections.map((section) => ({
+      ...section,
+      entries: section.entries.map((entry) => ({
+        ...entry,
+        transcription: list[position++]?.trim() || undefined,
+      })),
+    })),
   };
 }

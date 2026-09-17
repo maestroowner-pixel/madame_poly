@@ -32,7 +32,14 @@ export function nextDue(cards: ReviewCard[], now = Date.now()): number | null {
  * Новая карточка: срок — сейчас, чтобы её можно было повторить сразу же.
  */
 export function newCard(entry: VocabularyEntry, now = Date.now()): ReviewCard {
-  return { term: entry.term, translation: entry.translation, step: 0, due: now, addedAt: now };
+  return {
+    term: entry.term,
+    translation: entry.translation,
+    transcription: entry.transcription,
+    step: 0,
+    due: now,
+    addedAt: now,
+  };
 }
 
 /**
@@ -47,11 +54,21 @@ export function answer(card: ReviewCard, remembered: boolean, now = Date.now()):
   return { ...card, step: card.step + 1, due: now + interval };
 }
 
+export interface CardSides {
+  front: string;
+  back: string;
+  /** Транскрипция — под словом, на той стороне, где оно. */
+  frontNote?: string;
+  backNote?: string;
+  /** Слово видно на лицевой стороне — озвучиваем сразу, иначе после переворота. */
+  termInFront: boolean;
+}
+
 /** Что показывать на лицевой и обратной стороне при выбранном направлении. */
-export function sides(entry: VocabularyEntry, direction: CardDirection): { front: string; back: string } {
+export function sides(entry: VocabularyEntry, direction: CardDirection): CardSides {
   return direction === 'forward'
-    ? { front: entry.term, back: entry.translation }
-    : { front: entry.translation, back: entry.term };
+    ? { front: entry.term, back: entry.translation, frontNote: entry.transcription, termInFront: true }
+    : { front: entry.translation, back: entry.term, backNote: entry.transcription, termInFront: false };
 }
 
 // --- Тест ---

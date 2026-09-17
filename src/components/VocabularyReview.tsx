@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { FlipCard } from './FlipCard';
@@ -35,6 +35,13 @@ export function VocabularyReview({ cards, direction, speaking, onSpeak, onAnswer
 
   const card = queue[0];
   const dueLeft = dueCards(cards).length;
+  const shown = card ? sides(card, direction) : null;
+
+  // Слово звучит само, как только показалось: сразу или после переворота.
+  useEffect(() => {
+    if (card && shown && (shown.termInFront ? !flipped : flipped)) onSpeak(card.term);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [card?.term, flipped, shown?.termInFront]);
 
   const reply = (remembered: boolean) => {
     if (!card) return;
@@ -78,7 +85,7 @@ export function VocabularyReview({ cards, direction, speaking, onSpeak, onAnswer
     );
   }
 
-  const { front, back } = sides(card, direction);
+  const { front, back, frontNote, backNote } = sides(card, direction);
 
   return (
     <View style={styles.stack}>
@@ -89,6 +96,8 @@ export function VocabularyReview({ cards, direction, speaking, onSpeak, onAnswer
       <FlipCard
         front={front}
         back={back}
+        frontNote={frontNote}
+        backNote={backNote}
         flipped={flipped}
         onFlip={() => setFlipped((value) => !value)}
         onSpeak={() => onSpeak(card.term)}

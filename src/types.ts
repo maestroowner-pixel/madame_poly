@@ -245,6 +245,8 @@ export interface VocabularyEntry {
   /** На изучаемом языке; существительные с артиклем. */
   term: string;
   translation: string;
+  /** Произношение знаками МФА, в косых чертах: /kaˈβeθa/. У старых наборов нет. */
+  transcription?: string;
 }
 
 /** Группа слов или фраз: «части тела», «у врача», «как спросить о самочувствии». */
@@ -284,6 +286,7 @@ export type CardDirection = 'forward' | 'reverse';
 export interface ReviewCard {
   term: string;
   translation: string;
+  transcription?: string;
   /** Сколько раз подряд слово вспомнилось — от этого зависит, когда показать снова. */
   step: number;
   /** Когда показать в следующий раз, мс. */

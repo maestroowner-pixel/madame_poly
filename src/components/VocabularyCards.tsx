@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { FlipCard } from './FlipCard';
@@ -26,12 +26,12 @@ interface Props {
 export function VocabularyCards({ vocabulary, known, direction, speaking, onSpeak, onKnow, onLater }: Props) {
   const styles = useStyles(createStyles);
 
-  const build = (all: boolean) =>
-    flatEntries(vocabulary)
-      .map((item) => item.entry)
-      .filter((entry) => all || !known.has(entry.term));
+  /** Колода держит только слова: записи берём из набора при каждом рендере,
+      чтобы подоспевшая транскрипция попала на уже открытую карточку. */
+  const entries = new Map(flatEntries(vocabulary).map((item) => [item.entry.term, item.entry]));
+  const build = (all: boolean) => [...entries.keys()].filter((term) => all || !known.has(term));
 
-  const [deck, setDeck] = useState<VocabularyEntry[]>(() => build(false));
+  const [deck, setDeck] = useState<string[]>(() => build(false));
   const [index, setIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
   const [counts, setCounts] = useState({ known: 0, later: 0 });
@@ -43,7 +43,16 @@ export function VocabularyCards({ vocabulary, known, direction, speaking, onSpea
     setCounts({ known: 0, later: 0 });
   };
 
-  const entry = deck[index];
+  const entry: VocabularyEntry | undefined = deck[index] === undefined ? undefined : entries.get(deck[index]);
+  const shown = entry ? sides(entry, direction) : null;
+
+  // Слово звучит само, как только показалось: сразу или после переворота.
+  // Хук стоит до ранних выходов — порядок хуков между рендерами меняться не должен.
+  useEffect(() => {
+    if (entry && shown && (shown.termInFront ? !flipped : flipped)) onSpeak(entry.term);
+    // Озвучка зависит только от карточки и стороны — не от смены колбэка.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [entry?.term, flipped, shown?.termInFront]);
 
   const advance = (remembered: boolean) => {
     if (!entry) return;
@@ -68,7 +77,7 @@ export function VocabularyCards({ vocabulary, known, direction, speaking, onSpea
     );
   }
 
-  if (!entry) {
+  if (!entry || !shown) {
     return (
       <View style={styles.stack}>
         <Text style={styles.note}>{t.wordsDeckDone(counts.known, counts.later)}</Text>
@@ -82,7 +91,7 @@ export function VocabularyCards({ vocabulary, known, direction, speaking, onSpea
     );
   }
 
-  const { front, back } = sides(entry, direction);
+  const { front, back, frontNote, backNote } = shown;
 
   return (
     <View style={styles.stack}>
@@ -90,6 +99,8 @@ export function VocabularyCards({ vocabulary, known, direction, speaking, onSpea
       <FlipCard
         front={front}
         back={back}
+        frontNote={frontNote}
+        backNote={backNote}
         flipped={flipped}
         onFlip={() => setFlipped((value) => !value)}
         onSpeak={() => onSpeak(entry.term)}
