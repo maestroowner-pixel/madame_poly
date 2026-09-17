@@ -518,3 +518,56 @@ export function BookIcon({ size, color }: Props) {
     </View>
   );
 }
+
+interface EyeProps extends Props {
+  /** Закрытый глаз — тот же контур, перечёркнутый наискось. */
+  closed: boolean;
+  /** Цвет подложки: кант вокруг черты отделяет её от контура. */
+  cutout: string;
+}
+
+/** Глаз: скруглённый контур со зрачком; закрытый — перечёркнут, как «eye-off». */
+export function EyeIcon({ size, color, closed, cutout }: EyeProps) {
+  const line = Math.max(1.6, size * 0.085);
+  const pupil = size * 0.28;
+
+  return (
+    <View style={[styles.box, { width: size, height: size }]}>
+      <View
+        style={{
+          width: size * 0.92,
+          height: size * 0.58,
+          borderRadius: size * 0.32,
+          borderWidth: line,
+          borderColor: color,
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <View
+          style={{
+            width: pupil,
+            height: pupil,
+            borderRadius: pupil / 2,
+            backgroundColor: color,
+          }}
+        />
+      </View>
+      {closed &&
+        [cutout, color].map((fill, layer) => (
+          <View
+            key={layer}
+            style={{
+              position: 'absolute',
+              width: size * 0.96,
+              // Нижний слой шире — кант цвета подложки отделяет черту от контура.
+              height: layer === 0 ? line * 2.8 : line,
+              borderRadius: line * 2,
+              backgroundColor: fill,
+              transform: [{ rotate: '-45deg' }],
+            }}
+          />
+        ))}
+    </View>
+  );
+}

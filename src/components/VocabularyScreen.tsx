@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 
 import { DirectionToggle } from './FlipCard';
-import { ShareIcon } from './icons';
+import { EyeIcon, ShareIcon } from './icons';
 import { ScreenTitle } from './ScreenMenu';
 import { TopicPicker } from './TopicPicker';
 import { VocabularyCards } from './VocabularyCards';
@@ -279,6 +279,9 @@ export function VocabularyScreen({ menu, language, level, topicId }: Props) {
     { key: 'review', label: t.wordsTabReview, badge: due },
     { key: 'quiz', label: t.wordsTabQuiz },
   ];
+  const tabIndex = tabs.findIndex((item) => item.key === tab);
+  /** Стрелки листают по кругу: с последнего раздела — на первый. */
+  const shiftTab = (step: number) => setTab(tabs[(tabIndex + step + tabs.length) % tabs.length].key);
 
   return (
     <View style={styles.screen}>
@@ -338,26 +341,37 @@ export function VocabularyScreen({ menu, language, level, topicId }: Props) {
           </Pressable>
         )}
 
-        <View style={styles.tabs}>
-          {tabs.map((item) => {
-            const active = item.key === tab;
-            return (
-              <Pressable
-                key={item.key}
-                onPress={() => setTab(item.key)}
-                style={[styles.tab, active && styles.tabActive]}
-              >
-                <Text style={[styles.tabLabel, active && styles.tabLabelActive]} numberOfLines={1}>
-                  {item.label}
-                </Text>
-                {item.badge ? (
-                  <View style={styles.badge}>
-                    <Text style={styles.badgeText}>{item.badge}</Text>
-                  </View>
-                ) : null}
-              </Pressable>
-            );
-          })}
+        {/* Четыре названия в ряд на телефоне не помещаются — показываем одно
+            целиком, а листаем стрелками; точки под ним говорят, где мы. */}
+        <View style={styles.pager}>
+          <Pressable onPress={() => shiftTab(-1)} hitSlop={8} style={styles.pagerArrow}>
+            <Text style={styles.pagerArrowText}>‹</Text>
+          </Pressable>
+          <View style={styles.pagerTitle}>
+            <View style={styles.pagerTitleRow}>
+              <Text style={styles.pagerLabel} numberOfLines={1}>
+                {tabs[tabIndex].label}
+              </Text>
+              {tabs[tabIndex].badge ? (
+                <View style={styles.badge}>
+                  <Text style={styles.badgeText}>{tabs[tabIndex].badge}</Text>
+                </View>
+              ) : null}
+            </View>
+            <View style={styles.dots}>
+              {tabs.map((item) => (
+                <Pressable
+                  key={item.key}
+                  onPress={() => setTab(item.key)}
+                  hitSlop={6}
+                  style={[styles.dot, item.key === tab && styles.dotActive, item.badge ? styles.dotDue : null]}
+                />
+              ))}
+            </View>
+          </View>
+          <Pressable onPress={() => shiftTab(1)} hitSlop={8} style={styles.pagerArrow}>
+            <Text style={styles.pagerArrowText}>›</Text>
+          </Pressable>
         </View>
 
         {tab !== 'list' && (
@@ -417,18 +431,22 @@ export function VocabularyScreen({ menu, language, level, topicId }: Props) {
           <>
             <View style={styles.titleRow}>
               <Text style={styles.title}>{vocabulary.title}</Text>
-              <Text style={styles.progress}>{t.wordsKnown(knownCount, total)}</Text>
+              <Text style={styles.progress}>
+                {knownCount} / {total}
+              </Text>
+              <Pressable
+                onPress={() => {
+                  setHideTranslations((hidden) => !hidden);
+                  setPeeked(new Set());
+                }}
+                hitSlop={8}
+                accessibilityRole="button"
+                accessibilityLabel={hideTranslations ? t.wordsShow : t.wordsHide}
+                style={styles.eye}
+              >
+                <EyeIcon size={22} color={theme.neon} closed={hideTranslations} cutout={theme.surfaceAlt} />
+              </Pressable>
             </View>
-
-            <Pressable
-              onPress={() => {
-                setHideTranslations((hidden) => !hidden);
-                setPeeked(new Set());
-              }}
-              style={styles.tool}
-            >
-              <Text style={styles.toolLabel}>{hideTranslations ? t.wordsShow : t.wordsHide}</Text>
-            </Pressable>
 
             {vocabulary.sections.map((section, position) => {
               const closed = collapsed.has(position);
@@ -625,25 +643,23 @@ const createStyles = (theme: Theme) =>
     },
     reminderText: { color: theme.correctionText, fontSize: 14, fontWeight: '600', flex: 1 },
     reminderChevron: { color: theme.correctionText, fontSize: 18, lineHeight: 20 },
-    tabs: {
-      flexDirection: 'row',
-      padding: 3,
-      borderRadius: 14,
-      backgroundColor: theme.surfaceAlt,
-    },
-    tab: {
-      flex: 1,
-      flexDirection: 'row',
-      height: 36,
-      gap: 4,
-      borderRadius: 11,
+    pager: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+    pagerArrow: {
+      width: 40,
+      height: 44,
+      borderRadius: 12,
       alignItems: 'center',
       justifyContent: 'center',
-      paddingHorizontal: 4,
+      backgroundColor: theme.surfaceAlt,
     },
-    tabActive: { backgroundColor: theme.surface },
-    tabLabel: { color: theme.textMuted, fontSize: 13, fontWeight: '600', flexShrink: 1 },
-    tabLabelActive: { color: theme.neon, fontWeight: '700' },
+    pagerArrowText: { color: theme.neon, fontSize: 26, lineHeight: 30, fontWeight: '600' },
+    pagerTitle: { flex: 1, alignItems: 'center', gap: 6 },
+    pagerTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    pagerLabel: { color: theme.neon, fontSize: 16, fontWeight: '700' },
+    dots: { flexDirection: 'row', gap: 6 },
+    dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: theme.border },
+    dotActive: { backgroundColor: theme.neon },
+    dotDue: { backgroundColor: theme.correctionText },
     badge: {
       minWidth: 18,
       height: 18,
@@ -668,17 +684,17 @@ const createStyles = (theme: Theme) =>
     topicValue: { color: theme.text, fontSize: 14, fontWeight: '600', flex: 1 },
     topicChevron: { color: theme.textMuted, fontSize: 18, lineHeight: 20 },
 
-    titleRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 10 },
+    titleRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
     title: { color: theme.text, fontSize: 18, fontWeight: '700', flex: 1 },
-    progress: { color: theme.correctionText, fontSize: 12, fontWeight: '700' },
-    tool: {
-      height: 38,
-      borderRadius: 12,
+    progress: { color: theme.correctionText, fontSize: 13, fontWeight: '700' },
+    eye: {
+      width: 36,
+      height: 36,
+      borderRadius: 10,
       alignItems: 'center',
       justifyContent: 'center',
       backgroundColor: theme.surfaceAlt,
     },
-    toolLabel: { color: theme.neon, fontSize: 13, fontWeight: '600' },
 
     section: {
       gap: 4,
