@@ -31,6 +31,7 @@ import {
   loadEnglishVariant,
   loadKnownWords,
   loadReviewCards,
+  loadSpeechRate,
   loadVocabulary,
   loadVocabularyIndex,
   saveCardDirection,
@@ -99,6 +100,9 @@ export function VocabularyScreen({ menu, language, level, topicId }: Props) {
   const topicRef = useRef<View>(null);
   /** Озвучка слова на время сеанса — второй раз за тем же не ходим. */
   const audio = useRef(new Map<string, string>());
+  /** Темп из настроек беседы: слова Poly читает тем же голосом и в том же темпе.
+      «Как я» тут не к чему примерять — берём обычный. */
+  const rate = useRef(1);
 
   const fail = (e: unknown) => setError(e instanceof Error ? e.message : String(e));
 
@@ -113,6 +117,9 @@ export function VocabularyScreen({ menu, language, level, topicId }: Props) {
 
   useEffect(() => {
     void loadCardDirection().then(setDirection);
+    void loadSpeechRate().then((mode) => {
+      rate.current = mode === 'auto' ? 1 : mode;
+    });
   }, []);
 
   // Сменили тему или уровень — показываем готовый список под них, если он есть.
@@ -194,7 +201,7 @@ export function VocabularyScreen({ menu, language, level, topicId }: Props) {
     try {
       let uri = audio.current.get(text);
       if (!uri) {
-        uri = await synthesize(text);
+        uri = await synthesize(text, rate.current);
         audio.current.set(text, uri);
       }
       await setAudioModeAsync({ playsInSilentMode: true, allowsRecording: false });
