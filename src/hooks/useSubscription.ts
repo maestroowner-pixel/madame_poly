@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   FREE_MONTHLY_BUDGET_USD,
   FREE_TALKS_PER_DAY,
+  UNLIMITED_TALKS,
   PRO_MONTHLY_BUDGET_USD,
 } from '../config';
 import { allowance, setBudget } from '../services/meter';
@@ -88,7 +89,13 @@ export function useSubscription(): Subscription {
 
   // Пока подписка не известна, беседу не запрещаем: проверка занимает
   // мгновение, а платящий человек не должен упереться в стену на запуске.
-  const block: Block = exhausted ? 'budget' : pro === false && left === 0 ? 'talks' : null;
+  const block: Block = UNLIMITED_TALKS
+    ? null
+    : exhausted
+      ? 'budget'
+      : pro === false && left === 0
+        ? 'talks'
+        : null;
 
   return {
     pro,

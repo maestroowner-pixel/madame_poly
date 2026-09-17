@@ -5,6 +5,7 @@ import {
   PRO_MONTHLY_BUDGET_USD,
   RECORDING_BITRATE,
   TTS_PRICE_PER_CHAR,
+  UNLIMITED_TALKS,
   WHISPER_PRICE_PER_MINUTE,
 } from '../config';
 import { t } from '../i18n';
@@ -51,6 +52,7 @@ export async function allowance(): Promise<Allowance> {
 
 /** Бросает BudgetError, если месячный объём исчерпан. Звать перед каждым запросом. */
 export async function assertBudget(): Promise<void> {
+  if (UNLIMITED_TALKS) return;
   if ((await allowance()).exhausted) throw new BudgetError();
 }
 
