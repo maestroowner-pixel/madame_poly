@@ -11,6 +11,8 @@ import type {
   SessionReport,
   Vocabulary,
   VocabularyIndexEntry,
+  CardDirection,
+  ReviewCard,
   Homework,
   LanguageCode,
   Level,
@@ -49,6 +51,8 @@ const KEY_VOCABULARIES = 'polyglotta:vocabularies';
 const keyVocabulary = (language: LanguageCode, level: Level, topicId: string | null) =>
   `polyglotta:vocabulary:${language}:${level}:${topicId ?? 'free'}`;
 const keyVocabKnown = (language: LanguageCode) => `polyglotta:vocabKnown:${language}`;
+const keyVocabReview = (language: LanguageCode) => `polyglotta:vocabReview:${language}`;
+const KEY_CARD_DIRECTION = 'polyglotta:cardDirection';
 const keyExamLevel = (language: LanguageCode) => `polyglotta:examLevel:${language}`;
 
 /**
@@ -588,4 +592,24 @@ export async function loadKnownWords(language: LanguageCode): Promise<Set<string
 
 export async function saveKnownWords(language: LanguageCode, known: Set<string>): Promise<void> {
   await write(keyVocabKnown(language), JSON.stringify([...known]));
+}
+
+/**
+ * Очередь повторения — тоже по языку: карточки из разных наборов повторяются
+ * вперемешку, а срок у каждой свой.
+ */
+export async function loadReviewCards(language: LanguageCode): Promise<ReviewCard[]> {
+  return parse(await AsyncStorage.getItem(keyVocabReview(language)), [] as ReviewCard[]);
+}
+
+export async function saveReviewCards(language: LanguageCode, cards: ReviewCard[]): Promise<void> {
+  await write(keyVocabReview(language), JSON.stringify(cards));
+}
+
+export async function loadCardDirection(): Promise<CardDirection> {
+  return parse(await AsyncStorage.getItem(KEY_CARD_DIRECTION), 'forward' as CardDirection);
+}
+
+export async function saveCardDirection(direction: CardDirection): Promise<void> {
+  await write(KEY_CARD_DIRECTION, JSON.stringify(direction));
 }

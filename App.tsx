@@ -42,6 +42,8 @@ import { locale, t } from './src/i18n';
 import { LANGUAGES } from './src/languages';
 import { CONTENT_MAX_WIDTH } from './src/layout';
 import { VOCABULARY_LANGUAGES } from './src/config';
+import { dueCards } from './src/review';
+import { loadReviewCards } from './src/storage';
 import { ThemeProvider, useStyles, useTheme, type Theme } from './src/theme';
 import { findTopic } from './src/topics';
 import type { Message } from './src/types';
@@ -110,6 +112,13 @@ function Screen() {
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuAnchor, setMenuAnchor] = useState<Anchor | null>(null);
+  /** Сколько слов ждут повторения — считаем при каждом открытии меню. */
+  const [wordsDue, setWordsDue] = useState(0);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    void loadReviewCards(conversation.language).then((cards) => setWordsDue(dueCards(cards).length));
+  }, [menuOpen, conversation.language]);
 
   /**
    * Экраны, открываемые поверх вкладки. Их ровно один слой: вкладки убрали
@@ -378,6 +387,7 @@ function Screen() {
             current={section}
             // Слова открыты не для всех языков — закрытые из списка убираем.
             hidden={VOCABULARY_LANGUAGES.includes(conversation.language) ? [] : ['words']}
+            badges={{ words: wordsDue }}
             anchor={menuAnchor}
             onSelect={setSection}
             onClose={() => setMenuOpen(false)}

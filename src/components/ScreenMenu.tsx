@@ -103,6 +103,8 @@ interface MenuProps {
   current: Screen;
   /** Разделы, закрытые для текущего языка, — в списке их нет. */
   hidden?: Screen[];
+  /** Счётчик у раздела: у «Слов» — сколько карточек ждут повторения. */
+  badges?: Partial<Record<Screen, number>>;
   /** Где стоит домик — под ним и раскрывается список. */
   anchor: Anchor | null;
   onSelect: (screen: Screen) => void;
@@ -114,7 +116,7 @@ interface MenuProps {
  * она отнимала бы полоску экрана у ленты, а внизу и без того живёт кнопка
  * беседы — главный орган управления.
  */
-export function ScreenMenu({ current, hidden = [], anchor, onSelect, onClose }: MenuProps) {
+export function ScreenMenu({ current, hidden = [], badges = {}, anchor, onSelect, onClose }: MenuProps) {
   const { theme } = useTheme();
   const styles = useStyles(createStyles);
   const labels = screenLabels();
@@ -141,6 +143,11 @@ export function ScreenMenu({ current, hidden = [], anchor, onSelect, onClose }: 
             >
               <Icon size={20} color={active ? theme.neon : theme.textMuted} />
               <Text style={[styles.label, active && styles.labelActive]}>{labels[screen]}</Text>
+              {badges[screen] ? (
+                <View style={styles.badge}>
+                  <Text style={styles.badgeText}>{badges[screen]}</Text>
+                </View>
+              ) : null}
             </Pressable>
           );
         })}
@@ -179,6 +186,17 @@ const createStyles = (theme: Theme) =>
       borderRadius: 12,
     },
     rowActive: { backgroundColor: theme.surfaceAlt },
+    badge: {
+      marginLeft: 'auto',
+      minWidth: 20,
+      height: 20,
+      paddingHorizontal: 6,
+      borderRadius: 10,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: theme.correctionText,
+    },
+    badgeText: { color: theme.surface, fontSize: 11, fontWeight: '700' },
     label: { color: theme.textMuted, fontSize: 15, fontWeight: '600' },
     labelActive: { color: theme.neon, fontWeight: '700' },
     titleRow: { flexDirection: 'row', alignItems: 'center', gap: 8, flexShrink: 1 },

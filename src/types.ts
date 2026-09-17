@@ -274,6 +274,23 @@ export interface Vocabulary {
   createdAt: number;
 }
 
+/** В какую сторону показывать карточку: слово → перевод или перевод → слово. */
+export type CardDirection = 'forward' | 'reverse';
+
+/**
+ * Карточка, отложенная на повторение. Живёт по языку, а не по набору: слово из
+ * списка о здоровье повторяется вместе со словом из списка о работе.
+ */
+export interface ReviewCard {
+  term: string;
+  translation: string;
+  /** Сколько раз подряд слово вспомнилось — от этого зависит, когда показать снова. */
+  step: number;
+  /** Когда показать в следующий раз, мс. */
+  due: number;
+  addedAt: number;
+}
+
 /** Строка списка сохранённых наборов — сам набор грузится по нажатию. */
 export interface VocabularyIndexEntry {
   language: LanguageCode;

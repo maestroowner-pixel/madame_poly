@@ -9,27 +9,45 @@ import {
   View,
 } from 'react-native';
 
+import { DirectionToggle } from './FlipCard';
+import { ShareIcon } from './icons';
 import { ScreenTitle } from './ScreenMenu';
 import { TopicPicker } from './TopicPicker';
+import { VocabularyCards } from './VocabularyCards';
+import { VocabularyQuiz } from './VocabularyQuiz';
+import { VocabularyReview } from './VocabularyReview';
 import { measureAnchor, type Anchor } from '../anchor';
 import { formatDate } from '../format';
 import { locale, t } from '../i18n';
 import { LANGUAGES } from '../languages';
 import { CONTENT_MAX_WIDTH } from '../layout';
+import { dueCards, newCard } from '../review';
 import { generateVocabulary } from '../services/llm';
 import { exportVocabularyPdf } from '../services/pdf';
 import { synthesize } from '../services/tts';
 import {
   deleteVocabulary,
+  loadCardDirection,
   loadKnownWords,
+  loadReviewCards,
   loadVocabulary,
   loadVocabularyIndex,
+  saveCardDirection,
   saveKnownWords,
+  saveReviewCards,
   saveVocabulary,
 } from '../storage';
 import { useStyles, useTheme, type Theme } from '../theme';
 import { findTopic } from '../topics';
-import type { LanguageCode, Level, Vocabulary, VocabularyIndexEntry } from '../types';
+import type {
+  CardDirection,
+  LanguageCode,
+  Level,
+  ReviewCard,
+  Vocabulary,
+  VocabularyEntry,
+  VocabularyIndexEntry,
+} from '../types';
 
 interface Props {
   /** Домик со списком разделов. */
@@ -39,11 +57,16 @@ interface Props {
   topicId: string | null;
 }
 
+/** Четыре вкладки под темой: список, колода карточек, очередь повторения, тест. */
+type Tab = 'list' | 'cards' | 'review' | 'quiz';
+
 /**
  * Слова: тематический список лексики под уровень — как лист, который учитель
  * раздаёт перед новой темой. Слова группами с переводом, готовые фразы, диалог,
  * предложения. Нажатие озвучивает, галочка отмечает выученное, перевод можно
- * спрятать и проверять себя. Список составляется один раз и хранится.
+ * спрятать и проверять себя. Список составляется один раз и хранится. Из него
+ * же растут карточки и тест; отложенные слова копятся в очереди повторения по
+ * языку и возвращаются по расписанию — сначала часто, потом всё реже.
  */
 export function VocabularyScreen({ menu, language, level, topicId }: Props) {
   const { theme } = useTheme();
@@ -53,6 +76,9 @@ export function VocabularyScreen({ menu, language, level, topicId }: Props) {
   const [vocabulary, setVocabulary] = useState<Vocabulary | null>(null);
   const [index, setIndex] = useState<VocabularyIndexEntry[]>([]);
   const [known, setKnown] = useState<Set<string>>(new Set());
+  const [review, setReview] = useState<ReviewCard[]>([]);
+  const [direction, setDirection] = useState<CardDirection>('forward');
+  const [tab, setTab] = useState<Tab>('list');
   const [busy, setBusy] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [hideTranslations, setHideTranslations] = useState(false);
@@ -75,9 +101,15 @@ export function VocabularyScreen({ menu, language, level, topicId }: Props) {
   useEffect(() => {
     setError(null);
     setTopic(topicId);
+    setTab('list');
     void loadKnownWords(language).then(setKnown);
+    void loadReviewCards(language).then(setReview);
     void loadVocabularyIndex().then(setIndex);
   }, [language, topicId]);
+
+  useEffect(() => {
+    void loadCardDirection().then(setDirection);
+  }, []);
 
   // Сменили тему или уровень — показываем готовый список под них, если он есть.
   useEffect(() => {
@@ -132,6 +164,55 @@ export function VocabularyScreen({ menu, language, level, topicId }: Props) {
     else next.add(term);
     setKnown(next);
     void saveKnownWords(language, next);
+  };
+
+  const changeDirection = (next: CardDirection) => {
+    setDirection(next);
+    void saveCardDirection(next);
+  };
+
+  const storeReview = (cards: ReviewCard[]) => {
+    setReview(cards);
+    void saveReviewCards(language, cards);
+  };
+
+  /** «Знаю» на карточке: галочка в списке, из очереди повторения — долой. */
+  const markKnown = (entry: VocabularyEntry) => {
+    if (!known.has(entry.term)) {
+      const next = new Set(known).add(entry.term);
+      setKnown(next);
+      void saveKnownWords(language, next);
+    }
+    if (review.some((card) => card.term === entry.term)) {
+      storeReview(review.filter((card) => card.term !== entry.term));
+    }
+  };
+
+  /** «Повторить позже»: в очередь, если ещё не там; галочку «знаю» снимаем. */
+  const postpone = (entries: VocabularyEntry[]) => {
+    const queued = new Set(review.map((card) => card.term));
+    const fresh = entries.filter((entry) => !queued.has(entry.term));
+    if (fresh.length) storeReview([...review, ...fresh.map((entry) => newCard(entry))]);
+    if (entries.some((entry) => known.has(entry.term))) {
+      const next = new Set(known);
+      entries.forEach((entry) => next.delete(entry.term));
+      setKnown(next);
+      void saveKnownWords(language, next);
+    }
+  };
+
+  /** Ответ в повторении: карточка сдвигается по лестнице или, выученная, уходит в «знаю». */
+  const answerReview = (card: ReviewCard, next: ReviewCard | null) => {
+    storeReview(
+      next
+        ? review.map((item) => (item.term === card.term ? next : item))
+        : review.filter((item) => item.term !== card.term),
+    );
+    if (!next && !known.has(card.term)) {
+      const knownNext = new Set(known).add(card.term);
+      setKnown(knownNext);
+      void saveKnownWords(language, knownNext);
+    }
   };
 
   const togglePeek = (term: string) => {
@@ -191,6 +272,13 @@ export function VocabularyScreen({ menu, language, level, topicId }: Props) {
     ) ?? 0;
 
   const saved = index.filter((entry) => entry.language === language);
+  const due = dueCards(review).length;
+  const tabs: { key: Tab; label: string; badge?: number }[] = [
+    { key: 'list', label: t.wordsTabList },
+    { key: 'cards', label: t.wordsTabCards },
+    { key: 'review', label: t.wordsTabReview, badge: due },
+    { key: 'quiz', label: t.wordsTabQuiz },
+  ];
 
   return (
     <View style={styles.screen}>
@@ -207,25 +295,114 @@ export function VocabularyScreen({ menu, language, level, topicId }: Props) {
           </Pressable>
         )}
 
-        <View ref={topicRef} collapsable={false}>
-          <Pressable
-            onPress={() =>
-              measureAnchor(topicRef, (point) => {
-                setPickerAnchor(point);
-                setPickerOpen(true);
-              })
-            }
-            style={styles.topicButton}
-          >
-            <Text style={styles.topicCaption}>{t.topic}</Text>
-            <Text style={styles.topicValue} numberOfLines={1}>
-              {findTopic(language, topic)?.label ?? t.free}
-            </Text>
-            <Text style={styles.topicChevron}>›</Text>
-          </Pressable>
+        <View style={styles.topicRow}>
+          <View ref={topicRef} collapsable={false} style={styles.topicWrap}>
+            <Pressable
+              onPress={() =>
+                measureAnchor(topicRef, (point) => {
+                  setPickerAnchor(point);
+                  setPickerOpen(true);
+                })
+              }
+              style={styles.topicButton}
+            >
+              <Text style={styles.topicCaption}>{t.topic}</Text>
+              <Text style={styles.topicValue} numberOfLines={1}>
+                {findTopic(language, topic)?.label ?? t.free}
+              </Text>
+              <Text style={styles.topicChevron}>›</Text>
+            </Pressable>
+          </View>
+          {vocabulary && (
+            <Pressable
+              onPress={() => void exportPdf()}
+              disabled={exporting}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel={t.pdf}
+              style={styles.share}
+            >
+              {exporting ? (
+                <ActivityIndicator color={theme.neon} size="small" />
+              ) : (
+                <ShareIcon size={22} color={theme.neon} />
+              )}
+            </Pressable>
+          )}
         </View>
 
-        {!vocabulary ? (
+        {due > 0 && tab !== 'review' && (
+          <Pressable onPress={() => setTab('review')} style={styles.reminder}>
+            <Text style={styles.reminderText}>{t.wordsReviewDue(due)}</Text>
+            <Text style={styles.reminderChevron}>›</Text>
+          </Pressable>
+        )}
+
+        <View style={styles.tabs}>
+          {tabs.map((item) => {
+            const active = item.key === tab;
+            return (
+              <Pressable
+                key={item.key}
+                onPress={() => setTab(item.key)}
+                style={[styles.tab, active && styles.tabActive]}
+              >
+                <Text style={[styles.tabLabel, active && styles.tabLabelActive]} numberOfLines={1}>
+                  {item.label}
+                </Text>
+                {item.badge ? (
+                  <View style={styles.badge}>
+                    <Text style={styles.badgeText}>{item.badge}</Text>
+                  </View>
+                ) : null}
+              </Pressable>
+            );
+          })}
+        </View>
+
+        {tab !== 'list' && (
+          <DirectionToggle learning={language} native={locale} value={direction} onChange={changeDirection} />
+        )}
+
+        {tab === 'cards' &&
+          (vocabulary ? (
+            <VocabularyCards
+              key={`${vocabulary.language}:${vocabulary.level}:${vocabulary.topicId ?? 'free'}:${vocabulary.createdAt}`}
+              vocabulary={vocabulary}
+              known={known}
+              direction={direction}
+              speaking={speaking}
+              onSpeak={(text) => void speak(text)}
+              onKnow={markKnown}
+              onLater={(entry) => postpone([entry])}
+            />
+          ) : (
+            <Text style={styles.intro}>{t.wordsNoSheet}</Text>
+          ))}
+
+        {tab === 'review' && (
+          <VocabularyReview
+            cards={review}
+            direction={direction}
+            speaking={speaking}
+            onSpeak={(text) => void speak(text)}
+            onAnswer={answerReview}
+          />
+        )}
+
+        {tab === 'quiz' &&
+          (vocabulary ? (
+            <VocabularyQuiz
+              key={`${vocabulary.createdAt}:${direction}`}
+              vocabulary={vocabulary}
+              direction={direction}
+              onLater={postpone}
+            />
+          ) : (
+            <Text style={styles.intro}>{t.wordsNoSheet}</Text>
+          ))}
+
+        {tab === 'list' && !vocabulary ? (
           <>
             <Text style={styles.intro}>{t.wordsIntro}</Text>
             <Pressable onPress={() => void build()} disabled={busy} style={styles.cta}>
@@ -236,31 +413,22 @@ export function VocabularyScreen({ menu, language, level, topicId }: Props) {
               )}
             </Pressable>
           </>
-        ) : (
+        ) : tab === 'list' && vocabulary ? (
           <>
             <View style={styles.titleRow}>
               <Text style={styles.title}>{vocabulary.title}</Text>
               <Text style={styles.progress}>{t.wordsKnown(knownCount, total)}</Text>
             </View>
 
-            <View style={styles.tools}>
-              <Pressable
-                onPress={() => {
-                  setHideTranslations((hidden) => !hidden);
-                  setPeeked(new Set());
-                }}
-                style={styles.tool}
-              >
-                <Text style={styles.toolLabel}>{hideTranslations ? t.wordsShow : t.wordsHide}</Text>
-              </Pressable>
-              <Pressable onPress={() => void exportPdf()} disabled={exporting} style={styles.tool}>
-                {exporting ? (
-                  <ActivityIndicator color={theme.neon} size="small" />
-                ) : (
-                  <Text style={styles.toolLabel}>{t.pdf}</Text>
-                )}
-              </Pressable>
-            </View>
+            <Pressable
+              onPress={() => {
+                setHideTranslations((hidden) => !hidden);
+                setPeeked(new Set());
+              }}
+              style={styles.tool}
+            >
+              <Text style={styles.toolLabel}>{hideTranslations ? t.wordsShow : t.wordsHide}</Text>
+            </Pressable>
 
             {vocabulary.sections.map((section, position) => {
               const closed = collapsed.has(position);
@@ -354,10 +522,10 @@ export function VocabularyScreen({ menu, language, level, topicId }: Props) {
               )}
             </Pressable>
           </>
-        )}
+        ) : null}
 
-        {saved.length > 0 && <Text style={styles.caption}>{t.wordsSaved}</Text>}
-        {saved.map((entry) => (
+        {tab === 'list' && saved.length > 0 && <Text style={styles.caption}>{t.wordsSaved}</Text>}
+        {tab === 'list' && saved.map((entry) => (
           <Pressable
             key={`${entry.level}:${entry.topicId ?? 'free'}`}
             onPress={() => void open(entry)}
@@ -434,6 +602,59 @@ const createStyles = (theme: Theme) =>
     intro: { color: theme.textMuted, fontSize: 13, lineHeight: 19 },
     caption: { color: theme.textMuted, fontSize: 12, marginTop: 8 },
 
+    topicRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    topicWrap: { flex: 1 },
+    share: {
+      width: 44,
+      height: 44,
+      borderRadius: 14,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: theme.surfaceAlt,
+    },
+    reminder: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      paddingVertical: 10,
+      paddingHorizontal: 14,
+      borderRadius: 14,
+      backgroundColor: theme.correctionBg,
+      borderWidth: 1,
+      borderColor: theme.correctionBorder,
+    },
+    reminderText: { color: theme.correctionText, fontSize: 14, fontWeight: '600', flex: 1 },
+    reminderChevron: { color: theme.correctionText, fontSize: 18, lineHeight: 20 },
+    tabs: {
+      flexDirection: 'row',
+      padding: 3,
+      borderRadius: 14,
+      backgroundColor: theme.surfaceAlt,
+    },
+    tab: {
+      flex: 1,
+      flexDirection: 'row',
+      height: 36,
+      gap: 4,
+      borderRadius: 11,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: 4,
+    },
+    tabActive: { backgroundColor: theme.surface },
+    tabLabel: { color: theme.textMuted, fontSize: 13, fontWeight: '600', flexShrink: 1 },
+    tabLabelActive: { color: theme.neon, fontWeight: '700' },
+    badge: {
+      minWidth: 18,
+      height: 18,
+      paddingHorizontal: 5,
+      borderRadius: 9,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: theme.correctionText,
+    },
+    badgeText: { color: theme.surface, fontSize: 11, fontWeight: '700' },
+
     topicButton: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -450,9 +671,7 @@ const createStyles = (theme: Theme) =>
     titleRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 10 },
     title: { color: theme.text, fontSize: 18, fontWeight: '700', flex: 1 },
     progress: { color: theme.correctionText, fontSize: 12, fontWeight: '700' },
-    tools: { flexDirection: 'row', gap: 8 },
     tool: {
-      flex: 1,
       height: 38,
       borderRadius: 12,
       alignItems: 'center',
