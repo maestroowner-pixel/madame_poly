@@ -26,7 +26,9 @@ function TimeStepper({ value, onChange }: { value: ClockTime; onChange: (next: C
       <Pressable onPress={() => onChange(shift(value, -STEP_MINUTES))} hitSlop={8} style={styles.arrow}>
         <ChevronIcon size={18} color={theme.neon} direction="left" />
       </Pressable>
-      <Text style={styles.time}>{formatTime(value)}</Text>
+      <Text style={styles.time} numberOfLines={1}>
+        {formatTime(value)}
+      </Text>
       <Pressable onPress={() => onChange(shift(value, STEP_MINUTES))} hitSlop={8} style={styles.arrow}>
         <ChevronIcon size={18} color={theme.neon} direction="right" />
       </Pressable>
@@ -127,13 +129,14 @@ const createStyles = (theme: Theme) =>
     valueOff: { color: theme.textMuted, fontWeight: '600' },
     pair: { flexDirection: 'row', justifyContent: 'space-around', paddingBottom: 2 },
     stepper: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-    /** Фиксированная ширина: «10:00» и «19:00» стоят одинаково, стрелки не гуляют. */
+    /** Табличные цифры: «10:00» и «19:00» одной ширины, стрелки не гуляют.
+        Ширина не зашита — при крупном системном шрифте текст переносился. */
     time: {
       color: theme.neon,
       fontSize: 16,
       fontWeight: '700',
       lineHeight: 20,
-      width: 56,
+      minWidth: 52,
       textAlign: 'center',
       fontVariant: ['tabular-nums'],
     },
