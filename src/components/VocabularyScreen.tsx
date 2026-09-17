@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 
 import { DirectionToggle } from './FlipCard';
-import { EyeIcon, ShareIcon } from './icons';
+import { ChevronIcon, EyeIcon, ShareIcon } from './icons';
 import { ScreenTitle } from './ScreenMenu';
 import { TopicPicker } from './TopicPicker';
 import { VocabularyCards } from './VocabularyCards';
@@ -408,7 +408,7 @@ export function VocabularyScreen({ menu, language, level, topicId }: Props) {
             целиком, а листаем стрелками; точки под ним говорят, где мы. */}
         <View style={styles.pager}>
           <Pressable onPress={() => shiftTab(-1)} hitSlop={8} style={styles.pagerArrow}>
-            <Text style={styles.pagerArrowText}>‹</Text>
+            <ChevronIcon size={22} color={theme.neon} direction="left" />
           </Pressable>
           <View style={styles.pagerTitle}>
             <View style={styles.pagerTitleRow}>
@@ -433,7 +433,7 @@ export function VocabularyScreen({ menu, language, level, topicId }: Props) {
             </View>
           </View>
           <Pressable onPress={() => shiftTab(1)} hitSlop={8} style={styles.pagerArrow}>
-            <Text style={styles.pagerArrowText}>›</Text>
+            <ChevronIcon size={22} color={theme.neon} direction="right" />
           </Pressable>
         </View>
 
@@ -715,7 +715,6 @@ const createStyles = (theme: Theme) =>
       justifyContent: 'center',
       backgroundColor: theme.surfaceAlt,
     },
-    pagerArrowText: { color: theme.neon, fontSize: 26, lineHeight: 30, fontWeight: '600' },
     pagerTitle: { flex: 1, alignItems: 'center', gap: 6 },
     pagerTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
     pagerLabel: { color: theme.neon, fontSize: 16, fontWeight: '700' },

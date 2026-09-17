@@ -627,3 +627,35 @@ export function SpeakerIcon({ size, color }: Props) {
     </View>
   );
 }
+
+interface ChevronProps extends Props {
+  direction: 'left' | 'right';
+}
+
+/**
+ * Уголок стрелки: квадрат с двумя сторонами, повёрнутый на 45°. Шрифтовые
+ * «‹ ›» сидят ниже строки и в кнопке рядом с цифрами смотрятся криво.
+ */
+export function ChevronIcon({ size, color, direction }: ChevronProps) {
+  const line = Math.max(1.8, size * 0.11);
+  const side = size * 0.42;
+
+  return (
+    <View style={[styles.box, { width: size, height: size }]}>
+      <View
+        style={{
+          width: side,
+          height: side,
+          borderColor: color,
+          borderTopWidth: line,
+          borderRightWidth: line,
+          // Уголок сдвигаем к своему острию, иначе он кажется смещённым.
+          transform: [
+            { translateX: direction === 'right' ? -side * 0.2 : side * 0.2 },
+            { rotate: direction === 'right' ? '45deg' : '225deg' },
+          ],
+        }}
+      />
+    </View>
+  );
+}

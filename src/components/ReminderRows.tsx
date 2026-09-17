@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { ChevronIcon } from './icons';
 import { t } from '../i18n';
 import { formatTime, syncReminders } from '../services/reminders';
 import { DEFAULT_REMINDERS, loadReminderSettings, saveReminderSettings } from '../storage';
-import { useStyles, type Theme } from '../theme';
+import { useStyles, useTheme, type Theme } from '../theme';
 import type { ClockTime, ReminderSettings } from '../types';
 
 /** Шаг стрелок времени: полчаса — точнее для напоминания не нужно. */
@@ -18,15 +19,16 @@ const shift = ({ hour, minute }: ClockTime, step: number): ClockTime => {
 
 /** Время со стрелками по бокам: на полчаса назад и вперёд, по кругу через полночь. */
 function TimeStepper({ value, onChange }: { value: ClockTime; onChange: (next: ClockTime) => void }) {
+  const { theme } = useTheme();
   const styles = useStyles(createStyles);
   return (
     <View style={styles.stepper}>
       <Pressable onPress={() => onChange(shift(value, -STEP_MINUTES))} hitSlop={8} style={styles.arrow}>
-        <Text style={styles.arrowText}>‹</Text>
+        <ChevronIcon size={18} color={theme.neon} direction="left" />
       </Pressable>
-      <Text style={styles.value}>{formatTime(value)}</Text>
+      <Text style={styles.time}>{formatTime(value)}</Text>
       <Pressable onPress={() => onChange(shift(value, STEP_MINUTES))} hitSlop={8} style={styles.arrow}>
-        <Text style={styles.arrowText}>›</Text>
+        <ChevronIcon size={18} color={theme.neon} direction="right" />
       </Pressable>
     </View>
   );
@@ -124,7 +126,17 @@ const createStyles = (theme: Theme) =>
     value: { color: theme.neon, fontSize: 14, fontWeight: '700' },
     valueOff: { color: theme.textMuted, fontWeight: '600' },
     pair: { flexDirection: 'row', justifyContent: 'space-around', paddingBottom: 2 },
-    stepper: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+    stepper: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+    /** Фиксированная ширина: «10:00» и «19:00» стоят одинаково, стрелки не гуляют. */
+    time: {
+      color: theme.neon,
+      fontSize: 16,
+      fontWeight: '700',
+      lineHeight: 20,
+      width: 56,
+      textAlign: 'center',
+      fontVariant: ['tabular-nums'],
+    },
     arrow: {
       width: 30,
       height: 30,
@@ -133,6 +145,5 @@ const createStyles = (theme: Theme) =>
       justifyContent: 'center',
       backgroundColor: theme.surface,
     },
-    arrowText: { color: theme.neon, fontSize: 22, lineHeight: 26, fontWeight: '600' },
     denied: { color: theme.dangerText, fontSize: 12, lineHeight: 17 },
   });
