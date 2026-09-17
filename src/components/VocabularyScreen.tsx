@@ -23,6 +23,7 @@ import { LANGUAGES } from '../languages';
 import { CONTENT_MAX_WIDTH } from '../layout';
 import { dueCards, newCard } from '../review';
 import { generateVocabulary, transcribeVocabulary } from '../services/llm';
+import { syncReminders } from '../services/reminders';
 import { exportVocabularyPdf } from '../services/pdf';
 import { synthesize } from '../services/tts';
 import {
@@ -229,7 +230,13 @@ export function VocabularyScreen({ menu, language, level, topicId }: Props) {
 
   const storeReview = (cards: ReviewCard[]) => {
     setReview(cards);
-    void saveReviewCards(language, cards);
+    // Очередь опустела или впервые наполнилась — напоминания в системе
+    // должны это узнать.
+    if ((cards.length === 0) !== (review.length === 0)) {
+      void saveReviewCards(language, cards).then(syncReminders).catch(() => undefined);
+    } else {
+      void saveReviewCards(language, cards);
+    }
   };
 
   /** «Знаю» на карточке: галочка в списке, из очереди повторения — долой. */

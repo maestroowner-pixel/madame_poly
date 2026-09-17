@@ -13,6 +13,7 @@ import type {
   VocabularyIndexEntry,
   CardDirection,
   ReviewCard,
+  ReminderSettings,
   Homework,
   LanguageCode,
   Level,
@@ -53,6 +54,7 @@ const keyVocabulary = (language: LanguageCode, level: Level, topicId: string | n
 const keyVocabKnown = (language: LanguageCode) => `polyglotta:vocabKnown:${language}`;
 const keyVocabReview = (language: LanguageCode) => `polyglotta:vocabReview:${language}`;
 const KEY_CARD_DIRECTION = 'polyglotta:cardDirection';
+const KEY_REMINDERS = 'polyglotta:reminders';
 const keyExamLevel = (language: LanguageCode) => `polyglotta:examLevel:${language}`;
 
 /**
@@ -612,4 +614,17 @@ export async function loadCardDirection(): Promise<CardDirection> {
 
 export async function saveCardDirection(direction: CardDirection): Promise<void> {
   await write(KEY_CARD_DIRECTION, JSON.stringify(direction));
+}
+
+// --- Напоминания ---
+
+/** По умолчанию оба напоминания включены: за ними приложение и ставят. */
+export const DEFAULT_REMINDERS: ReminderSettings = { review: true, practice: { hour: 18, minute: 0 } };
+
+export async function loadReminderSettings(): Promise<ReminderSettings> {
+  return parse(await AsyncStorage.getItem(KEY_REMINDERS), DEFAULT_REMINDERS);
+}
+
+export async function saveReminderSettings(settings: ReminderSettings): Promise<void> {
+  await write(KEY_REMINDERS, JSON.stringify(settings));
 }

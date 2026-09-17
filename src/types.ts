@@ -304,3 +304,18 @@ export interface VocabularyIndexEntry {
   count: number;
   createdAt: number;
 }
+
+// --- Напоминания ---
+
+/** Время суток для ежедневного напоминания. */
+export interface ClockTime {
+  hour: number;
+  minute: number;
+}
+
+export interface ReminderSettings {
+  /** Повторить слова — два раза в день, в фиксированные часы. */
+  review: boolean;
+  /** Позаниматься — раз в день, во время по выбору; null — выключено. */
+  practice: ClockTime | null;
+}

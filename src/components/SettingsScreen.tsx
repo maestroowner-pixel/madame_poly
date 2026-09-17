@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { ScreenTitle } from './ScreenMenu';
+import { ReminderRows } from './ReminderRows';
 import { TopicPicker } from './TopicPicker';
 import { measureAnchor, type Anchor } from '../anchor';
 import {
@@ -115,6 +116,23 @@ export function SettingsScreen({
         })}
       </View>
 
+      {/* Уровень — сразу под языком: две вещи, которые задают всё остальное. */}
+      <View style={styles.row}>
+        {LEVELS.map((value) => {
+          const active = value === level;
+          return (
+            <Pressable
+              key={value}
+              disabled={disabled}
+              onPress={() => onSelectLevel(value)}
+              style={[styles.square, active && styles.tileActive, disabled && styles.dimmed]}
+            >
+              <Text style={[styles.squareLabel, active && styles.activeLabel]}>{value}</Text>
+            </Pressable>
+          );
+        })}
+      </View>
+
       <Pressable
         disabled={disabled}
         ref={topicRef}
@@ -215,21 +233,8 @@ export function SettingsScreen({
         <Text style={styles.topicChevron}>›</Text>
       </Pressable>
 
-      <View style={styles.row}>
-        {LEVELS.map((value) => {
-          const active = value === level;
-          return (
-            <Pressable
-              key={value}
-              disabled={disabled}
-              onPress={() => onSelectLevel(value)}
-              style={[styles.square, active && styles.tileActive, disabled && styles.dimmed]}
-            >
-              <Text style={[styles.squareLabel, active && styles.activeLabel]}>{value}</Text>
-            </Pressable>
-          );
-        })}
-      </View>
+      {/* Напоминания — в самом низу: их ставят один раз. */}
+      <ReminderRows />
       <View style={styles.footer}>
         <View style={styles.footerLinks}>
           <FooterLink label={t.privacy} url={PRIVACY_URL} />

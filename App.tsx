@@ -43,6 +43,7 @@ import { LANGUAGES } from './src/languages';
 import { CONTENT_MAX_WIDTH } from './src/layout';
 import { VOCABULARY_LANGUAGES } from './src/config';
 import { dueCards } from './src/review';
+import { syncReminders } from './src/services/reminders';
 import { loadReviewCards } from './src/storage';
 import { ThemeProvider, useStyles, useTheme, type Theme } from './src/theme';
 import { findTopic } from './src/topics';
@@ -175,6 +176,12 @@ function Screen() {
   // экран смонтирован: иначе приложение навсегда остаётся на стартовой картинке.
   useEffect(() => {
     void SplashScreen.hideAsync();
+  }, []);
+
+  // Расписание напоминаний живёт в системе — сверяем его с настройками при
+  // каждом запуске: язык интерфейса или очередь могли смениться.
+  useEffect(() => {
+    void syncReminders().catch(() => undefined);
   }, []);
 
   useEffect(() => {

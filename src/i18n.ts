@@ -298,6 +298,17 @@ const en = {
   wordsQuizReviewMistakes: 'Set the mistakes aside for review',
   wordsQuizAgain: 'Take it again',
 
+  // Напоминания
+  reminders: 'Reminders',
+  remindReview: 'Review the words',
+  remindPractice: 'Time to practise',
+  remindOff: 'Off',
+  remindDenied: 'Notifications are switched off for the app in the system settings.',
+  notifyReviewTitle: 'Time to review the words',
+  notifyReviewBody: 'A few cards are waiting — five minutes is enough to keep them.',
+  notifyPracticeTitle: 'Madame Poly is waiting',
+  notifyPracticeBody: 'A short conversation today keeps the language alive. Shall we?',
+
   // Экзамен
   tabExam: 'Exam',
   examIntro: (exam: string) =>
@@ -597,6 +608,17 @@ const uk: Strings = {
   wordsQuizReviewMistakes: 'Відкласти помилки на повторення',
   wordsQuizAgain: 'Пройти ще раз',
 
+  // Нагадування
+  reminders: 'Нагадування',
+  remindReview: 'Повторити слова',
+  remindPractice: 'Час позайматися',
+  remindOff: 'Вимкнено',
+  remindDenied: 'Сповіщення для застосунку вимкнені в налаштуваннях системи.',
+  notifyReviewTitle: 'Час повторити слова',
+  notifyReviewBody: 'Кілька карток чекають — п’яти хвилин вистачить, щоб їх не забути.',
+  notifyPracticeTitle: 'Мадам Полі чекає',
+  notifyPracticeBody: 'Коротка розмова сьогодні — і мова не забувається. Поговоримо?',
+
   // Экзамен
   tabExam: 'Іспит',
   examIntro: (exam) =>
@@ -889,6 +911,17 @@ const es: Strings = {
   wordsQuizMistakes: 'Errores',
   wordsQuizReviewMistakes: 'Apartar los errores para repasar',
   wordsQuizAgain: 'Repetir el test',
+
+  // Recordatorios
+  reminders: 'Recordatorios',
+  remindReview: 'Repasar las palabras',
+  remindPractice: 'Hora de practicar',
+  remindOff: 'Apagado',
+  remindDenied: 'Las notificaciones de la app están desactivadas en los ajustes del sistema.',
+  notifyReviewTitle: 'Hora de repasar las palabras',
+  notifyReviewBody: 'Unas tarjetas te esperan: con cinco minutos basta para no olvidarlas.',
+  notifyPracticeTitle: 'Madame Poly te espera',
+  notifyPracticeBody: 'Una charla corta hoy mantiene vivo el idioma. ¿Hablamos?',
 
   // Экзамен
   tabExam: 'Examen',
@@ -1185,6 +1218,17 @@ const ru: Strings = {
   wordsQuizMistakes: 'Ошибки',
   wordsQuizReviewMistakes: 'Отложить ошибки на повторение',
   wordsQuizAgain: 'Пройти ещё раз',
+
+  // Напоминания
+  reminders: 'Напоминания',
+  remindReview: 'Повторить слова',
+  remindPractice: 'Время позаниматься',
+  remindOff: 'Выключено',
+  remindDenied: 'Уведомления для приложения выключены в настройках системы.',
+  notifyReviewTitle: 'Пора повторить слова',
+  notifyReviewBody: 'Несколько карточек ждут — пяти минут хватит, чтобы их не забыть.',
+  notifyPracticeTitle: 'Мадам Поли ждёт',
+  notifyPracticeBody: 'Короткий разговор сегодня — и язык не забывается. Поговорим?',
 
   // Экзамен
   tabExam: 'Экзамен',
