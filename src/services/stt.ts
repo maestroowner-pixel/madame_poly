@@ -1,44 +1,24 @@
 import { File } from 'expo-file-system';
-import { fetch } from 'expo/fetch';
 
-import { OPENAI_API_KEY } from '../config';
 import { LANGUAGES } from '../languages';
 import type { LanguageCode } from '../types';
-import { t } from '../i18n';
 import { assertBudget, charge, whisperCost } from './meter';
-
-const ENDPOINT = 'https://api.openai.com/v1/audio/transcriptions';
+import { proxy } from './proxy';
 
 /**
- * Распознаёт записанный файл через Whisper.
- *
- * Файл кладём объектом `File` из expo-file-system, а не привычным для React
- * Native `{ uri, name, type }`: fetch у Expo принимает в форму только строку,
- * Blob или объект с методом `bytes()`, а на остальном падает с
- * «Unsupported FormDataPart implementation». В Expo Go это не всплывало —
- * там глобальный fetch был реализацией React Native.
+ * Распознаёт записанный файл через Whisper — на сервере. Файл уходит телом
+ * запроса как есть, форму для OpenAI собирает прокси: так не нужен FormData,
+ * с которым у fetch Expo свои счёты. Язык — подсказка Whisper: заметно
+ * повышает точность и не даёт ему «переключиться».
  */
 export async function transcribe(fileUri: string, language: LanguageCode): Promise<string> {
-  if (!OPENAI_API_KEY) throw new Error(t.noOpenAiKey);
   await assertBudget();
 
   const file = new File(fileUri);
-  const form = new FormData();
-  form.append('file', file as unknown as Blob);
-  form.append('model', 'whisper-1');
-  // Подсказка языка заметно повышает точность и не даёт Whisper «переключиться».
-  form.append('language', LANGUAGES[language].whisper);
-
-
-  const response = await fetch(ENDPOINT, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${OPENAI_API_KEY}` },
-    body: form,
+  const response = await proxy(`/transcribe?language=${LANGUAGES[language].whisper}`, {
+    body: await file.bytes(),
+    contentType: 'audio/m4a',
   });
-
-  if (!response.ok) {
-    throw new Error(`Whisper ${response.status}: ${await response.text()}`);
-  }
 
   await charge(whisperCost(file.size ?? 0));
 

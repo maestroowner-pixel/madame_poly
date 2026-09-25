@@ -3,19 +3,14 @@ import type { LanguageCode, Level } from './types';
 import { EXPLANATION_LANGUAGE_NAME, locale } from './i18n';
 
 /**
- * Ключи и настройки. Приложение личное, поэтому ключи лежат в .env и попадают
- * в бандл (переменные с префиксом EXPO_PUBLIC_ инлайнятся при сборке).
- * Для публикации в сторах так делать нельзя — понадобится прокси-бэкенд.
+ * Ключей Anthropic и OpenAI в сборке нет: запросы идут через прокси — функцию
+ * `api` в Firebase (`functions/`), ключи лежат там в Secret Manager. Адрес
+ * выводится из проекта Firebase; EXPO_PUBLIC_API_URL — чтобы указать другой,
+ * например эмулятор.
  */
-export const OPENAI_API_KEY = process.env.EXPO_PUBLIC_OPENAI_API_KEY ?? '';
-export const ANTHROPIC_API_KEY = process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY ?? '';
-
-/**
- * Голос собеседницы. Один на все четыре языка: у неё одно лицо во всех ролях,
- * значит и голос должен быть один — иначе на немецком отвечал бы мужчина.
- * Голоса OpenAI не привязаны к языку, `nova` одинаково читает все четыре.
- */
-export const OPENAI_TTS_VOICE = 'nova';
+export const API_URL =
+  process.env.EXPO_PUBLIC_API_URL ||
+  `https://europe-west1-${process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID ?? ''}.cloudfunctions.net/api`;
 
 /** Модель диалога. */
 export const CLAUDE_MODEL = 'claude-sonnet-5';

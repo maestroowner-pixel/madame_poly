@@ -3,7 +3,7 @@ import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
 import * as z from 'zod/v4';
 
 import {
-  ANTHROPIC_API_KEY,
+  API_URL,
   CLAUDE_MAX_TOKENS,
   CLAUDE_MODEL,
   HISTORY_STEP,
@@ -26,7 +26,8 @@ import {
   formatCorrections,
   formatExamTranscript,
 } from '../prompts';
-import { assertBudget, charge, claudeCost } from './meter';
+import { BudgetError, assertBudget, charge, claudeCost } from './meter';
+import { proxiedFetch } from './proxy';
 import type { Topic } from '../topics';
 import {
   ERROR_CATEGORIES,
@@ -150,17 +151,29 @@ const VocabularySchema = z.object({
   examples: z.array(z.string()),
 });
 
+/**
+ * Claude — через прокси: ключ живёт на сервере, SDK о нём не знает. apiKey
+ * здесь заглушка, без неё SDK не создаётся; proxiedFetch подменяет его
+ * Firebase-токеном. Флаг браузера — чтобы запускался и `expo start --web`.
+ */
 const client = new Anthropic({
-  apiKey: ANTHROPIC_API_KEY,
-  // Ключ и так лежит в бандле (личное приложение), а без флага SDK
-  // отказывается работать в вебе — `expo start --web` тоже должен запускаться.
+  apiKey: 'proxy',
+  baseURL: `${API_URL}/claude`,
+  fetch: proxiedFetch,
   dangerouslyAllowBrowser: true,
 });
 
 /** Каждый запрос идёт через счётчик: проверка объёма до, запись расхода после. */
 async function metered<T extends { usage: Anthropic.Usage }>(request: () => Promise<T>): Promise<T> {
   await assertBudget();
-  const response = await request();
+  let response: T;
+  try {
+    response = await request();
+  } catch (e) {
+    // Сервер ведёт свой счёт и отказывает кодом 402, когда объём исчерпан.
+    if (e instanceof Anthropic.APIError && e.status === 402) throw new BudgetError();
+    throw e;
+  }
   await charge(claudeCost(response.usage));
   return response;
 }
@@ -208,7 +221,6 @@ export async function respond(params: {
 }): Promise<TurnResult> {
   const { history, userText, language, level, topic, name, variant } = params;
 
-  if (!ANTHROPIC_API_KEY) throw new Error(t.noAnthropicKey);
 
   const context: Anthropic.MessageParam[] = windowed(history).map((message) => ({
     role: message.role,
@@ -302,7 +314,6 @@ export async function explainCorrection(params: {
 }): Promise<string> {
   const { correction, language, level } = params;
 
-  if (!ANTHROPIC_API_KEY) throw new Error(t.noAnthropicKey);
 
   const response = await metered(() =>
     client.messages.create({
@@ -347,7 +358,6 @@ export async function generateHomework(params: {
 }): Promise<Homework> {
   const { corrections, language, level } = params;
 
-  if (!ANTHROPIC_API_KEY) throw new Error(t.noAnthropicKey);
   if (corrections.length === 0) throw new Error(t.nothingToDrill);
 
   const response = await metered(() =>
@@ -426,7 +436,6 @@ export async function generateListening(params: {
 }): Promise<Listening> {
   const { language, level, topic } = params;
 
-  if (!ANTHROPIC_API_KEY) throw new Error(t.noAnthropicKey);
 
   const response = await metered(() =>
     client.messages.parse({
@@ -456,7 +465,6 @@ export async function checkListeningAnswers(params: {
 }): Promise<ListeningVerdict[]> {
   const { listening, answers } = params;
 
-  if (!ANTHROPIC_API_KEY) throw new Error(t.noAnthropicKey);
   if (answers.length === 0) return [];
 
   const items = answers
@@ -493,7 +501,6 @@ export async function generateWritingTask(params: {
 }): Promise<WritingTask> {
   const { language, level, topic } = params;
 
-  if (!ANTHROPIC_API_KEY) throw new Error(t.noAnthropicKey);
 
   const response = await metered(() =>
     client.messages.parse({
@@ -519,7 +526,6 @@ export async function reviewWriting(params: {
 }): Promise<WritingReview> {
   const { text, task } = params;
 
-  if (!ANTHROPIC_API_KEY) throw new Error(t.noAnthropicKey);
   if (!text.trim()) throw new Error(t.writingEmpty);
 
   const response = await metered(() =>
@@ -573,7 +579,6 @@ export async function examinerTurn(params: {
 }): Promise<string> {
   const { history, answer, answerIndex, language, level, topic, name } = params;
 
-  if (!ANTHROPIC_API_KEY) throw new Error(t.noAnthropicKey);
 
   const context: Anthropic.MessageParam[] = windowed(history).map((turn, index, all) => ({
     role: turn.role,
@@ -636,7 +641,6 @@ export async function reviewExam(params: {
 }): Promise<ErrorReport> {
   const { turns, language, level } = params;
 
-  if (!ANTHROPIC_API_KEY) throw new Error(t.noAnthropicKey);
   const answers = turns.filter((turn) => turn.role === 'user');
   if (answers.length === 0) throw new Error(t.examNothingToReview);
 
@@ -688,7 +692,6 @@ export async function generateVocabulary(params: {
 }): Promise<Vocabulary> {
   const { language, level, topic, variant } = params;
 
-  if (!ANTHROPIC_API_KEY) throw new Error(t.noAnthropicKey);
 
   const response = await metered(() =>
     client.messages.parse({
@@ -751,7 +754,6 @@ export async function transcribeVocabulary(
   vocabulary: Vocabulary,
   variant?: EnglishVariant,
 ): Promise<Vocabulary> {
-  if (!ANTHROPIC_API_KEY) throw new Error(t.noAnthropicKey);
 
   const terms = vocabulary.sections.flatMap((section) => section.entries.map((entry) => entry.term));
   const response = await metered(() =>

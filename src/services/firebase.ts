@@ -1,11 +1,14 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getApps, initializeApp, type FirebaseApp } from 'firebase/app';
 import {
+  EmailAuthProvider,
   createUserWithEmailAndPassword,
+  linkWithCredential,
   getReactNativePersistence,
   initializeAuth,
   onAuthStateChanged,
   sendPasswordResetEmail,
+  signInAnonymously,
   signInWithEmailAndPassword,
   signOut,
   type Auth,
@@ -57,6 +60,13 @@ export function watchUser(listener: (user: User | null) => void): () => void {
 export async function register(email: string, password: string): Promise<void> {
   const ready = ensure();
   if (!ready) throw new Error('sync-off');
+  const anonymous = ready.auth.currentUser;
+  // Анонимный вход превращаем в аккаунт, а не заводим новый: uid остаётся тем
+  // же, а с ним — подписка в RevenueCat и месячный расход на сервере.
+  if (anonymous?.isAnonymous) {
+    await linkWithCredential(anonymous, EmailAuthProvider.credential(email.trim(), password));
+    return;
+  }
   await createUserWithEmailAndPassword(ready.auth, email.trim(), password);
 }
 
@@ -76,6 +86,30 @@ export async function logout(): Promise<void> {
   const ready = ensure();
   if (!ready) return;
   await signOut(ready.auth);
+}
+
+/**
+ * Токен для прокси. Кто не заводил аккаунт, входит анонимно — незаметно для
+ * себя: серверу нужно знать, чей это расход и чья подписка. getIdToken сам
+ * обновляет токен, когда тот истекает (живёт час).
+ */
+let anonymous: Promise<User> | null = null;
+
+export async function idToken(): Promise<string> {
+  const ready = ensure();
+  if (!ready) throw new Error('firebase-off');
+  await ready.auth.authStateReady();
+  let user = ready.auth.currentUser;
+  if (!user) {
+    // Запросы уходят пачкой — входим один раз на всех, а не по разу на каждый.
+    anonymous ??= signInAnonymously(ready.auth)
+      .then((credential) => credential.user)
+      .finally(() => {
+        anonymous = null;
+      });
+    user = await anonymous;
+  }
+  return user.getIdToken();
 }
 
 /** Firestore нужен модулю синхронизации; наружу отдаём только вместе с входом. */

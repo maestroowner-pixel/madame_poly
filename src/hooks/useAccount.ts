@@ -49,12 +49,15 @@ export function useAccount(onPulled: () => Promise<void>): Account {
 
   useEffect(() => {
     return watchUser((user) => {
-      setEmail(user?.email ?? null);
+      // Анонимный вход — служебный, для прокси: для человека это «без аккаунта».
+      const account = user && !user.isAnonymous ? user : null;
+      setEmail(account?.email ?? null);
       // Подписка ходит за человеком, как и всё остальное: куплена на телефоне —
-      // действует и на планшете. Без входа она живёт на самом устройстве.
+      // действует и на планшете. RevenueCat знает человека по тому же uid, что
+      // и сервер, — анонимному тоже: по нему прокси проверяет подписку.
       void linkAccount(user?.uid ?? null);
       // Вход — первый повод свести данные: на этом устройстве их может не быть.
-      if (user) void run();
+      if (account) void run();
       else setSyncedAt(null);
     });
   }, [run]);

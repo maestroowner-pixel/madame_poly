@@ -43,3 +43,9 @@ yarn-error.*
 # secrets
 .env
 .idea/
+
+# Firebase Functions
+functions/lib/
+*.secret.local
+.firebase/
+firebase-debug.log

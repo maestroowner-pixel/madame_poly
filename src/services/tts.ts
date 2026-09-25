@@ -1,9 +1,8 @@
 import { Directory, File, Paths } from 'expo-file-system';
-import { fetch } from 'expo/fetch';
 
-import { OPENAI_API_KEY, OPENAI_TTS_VOICE } from '../config';
 import { t } from '../i18n';
 import { assertBudget, charge, ttsCost } from './meter';
+import { proxy } from './proxy';
 
 /** Озвучка складывается в кэш — её всегда можно перегенерировать. */
 const AUDIO_DIR = new Directory(Paths.cache, 'tts');
@@ -39,26 +38,15 @@ async function readBytes(response: Response): Promise<Uint8Array> {
   return bytes;
 }
 
+/** Голос и модель выбирает сервер: приложение передаёт только текст и темп. */
 async function synthesizeOpenAI(text: string, speed: number): Promise<Uint8Array> {
-  if (!OPENAI_API_KEY) throw new Error(t.noOpenAiKey);
   await assertBudget();
 
-  const response = await fetch('https://api.openai.com/v1/audio/speech', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${OPENAI_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'tts-1',
-      voice: OPENAI_TTS_VOICE,
-      input: text,
-      response_format: 'mp3',
-      speed,
-    }),
+  const response = await proxy('/speak', {
+    body: JSON.stringify({ text, speed }),
+    contentType: 'application/json',
   });
 
-  if (!response.ok) throw new Error(`OpenAI TTS ${response.status}: ${await response.text()}`);
   await charge(ttsCost(text));
   return readBytes(response as unknown as Response);
 }

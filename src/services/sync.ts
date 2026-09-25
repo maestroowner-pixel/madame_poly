@@ -72,7 +72,8 @@ interface Remote {
 export async function synchronise(): Promise<boolean> {
   const db = database();
   const user = currentUser();
-  if (!db || !user) return false;
+  // Анонимный вход — только ради прокси; синхронизировать нечего и некуда.
+  if (!db || !user || user.isAnonymous) return false;
 
   const stamps = await loadStamps();
   const snapshot = await getDocs(userRoot(db, user.uid));
