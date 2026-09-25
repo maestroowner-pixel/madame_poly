@@ -12,6 +12,7 @@ import { ZoomModal } from './ZoomModal';
 import type { Anchor } from '../anchor';
 import type { Block } from '../hooks/useSubscription';
 import { t } from '../i18n';
+import { errorText } from '../errors';
 import { CONTENT_MAX_WIDTH } from '../layout';
 import { buy, loadPackages, restore } from '../services/purchases';
 import { useStyles, useTheme, type Theme } from '../theme';
@@ -77,7 +78,7 @@ export function Paywall({ visible, anchor, left, used, block, onClose, onBought 
     } catch (e: unknown) {
       const cancelled =
         typeof e === 'object' && e !== null && 'userCancelled' in e && Boolean(e.userCancelled);
-      if (!cancelled) setError(e instanceof Error ? e.message : String(e));
+      if (!cancelled) setError(errorText(e));
     } finally {
       setBusy(false);
     }

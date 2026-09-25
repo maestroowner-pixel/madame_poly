@@ -81,6 +81,7 @@ const en = {
   accountNeedBoth: 'Enter the email and the password.',
   accountOffline: 'Sync is not set up in this build.',
   accountOfflineHint: 'Everything stays on this device. Sync will appear once the app is connected to a cloud project.',
+  offline: 'The app is offline: no internet connection.',
   listeningAverage: (percent: number, attempts: number) =>
     `Average ${percent}% over ${attempts} attempts`,
   listeningQuitTitle: 'Leave the dictation?',
@@ -413,6 +414,7 @@ const uk: Strings = {
   archive: 'Архів',
   toArchive: 'В архів',
   free: 'Вільна',
+  offline: 'Застосунок офлайн: немає підключення до інтернету.',
   topic: 'Тема',
   profile: 'Профіль',
   task: 'Завдання',
@@ -729,6 +731,7 @@ const es: Strings = {
   done: 'Listo',
   answer: 'Responder',
   auto: 'AUTO',
+  offline: 'La app está sin conexión: no hay internet.',
   longPressToFinish: 'Mantén pulsado para terminar la conversación',
   longPressToManual: 'Mantén pulsado para salir del modo automático',
   transcribing: 'Transcribiendo…',
@@ -1046,6 +1049,7 @@ const ru: Strings = {
   listening: 'Слушает',
   recognising: 'Распознаёт речь',
   thinkingShort: 'Думает',
+  offline: 'Приложение офлайн: нет подключения к интернету.',
   speakingMicOff: 'Отвечает — микрофон выключен',
 
   tapToPlay: '▸ нажми, чтобы прослушать',

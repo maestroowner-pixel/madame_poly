@@ -20,6 +20,7 @@ import type {
   TurnMode,
 } from '../types';
 import { t } from '../i18n';
+import { errorText } from '../errors';
 import { nextId } from './useConversation';
 import { useVoiceLoop, type Reply } from './useVoiceLoop';
 
@@ -171,7 +172,7 @@ export function useExamSession({ language, level, turnMode, speechRate, name }: 
       });
       update((item) => ({ ...item, report, errorCount: report.errors.length }));
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : String(e));
+      setError(errorText(e));
     } finally {
       setReviewing(false);
     }
@@ -273,7 +274,7 @@ export function useExamSession({ language, level, turnMode, speechRate, name }: 
         const uri = turn.audioUri ?? (await synthesize(turn.text));
         await voice.play(uri);
       } catch (e: unknown) {
-        setError(e instanceof Error ? e.message : String(e));
+        setError(errorText(e));
       }
     },
     [voice.isActive, voice.play],

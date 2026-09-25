@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { watchUser } from '../services/firebase';
 import { linkAccount } from '../services/purchases';
 import { synchronise } from '../services/sync';
+import { errorText } from '../errors';
 
 interface Account {
   /** Почта вошедшего; null — вход не выполнен. */
@@ -39,7 +40,7 @@ export function useAccount(onPulled: () => Promise<void>): Account {
       if (changed) await pulledRef.current();
       setSyncedAt(Date.now());
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : String(e));
+      setError(errorText(e));
     } finally {
       busyRef.current = false;
       setBusy(false);

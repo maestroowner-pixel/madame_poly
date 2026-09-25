@@ -15,6 +15,7 @@ import { useKeyboardInset } from '../hooks/useKeyboardInset';
 import { TopicPicker } from './TopicPicker';
 import { measureAnchor, type Anchor } from '../anchor';
 import { t } from '../i18n';
+import { errorText } from '../errors';
 import { CONTENT_MAX_WIDTH } from '../layout';
 import { generateHomework, generateWritingTask, reviewWriting } from '../services/llm';
 import {
@@ -82,7 +83,7 @@ export function WritingScreen({ menu, language, level, topicId }: Props) {
   stateRef.current = state;
   useEffect(() => () => void saveWriting(language, stateRef.current), [language]);
 
-  const fail = (e: unknown) => setError(e instanceof Error ? e.message : String(e));
+  const fail = (e: unknown) => setError(errorText(e));
 
   const setTask = async (subject: string | null) => {
     if (busy) return;

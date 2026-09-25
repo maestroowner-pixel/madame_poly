@@ -22,6 +22,7 @@ import { TopicPicker } from './TopicPicker';
 import { measureAnchor, type Anchor } from '../anchor';
 import { LISTENING_SPEED } from '../config';
 import { t } from '../i18n';
+import { errorText } from '../errors';
 import { CONTENT_MAX_WIDTH } from '../layout';
 import { checkListeningAnswers, generateListening } from '../services/llm';
 import { transcribe } from '../services/stt';
@@ -106,7 +107,7 @@ export function ListeningScreen({ menu, language, level, topicId }: Props) {
     });
   }, [language, topicId]);
 
-  const fail = (e: unknown) => setError(e instanceof Error ? e.message : String(e));
+  const fail = (e: unknown) => setError(errorText(e));
 
   const record = async (right: number, total: number, abandoned: boolean) => {
     const next: ListeningStats = {

@@ -24,6 +24,7 @@ import { transcribe } from '../services/stt';
 import { synthesize } from '../services/tts';
 import type { LanguageCode, TurnMode } from '../types';
 import { t } from '../i18n';
+import { errorText } from '../errors';
 
 export type Status = 'idle' | 'listening' | 'transcribing' | 'thinking' | 'speaking';
 
@@ -115,7 +116,7 @@ export function useVoiceLoop(options: VoiceLoopOptions) {
     turnBusyRef.current = false;
     sessionRef.current = false;
     setSessionActive(false);
-    optionsRef.current.onError(e instanceof Error ? e.message : String(e));
+    optionsRef.current.onError(errorText(e));
     setStatus('idle');
   }, []);
 

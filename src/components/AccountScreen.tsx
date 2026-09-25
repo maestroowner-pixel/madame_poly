@@ -20,6 +20,7 @@ import type { Anchor } from '../anchor';
 import { formatDate } from '../format';
 import { useKeyboardInset } from '../hooks/useKeyboardInset';
 import { t } from '../i18n';
+import { errorText } from '../errors';
 import { CONTENT_MAX_WIDTH } from '../layout';
 import { login, logout, register, resetPassword, syncAvailable } from '../services/firebase';
 import { useStyles, useTheme, type Theme } from '../theme';
@@ -70,7 +71,7 @@ export function AccountScreen({
     try {
       await action();
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : String(e));
+      setError(errorText(e));
     } finally {
       setWorking(false);
     }

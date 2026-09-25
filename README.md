@@ -612,6 +612,16 @@ JS-функции без аргументов JSI передаёт нулево�
 `File` из `expo-file-system`. В Expo Go это не всплывало: там глобальный `fetch`
 был реализацией React Native и uri-объект понимал.
 
+## Нет сети
+
+Без интернета каждый слой падает по-своему: fetch у React Native и Expo пишет
+«Network request failed», Anthropic SDK — «Connection error.», iOS —
+NSURLErrorDomain -1009, Android — UnknownHost, Firebase —
+auth/network-request-failed. Человеку эти строки ничего не говорят, поэтому
+все ошибки перед показом проходят через `errorText()` (`src/errors.ts`): она
+узнаёт сетевой сбой и показывает одну фразу — «Приложение офлайн: нет
+подключения к интернету». Остальные ошибки выводятся как были.
+
 ## Подписка и объём
 
 Одна беседа в день бесплатно, подписка «Madame Poly Pro» — 7 € в месяц. Цена

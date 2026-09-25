@@ -52,6 +52,7 @@ import type {
   TurnMode,
 } from '../types';
 import { t } from '../i18n';
+import { errorText } from '../errors';
 import { useVoiceLoop, type Reply } from './useVoiceLoop';
 
 export type { Status } from './useVoiceLoop';
@@ -120,7 +121,7 @@ export function useConversation() {
 
       await reload();
       setReady(true);
-    })().catch((e: unknown) => setError(String(e)));
+    })().catch((e: unknown) => setError(errorText(e)));
   }, [reload]);
 
   const persist = useCallback((updater: (previous: Message[]) => Message[]) => {
@@ -416,7 +417,7 @@ export function useConversation() {
       setHomework(result);
       await saveHomework(languageRef.current, result);
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : String(e));
+      setError(errorText(e));
     } finally {
       setHomeworkBusy(false);
     }
@@ -445,7 +446,7 @@ export function useConversation() {
         }
         await voice.play(uri);
       } catch (e: unknown) {
-        setError(e instanceof Error ? e.message : String(e));
+        setError(errorText(e));
       }
     },
     [persist, voice.play, voiceRate, isActive],

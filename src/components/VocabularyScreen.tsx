@@ -19,6 +19,7 @@ import { VocabularyReview } from './VocabularyReview';
 import { measureAnchor, type Anchor } from '../anchor';
 import { formatDate } from '../format';
 import { locale, t } from '../i18n';
+import { errorText } from '../errors';
 import { LANGUAGES } from '../languages';
 import { CONTENT_MAX_WIDTH } from '../layout';
 import { dueCards, newCard } from '../review';
@@ -105,7 +106,7 @@ export function VocabularyScreen({ menu, language, level, topicId }: Props) {
       «Как я» тут не к чему примерять — берём обычный. */
   const rate = useRef(1);
 
-  const fail = (e: unknown) => setError(e instanceof Error ? e.message : String(e));
+  const fail = (e: unknown) => setError(errorText(e));
 
   useEffect(() => {
     setError(null);

@@ -20,6 +20,7 @@ import { ZoomModal } from './ZoomModal';
 import { measureAnchor, type Anchor } from '../anchor';
 import { formatDate } from '../format';
 import { t } from '../i18n';
+import { errorText } from '../errors';
 import { LANGUAGES } from '../languages';
 import { CONTENT_MAX_WIDTH } from '../layout';
 import { exportNotebookPdf } from '../services/pdf';
@@ -88,7 +89,7 @@ export function NotebookScreen({ menu }: { menu: ReactNode }) {
       await exportNotebookPdf(chosen);
       setSelected(null);
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : String(e));
+      setError(errorText(e));
     } finally {
       setExporting(false);
     }
