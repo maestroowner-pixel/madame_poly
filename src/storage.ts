@@ -14,6 +14,7 @@ import type {
   CardDirection,
   ReviewCard,
   ReminderSettings,
+  GrammarLesson,
   Homework,
   LanguageCode,
   Level,
@@ -56,6 +57,9 @@ const keyVocabReview = (language: LanguageCode) => `polyglotta:vocabReview:${lan
 const KEY_CARD_DIRECTION = 'polyglotta:cardDirection';
 const KEY_REMINDERS = 'polyglotta:reminders';
 const keyExamLevel = (language: LanguageCode) => `polyglotta:examLevel:${language}`;
+const keyGrammarLesson = (language: LanguageCode, unitId: string) =>
+  `polyglotta:grammar:${language}:${unitId}`;
+const keyGrammarProgress = (language: LanguageCode) => `polyglotta:grammarProgress:${language}`;
 
 /**
  * Любая запись отмечается временем — по нему синхронизация решает, чьи данные
@@ -638,4 +642,56 @@ export async function loadReminderSettings(): Promise<ReminderSettings> {
 
 export async function saveReminderSettings(settings: ReminderSettings): Promise<void> {
   await write(KEY_REMINDERS, JSON.stringify(settings));
+}
+
+// --- Грамматика ---
+
+/**
+ * Что сделано по программе грамматики языка: по каким юнитам есть урок и
+ * какие отмечены пройденными. Отдельно от самих уроков, чтобы список модулей
+ * рисовался без чтения сотни ключей.
+ */
+export interface GrammarProgress {
+  built: string[];
+  done: string[];
+}
+
+export async function loadGrammarProgress(language: LanguageCode): Promise<GrammarProgress> {
+  return parse(await AsyncStorage.getItem(keyGrammarProgress(language)), {
+    built: [],
+    done: [],
+  } as GrammarProgress);
+}
+
+async function saveGrammarProgress(language: LanguageCode, progress: GrammarProgress): Promise<void> {
+  await write(keyGrammarProgress(language), JSON.stringify(progress));
+}
+
+export async function loadGrammarLesson(
+  language: LanguageCode,
+  unitId: string,
+): Promise<GrammarLesson | null> {
+  return parse(await AsyncStorage.getItem(keyGrammarLesson(language, unitId)), null);
+}
+
+/** Сохраняет урок и отмечает, что по юниту он есть. Возвращает новый прогресс. */
+export async function saveGrammarLesson(lesson: GrammarLesson): Promise<GrammarProgress> {
+  await write(keyGrammarLesson(lesson.language, lesson.unitId), JSON.stringify(lesson));
+  const progress = await loadGrammarProgress(lesson.language);
+  if (progress.built.includes(lesson.unitId)) return progress;
+  const next = { ...progress, built: [...progress.built, lesson.unitId] };
+  await saveGrammarProgress(lesson.language, next);
+  return next;
+}
+
+export async function setGrammarDone(
+  language: LanguageCode,
+  unitId: string,
+  done: boolean,
+): Promise<GrammarProgress> {
+  const progress = await loadGrammarProgress(language);
+  const rest = progress.done.filter((id) => id !== unitId);
+  const next = { ...progress, done: done ? [...rest, unitId] : rest };
+  await saveGrammarProgress(language, next);
+  return next;
 }

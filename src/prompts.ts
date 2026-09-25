@@ -1,5 +1,6 @@
 import { EXPLANATION_LANGUAGE } from './config';
 import { examFormat, examPlan, placeOfAnswer } from './exam';
+import { unitTitles } from './grammar';
 import { LANGUAGES } from './languages';
 import { ROLEPLAY_SCENES, type Topic } from './topics';
 import type {
@@ -18,6 +19,7 @@ import type {
  */
 export function buildHomeworkPrompt(language: LanguageCode, level: Level): string {
   const { englishName } = LANGUAGES[language];
+  const units = unitTitles(language, level);
 
   return [
     `You are a ${englishName} teacher preparing homework for a CEFR ${level} learner after a spoken conversation.`,
@@ -29,7 +31,7 @@ export function buildHomeworkPrompt(language: LanguageCode, level: Level): strin
     '- Never reuse the sentence from the conversation. New sentences, same rule — otherwise they memorise the answer instead of the rule.',
     `- "task" and "answer" are in ${englishName}, except for "translate", where the task is the sentence in ${EXPLANATION_LANGUAGE} and the answer is its ${englishName} translation.`,
     '- "hint" is one short sentence in ' + EXPLANATION_LANGUAGE + ' that points at the rule without giving the answer away.',
-    '- "rule" repeats the name of the grammar point, so the exercise can be traced back to the mistake.',
+    '- "rule" names the grammar point, so the exercise can be traced back to the mistake. If the mistake belongs to one of the units of the grammar syllabus below, "rule" is that unit\'s title copied exactly; otherwise a short name of the point in ' + EXPLANATION_LANGUAGE + '.',
     '- "source" is the number of the mistake in the list that this exercise trains. Every exercise must name one.',
     '',
     'Exercise kinds:',
@@ -37,6 +39,45 @@ export function buildHomeworkPrompt(language: LanguageCode, level: Level): strin
     '- "fix": a sentence containing one mistake; the answer is the corrected sentence.',
     `- "translate": a sentence in ${EXPLANATION_LANGUAGE}; the answer is its ${englishName} translation.`,
     '- Mix the kinds. Keep sentences at their level and about everyday life, not about grammar itself.',
+    '',
+    `Grammar syllabus for ${level} (unit titles):`,
+    ...units.map((title) => `- ${title}`),
+  ].join('\n');
+}
+
+/**
+ * Урок грамматики по юниту программы: правило, примеры, таблица форм и
+ * упражнения. Объяснение — на языке интерфейса, всё, что учат, — на изучаемом.
+ * Упражнения того же вида, что в домашнем задании: экран и PDF у них общие.
+ */
+export function buildGrammarLessonPrompt(
+  language: LanguageCode,
+  level: Level,
+  unit: { title: string; focus?: string },
+  moduleTitle: string,
+): string {
+  const { englishName } = LANGUAGES[language];
+
+  return [
+    `You are a ${englishName} teacher writing a grammar lesson for a CEFR ${level} learner, in the manner of a good grammar-in-use book: a short clear explanation, then practice.`,
+    `The unit: "${unit.title}" from the module "${moduleTitle}".${unit.focus ? ` It covers: ${unit.focus}.` : ''}`,
+    `Stay inside this unit. Other grammar only as far as the examples need it, at ${level} level.`,
+    'Every statement about the grammar must be true. Simplify for the level, but never into a claim that is false: when a form has exceptions or two options, say so briefly rather than state one rule. Every example must be something a native speaker would say, and every translation must be natural and grammatical in its own language.',
+    '',
+    'Theory:',
+    `- "intro": two sentences in ${EXPLANATION_LANGUAGE} — what the structure is for and when a speaker needs it.`,
+    `- "rules": two to five rules in the order a learner meets them. "heading" is a short name in ${EXPLANATION_LANGUAGE}; "text" explains the rule in ${EXPLANATION_LANGUAGE}, two to five sentences, with the ${englishName} forms written in ${englishName}; "examples" are two to four natural ${englishName} sentences showing exactly this rule, each with a translation into ${EXPLANATION_LANGUAGE}.`,
+    `- "table": if the topic rests on forms (conjugation, endings, pronouns, articles), a compact table with a header row and up to eight rows, forms in ${englishName}, headers in ${EXPLANATION_LANGUAGE}; otherwise null.`,
+    `- "pitfalls": two to four typical mistakes learners make with this structure, each one line in ${EXPLANATION_LANGUAGE} with the wrong and the right ${englishName} form, like "✗ … → ✓ …".`,
+    '',
+    'Exercises:',
+    '- Ten exercises that train only this unit, from easier to harder. "rule" is the heading of the rule the exercise trains.',
+    `- "task" and "answer" are in ${englishName}, except for "translate", where the task is a sentence in ${EXPLANATION_LANGUAGE} and the answer is its ${englishName} translation.`,
+    `- "hint" is one short sentence in ${EXPLANATION_LANGUAGE} pointing at the rule without giving the answer away.`,
+    '- "fill": a sentence with one gap marked as ___ and, if the form is not obvious, the base word in brackets after the gap; the answer is what goes in the gap.',
+    '- "fix": a sentence with exactly one mistake of this unit; the answer is the corrected sentence.',
+    `- "translate": a sentence in ${EXPLANATION_LANGUAGE} that can only be translated well with this structure; the answer is the ${englishName} translation.`,
+    '- About six "fill", two "fix" and two "translate". New sentences about everyday life, not the examples from the theory, one clear right answer each.',
   ].join('\n');
 }
 

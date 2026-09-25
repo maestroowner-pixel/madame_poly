@@ -448,6 +448,63 @@ export function WordsIcon({ size, color }: Props) {
   );
 }
 
+/**
+ * Грамматика: таблица форм, как в учебнике, — рамка, строка заголовка
+ * жирнее и разделитель столбцов.
+ */
+export function GrammarIcon({ size, color }: Props) {
+  const line = Math.max(1.6, size * 0.085);
+  const inset = size * 0.12;
+  const inner = size - inset * 2;
+
+  return (
+    <View style={[styles.box, { width: size, height: size }]}>
+      <View
+        style={{
+          position: 'absolute',
+          top: inset,
+          left: inset,
+          width: inner,
+          height: inner,
+          borderWidth: line,
+          borderColor: color,
+          borderRadius: size * 0.1,
+        }}
+      />
+      <View
+        style={{
+          position: 'absolute',
+          top: inset + inner * 0.3,
+          left: inset,
+          width: inner,
+          height: line * 1.6,
+          backgroundColor: color,
+        }}
+      />
+      <View
+        style={{
+          position: 'absolute',
+          top: inset + inner * 0.64,
+          left: inset,
+          width: inner,
+          height: line,
+          backgroundColor: color,
+        }}
+      />
+      <View
+        style={{
+          position: 'absolute',
+          top: inset,
+          left: inset + inner * 0.42,
+          width: line,
+          height: inner,
+          backgroundColor: color,
+        }}
+      />
+    </View>
+  );
+}
+
 /** Экзамен: планшет экзаменатора — лист с зажимом сверху и строками ответов. */
 export function ExamIcon({ size, color }: Props) {
   const line = Math.max(1.6, size * 0.085);
@@ -629,8 +686,16 @@ export function SpeakerIcon({ size, color }: Props) {
 }
 
 interface ChevronProps extends Props {
-  direction: 'left' | 'right';
+  direction: 'left' | 'right' | 'up' | 'down';
 }
+
+/** Поворот уголка и сдвиг к его острию — иначе он кажется смещённым. */
+const CHEVRON = {
+  right: { rotate: '45deg', x: -0.2, y: 0 },
+  left: { rotate: '225deg', x: 0.2, y: 0 },
+  up: { rotate: '-45deg', x: 0, y: 0.2 },
+  down: { rotate: '135deg', x: 0, y: -0.2 },
+} as const;
 
 /**
  * Уголок стрелки: квадрат с двумя сторонами, повёрнутый на 45°. Шрифтовые
@@ -649,10 +714,10 @@ export function ChevronIcon({ size, color, direction }: ChevronProps) {
           borderColor: color,
           borderTopWidth: line,
           borderRightWidth: line,
-          // Уголок сдвигаем к своему острию, иначе он кажется смещённым.
           transform: [
-            { translateX: direction === 'right' ? -side * 0.2 : side * 0.2 },
-            { rotate: direction === 'right' ? '45deg' : '225deg' },
+            { translateX: side * CHEVRON[direction].x },
+            { translateY: side * CHEVRON[direction].y },
+            { rotate: CHEVRON[direction].rotate },
           ],
         }}
       />

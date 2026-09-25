@@ -13,6 +13,7 @@ import {
   buildExamPrompt,
   buildExamReviewPrompt,
   buildExplanationPrompt,
+  buildGrammarLessonPrompt,
   buildHomeworkPrompt,
   buildListeningCheckPrompt,
   buildListeningPrompt,
@@ -28,6 +29,7 @@ import {
 } from '../prompts';
 import { BudgetError, assertBudget, charge, claudeCost } from './meter';
 import { proxiedFetch } from './proxy';
+import type { GrammarUnit } from '../grammar';
 import type { Topic } from '../topics';
 import {
   ERROR_CATEGORIES,
@@ -36,6 +38,7 @@ import {
   type EnglishVariant,
   type ErrorCategory,
   type ErrorReport,
+  type GrammarLesson,
   type ExamTopic,
   type Homework,
   type LanguageCode,
@@ -83,6 +86,25 @@ const HomeworkSchema = z.object({
   summary: z.string(),
   exercises: z.array(ExerciseSchema),
 });
+
+/** Упражнение урока грамматики — как в домашнем задании, но без ссылки на ошибку. */
+const LessonExerciseSchema = ExerciseSchema.omit({ source: true });
+
+const GrammarLessonSchema = z.object({
+  intro: z.string(),
+  rules: z.array(
+    z.object({
+      heading: z.string(),
+      text: z.string(),
+      examples: z.array(z.object({ text: z.string(), translation: z.string() })),
+    }),
+  ),
+  table: z.object({ head: z.array(z.string()), rows: z.array(z.array(z.string())) }).nullable(),
+  pitfalls: z.array(z.string()),
+  exercises: z.array(LessonExerciseSchema),
+});
+
+const LessonExercisesSchema = z.object({ exercises: z.array(LessonExerciseSchema) });
 
 const ListeningQuestionSchema = z.object({
   prompt: z.string(),
@@ -388,6 +410,89 @@ export async function generateHomework(params: {
   });
 
   return { summary: parsed.summary, exercises, createdAt: Date.now() };
+}
+
+/**
+ * Урок грамматики по юниту программы. Теория и упражнения одним запросом:
+ * упражнения опираются на те же правила и те же заголовки.
+ */
+export async function generateGrammarLesson(params: {
+  language: LanguageCode;
+  level: Level;
+  unit: GrammarUnit;
+  moduleTitle: string;
+}): Promise<GrammarLesson> {
+  const { language, level, unit, moduleTitle } = params;
+
+  const response = await metered(() =>
+    client.messages.parse({
+      model: CLAUDE_MODEL,
+      max_tokens: 16000,
+      system: buildGrammarLessonPrompt(language, level, unit, moduleTitle),
+      // Урок составляется раз и хранится — точность правила важнее скорости:
+      // без рассуждения модель упрощала правила до неверных.
+      thinking: { type: 'adaptive' },
+      messages: [{ role: 'user', content: `Write the lesson "${unit.title}".` }],
+      output_config: { effort: 'medium', format: zodOutputFormat(GrammarLessonSchema) },
+    }),
+  );
+
+  const parsed = response.parsed_output;
+  if (!parsed || parsed.rules.length === 0 || parsed.exercises.length === 0) {
+    throw new Error(t.badGrammarLesson);
+  }
+
+  return {
+    ...parsed,
+    // Пустая таблица — всё равно что никакой.
+    table: parsed.table && parsed.table.rows.length > 0 ? parsed.table : null,
+    unitId: unit.id,
+    language,
+    level,
+    title: unit.title,
+    createdAt: Date.now(),
+  };
+}
+
+/**
+ * Новые упражнения к готовому уроку: теория остаётся, а прежние задания
+ * передаём модели, чтобы она их не повторила.
+ */
+export async function regenerateGrammarExercises(
+  lesson: GrammarLesson,
+  moduleTitle: string,
+  focus?: string,
+): Promise<GrammarLesson> {
+  const previous = lesson.exercises.map((exercise) => `- ${exercise.task}`).join('\n');
+
+  const response = await metered(() =>
+    client.messages.parse({
+      model: CLAUDE_MODEL,
+      max_tokens: 16000,
+      system: buildGrammarLessonPrompt(
+        lesson.language,
+        lesson.level,
+        { title: lesson.title, focus },
+        moduleTitle,
+      ),
+      thinking: { type: 'adaptive' },
+      messages: [
+        {
+          role: 'user',
+          content: [
+            `The theory of "${lesson.title}" is already written; its rule headings are: ${lesson.rules.map((rule) => `"${rule.heading}"`).join(', ')}.`,
+            'Write only a fresh set of ten exercises. Do not repeat these tasks:',
+            previous,
+          ].join('\n'),
+        },
+      ],
+      output_config: { effort: 'medium', format: zodOutputFormat(LessonExercisesSchema) },
+    }),
+  );
+
+  const parsed = response.parsed_output;
+  if (!parsed || parsed.exercises.length === 0) throw new Error(t.badGrammarLesson);
+  return { ...lesson, exercises: parsed.exercises };
 }
 
 /**

@@ -61,6 +61,36 @@ export interface Homework {
   createdAt: number;
 }
 
+/** Правило урока грамматики: заголовок, объяснение и примеры к нему. */
+export interface GrammarRule {
+  heading: string;
+  /** Объяснение на языке интерфейса; формы и примеры — на изучаемом. */
+  text: string;
+  examples: { text: string; translation: string }[];
+}
+
+/**
+ * Урок по юниту программы грамматики: короткая теория и упражнения. Составляется
+ * один раз и хранится; упражнения можно пересоставить, не трогая теорию.
+ */
+export interface GrammarLesson {
+  /** Ключ юнита из `src/grammar`. */
+  unitId: string;
+  language: LanguageCode;
+  level: Level;
+  /** Название юнита на момент составления — на случай, если программа поменяется. */
+  title: string;
+  /** Зачем эта тема и когда она нужна — пара фраз на языке интерфейса. */
+  intro: string;
+  rules: GrammarRule[];
+  /** Таблица форм, если тема на ней держится; иначе null. */
+  table: { head: string[]; rows: string[][] } | null;
+  /** Типичные ошибки: чего не делать. */
+  pitfalls: string[];
+  exercises: Exercise[];
+  createdAt: number;
+}
+
 /** Как отвечают на вопрос по прослушанному тексту. */
 export type ListeningAnswerKind = 'choice' | 'written' | 'spoken';
 

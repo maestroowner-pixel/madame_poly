@@ -46,7 +46,7 @@ const KIND_LABELS: Record<ExerciseKind, string> = {
   translate: t.kindTranslate,
 };
 
-function ExerciseCard({ exercise, index }: { exercise: Exercise; index: number }) {
+export function ExerciseCard({ exercise, index }: { exercise: Exercise; index: number }) {
   const { theme } = useTheme();
   const styles = useStyles(createStyles);
 

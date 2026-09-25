@@ -14,6 +14,7 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { AccountScreen } from './src/components/AccountScreen';
 import { ArchiveScreen } from './src/components/ArchiveScreen';
 import { ExamScreen } from './src/components/ExamScreen';
+import { GrammarScreen } from './src/components/GrammarScreen';
 import { HomeworkScreen } from './src/components/HomeworkScreen';
 import { ListeningScreen } from './src/components/ListeningScreen';
 import { MessageBubble } from './src/components/MessageBubble';
@@ -337,6 +338,10 @@ function Screen() {
               level={conversation.level}
               topicId={conversation.topicId}
             />
+          )}
+
+          {section === 'grammar' && (
+            <GrammarScreen menu={menu} language={conversation.language} level={conversation.level} />
           )}
 
           {section === 'exam' && (
