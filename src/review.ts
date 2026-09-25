@@ -1,4 +1,4 @@
-import type { CardDirection, ReviewCard, Vocabulary, VocabularyEntry } from './types';
+import type { CardDirection, ReviewCard, SectionKind, Vocabulary, VocabularyEntry } from './types';
 
 const MINUTE = 60_000;
 const DAY = 24 * 60 * MINUTE;
@@ -95,7 +95,7 @@ const shuffle = <T>(items: T[]): T[] => {
 };
 
 /** Все записи набора вместе с видом группы: слово путать со словом, фразу — с фразой. */
-export function flatEntries(vocabulary: Vocabulary): { entry: VocabularyEntry; kind: 'words' | 'phrases' }[] {
+export function flatEntries(vocabulary: Vocabulary): { entry: VocabularyEntry; kind: SectionKind }[] {
   return vocabulary.sections.flatMap((section) =>
     section.entries.map((entry) => ({ entry, kind: section.kind })),
   );

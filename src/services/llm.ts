@@ -143,7 +143,7 @@ const VocabularySchema = z.object({
     z.object({
       title: z.string(),
       gloss: z.string(),
-      kind: z.enum(['words', 'phrases']),
+      kind: z.enum(['words', 'phrasal', 'phrases']),
       entries: z.array(z.object({ term: z.string(), translation: z.string(), transcription: z.string() })),
     }),
   ),

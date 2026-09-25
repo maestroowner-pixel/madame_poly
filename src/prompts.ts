@@ -417,6 +417,18 @@ export function formatExamTranscript(turns: DialogueTurn[]): string {
  * Чем отличается список по уровням: объём, какие слова и какие обороты. На A1
  * «сбалансированная диета» неуместна, на C1 «голова» и «нога» — тоже.
  */
+/**
+ * Фразовые глаголы в английском — отдельный пласт, который с B1 требуют
+ * экзамены и без которого не понять живую речь. Идут своими группами между
+ * словами и фразами; на A1–A2 их не даём — рано. Сколько и каких — по уровню.
+ */
+const PHRASAL_GUIDANCE: Partial<Record<Level, string>> = {
+  B1: 'one "phrasal" section of eight to ten of the most frequent phrasal verbs that fit the topic (like "look after", "find out", "give up") — literal or transparent meanings',
+  B2: 'two "phrasal" sections of eight to twelve entries each: frequent phrasal verbs of the topic, including idiomatic meanings (like "put off", "come across", "turn down") and some three-part verbs (like "look forward to", "get on with")',
+  C1: 'two "phrasal" sections of ten to twelve entries each: phrasal verbs with idiomatic and figurative meanings, three-part verbs and those with several meanings where the topic uses a less obvious one (like "bring about", "come up against", "play down")',
+  C2: 'two "phrasal" sections of ten to twelve entries each: less frequent, figurative and register-marked phrasal verbs of the topic (like "gloss over", "fob off", "stave off"), including informal ones a native speaker uses',
+};
+
 const VOCABULARY_GUIDANCE: Record<Level, string> = {
   A1: 'Four or five sections, six to nine entries each. The most common concrete nouns and verbs, present tense phrases, greetings and simple questions. No idioms.',
   A2: 'Five or six sections, eight to ten entries each. Everyday nouns and verbs, simple collocations, phrases for shops, offices and calls, past and future forms.',
@@ -445,6 +457,7 @@ export function buildVocabularyPrompt(
   variant?: EnglishVariant,
 ): string {
   const { englishName } = LANGUAGES[language];
+  const phrasal = language === 'en' ? PHRASAL_GUIDANCE[level] : undefined;
 
   return [
     `You are a ${englishName} teacher compiling a thematic vocabulary sheet for a CEFR ${level} learner.`,
@@ -455,14 +468,21 @@ export function buildVocabularyPrompt(
       ? `- Topic: ${topic.label}. Every section is a sub-topic of it; cover the topic from several sides — things, actions, places, people, situations, feelings.`
       : `- No topic was chosen: compile the general vocabulary a ${level} learner needs across everyday life — people, home, food, work or study, city, time, feelings.`,
     `- Level ${level}: ${VOCABULARY_GUIDANCE[level]}`,
-    `- Sections come in two kinds. "words": single words and short collocations — ${language === 'en' ? 'nouns without an article' : 'nouns with their article'}, verbs in the infinitive, adjectives in the base form. "phrases": complete sentences and questions a person would actually say in a situation of the topic — describing, asking, answering, advising, dealing with an emergency. Put the "words" sections first, then the "phrases" sections; have at least two of each.`,
+    phrasal
+      ? `- Sections come in three kinds. "words": single words and short collocations — nouns without an article, verbs in the infinitive, adjectives in the base form; no phrasal verbs here. "phrasal": phrasal verbs — ${phrasal}. "phrases": complete sentences and questions a person would actually say in a situation of the topic — describing, asking, answering, advising, dealing with an emergency. Put the "words" sections first, then "phrasal", then "phrases"; have at least two "words" and two "phrases" sections.`
+      : `- Sections come in two kinds. "words": single words and short collocations — ${language === 'en' ? 'nouns without an article' : 'nouns with their article'}, verbs in the infinitive, adjectives in the base form. "phrases": complete sentences and questions a person would actually say in a situation of the topic — describing, asking, answering, advising, dealing with an emergency. Put the "words" sections first, then the "phrases" sections; have at least two of each. Do not use the "phrasal" kind.`,
+    phrasal
+      ? '- A phrasal verb "term" is the verb without "to", with "sth" / "sb" showing where the object goes: "put sth off" when the object can go between verb and particle, "look after sb" when it cannot, "look forward to sth" for three-part verbs, no placeholder for intransitive ones like "break down". If the verb has several meanings, give only the one the topic needs and translate that one.'
+      : '',
     `- "term" is in ${englishName}; "translation" is in ${EXPLANATION_LANGUAGE}, short and natural, not a dictionary list of every meaning. Where two forms are interchangeable, give both in one entry separated by " / ", like "el oído / la oreja".`,
     `- "transcription" is the pronunciation of the whole term in IPA between slashes, ${pronunciationName(language, variant)}, with stress marks, like /kaˈβeθa/ or /ˈhedeɪk/. For a phrase transcribe the whole phrase, connected speech, no pauses marked.`,
     `- "title" of a section is in ${englishName}; "gloss" is the same in ${EXPLANATION_LANGUAGE}. The sheet "title" is the topic named in ${englishName}.`,
     '- No entry appears twice across sections. Every term must be correct, natural, spelled as in a dictionary and in use today — a learner will memorise it as is.',
-    `- "dialogue": one conversation of ten to fourteen lines in ${englishName} between two people in a typical situation of the topic, turns alternating, each line a full utterance without speaker labels. It reuses words and phrases from the sections.`,
-    `- "examples": ten to fourteen full sentences in ${englishName}, each using one or two entries from the sections in a natural context, at the level's grammar — past, future, conditions, reported speech as the level allows.`,
-  ].join('\n');
+    `- "dialogue": one conversation of ten to fourteen lines in ${englishName} between two people in a typical situation of the topic, turns alternating, each line a full utterance without speaker labels. It reuses words and phrases from the sections${phrasal ? ', including several phrasal verbs' : ''}.`,
+    `- "examples": ten to fourteen full sentences in ${englishName}, each using one or two entries from the sections in a natural context, at the level's grammar — past, future, conditions, reported speech as the level allows.${phrasal ? ' At least a third of them use a phrasal verb, some with the object between verb and particle.' : ''}`,
+  ]
+    .filter(Boolean)
+    .join('\n');
 }
 
 /**

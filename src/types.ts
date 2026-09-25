@@ -249,14 +249,19 @@ export interface VocabularyEntry {
   transcription?: string;
 }
 
+/**
+ * Вид группы: слова и устойчивые сочетания, фразовые глаголы (только в
+ * английском, с B1) или целые фразы для разговора.
+ */
+export type SectionKind = 'words' | 'phrasal' | 'phrases';
+
 /** Группа слов или фраз: «части тела», «у врача», «как спросить о самочувствии». */
 export interface VocabularySection {
   /** Название на изучаемом языке. */
   title: string;
   /** То же на языке интерфейса. */
   gloss: string;
-  /** Слова и устойчивые сочетания — или целые фразы для разговора. */
-  kind: 'words' | 'phrases';
+  kind: SectionKind;
   entries: VocabularyEntry[];
 }
 
