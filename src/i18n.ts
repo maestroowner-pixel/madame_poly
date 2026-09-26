@@ -323,6 +323,7 @@ const en = {
 
   // Напоминания
   reminders: 'Reminders',
+  remindAll: 'Notifications and reminders',
   remindReview: 'Review the words',
   remindPractice: 'Time to practise',
   remindOff: 'Off',
@@ -653,6 +654,7 @@ const uk: Strings = {
 
   // Нагадування
   reminders: 'Нагадування',
+  remindAll: 'Сповіщення й нагадування',
   remindReview: 'Повторити слова',
   remindPractice: 'Час позайматися',
   remindOff: 'Вимкнено',
@@ -977,6 +979,7 @@ const es: Strings = {
 
   // Recordatorios
   reminders: 'Recordatorios',
+  remindAll: 'Notificaciones y recordatorios',
   remindReview: 'Repasar las palabras',
   remindPractice: 'Hora de practicar',
   remindOff: 'Apagado',
@@ -1304,6 +1307,7 @@ const ru: Strings = {
 
   // Напоминания
   reminders: 'Напоминания',
+  remindAll: 'Уведомления и напоминания',
   remindReview: 'Повторить слова',
   remindPractice: 'Время позаниматься',
   remindOff: 'Выключено',
@@ -1627,6 +1631,7 @@ const de: Strings = {
   wordsQuizAgain: 'Noch einmal',
 
   reminders: 'Erinnerungen',
+  remindAll: 'Mitteilungen und Erinnerungen',
   remindReview: 'Wörter wiederholen',
   remindPractice: 'Zeit zum Üben',
   remindOff: 'Aus',
@@ -1949,6 +1954,7 @@ const fr: Strings = {
   wordsQuizAgain: 'Recommencer',
 
   reminders: 'Rappels',
+  remindAll: 'Notifications et rappels',
   remindReview: 'Réviser les mots',
   remindPractice: 'C’est l’heure de pratiquer',
   remindOff: 'Désactivé',
@@ -2271,6 +2277,7 @@ const pt: Strings = {
   wordsQuizAgain: 'Fazer de novo',
 
   reminders: 'Lembretes',
+  remindAll: 'Notificações e lembretes',
   remindReview: 'Revisar as palavras',
   remindPractice: 'Hora de praticar',
   remindOff: 'Desligado',

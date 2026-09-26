@@ -90,6 +90,10 @@ export async function syncReminders(): Promise<boolean> {
   if (!Notifications) return true;
 
   const settings = await loadReminderSettings();
+  if (settings.enabled === false) {
+    await Notifications.cancelAllScheduledNotificationsAsync();
+    return true;
+  }
   const review = settings.review && (await hasReviewCards()) ? settings.review : null;
   const practice = settings.practice;
 

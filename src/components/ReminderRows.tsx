@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 
 import { ChevronIcon } from './icons';
 import { t } from '../i18n';
@@ -43,6 +43,7 @@ function TimeStepper({ value, onChange }: { value: ClockTime; onChange: (next: C
  * перестраивают расписание в системе.
  */
 export function ReminderRows() {
+  const { theme } = useTheme();
   const styles = useStyles(createStyles);
   const [settings, setSettings] = useState<ReminderSettings | null>(null);
   const [denied, setDenied] = useState(false);
@@ -59,10 +60,25 @@ export function ReminderRows() {
   if (!settings) return null;
 
   const { review, practice } = settings;
+  const enabled = settings.enabled !== false;
 
   return (
     <View style={styles.block}>
       <Text style={styles.caption}>{t.reminders}</Text>
+
+      {/* Общий выключатель: выключен — строки времени прячутся, но не теряются. */}
+      <View style={styles.row}>
+        <Text style={styles.label}>{t.remindAll}</Text>
+        <Switch
+          value={enabled}
+          onValueChange={(on) => apply({ ...settings, enabled: on })}
+          trackColor={{ true: theme.accent, false: theme.border }}
+          accessibilityLabel={t.remindAll}
+        />
+      </View>
+
+      {enabled && (
+        <>
 
       <View style={[styles.row, review ? styles.rowTall : null]}>
         <Pressable
@@ -102,7 +118,10 @@ export function ReminderRows() {
         )}
       </View>
 
-      {denied && <Text style={styles.denied}>{t.remindDenied}</Text>}
+        </>
+      )}
+
+      {enabled && denied && <Text style={styles.denied}>{t.remindDenied}</Text>}
     </View>
   );
 }
