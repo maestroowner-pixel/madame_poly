@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import {
   SafeAreaProvider,
   SafeAreaView,
@@ -158,7 +158,7 @@ export function Paywall({ visible, anchor, left, used, block, tier, onClose, onB
               Apple требует на экране покупки условия автопродления и ссылки на
               политику и условия (App Review Guidelines 3.1.2) — без них отказ.
             */}
-            <Text style={styles.legal}>{t.paywallRenewNote}</Text>
+            <Text style={styles.legal}>{t.paywallRenewNote(Platform.OS === 'ios' ? 'App Store' : 'Google Play')}</Text>
             <View style={styles.legalLinks}>
               <Pressable onPress={() => void Linking.openURL(TERMS_URL).catch(() => {})} hitSlop={8}>
                 <Text style={styles.legalLink}>{t.terms}</Text>
