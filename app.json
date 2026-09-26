@@ -100,7 +100,8 @@
           "icon": "./assets/android-icon-monochrome.png",
           "color": "#17769F"
         }
-      ]
+      ],
+      "./plugins/withReleaseSigning"
     ],
     "backgroundColor": "#EFF6FD",
     "locales": {
