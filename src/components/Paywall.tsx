@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import {
   SafeAreaProvider,
   SafeAreaView,
@@ -10,7 +10,7 @@ import type { PurchasesPackage } from 'react-native-purchases';
 import { CloseIcon } from './icons';
 import { ZoomModal } from './ZoomModal';
 import type { Anchor } from '../anchor';
-import type { Tier } from '../config';
+import { PRIVACY_URL, TERMS_URL, type Tier } from '../config';
 import type { Block } from '../hooks/useSubscription';
 import { t } from '../i18n';
 import { errorText } from '../errors';
@@ -153,6 +153,21 @@ export function Paywall({ visible, anchor, left, used, block, tier, onClose, onB
             <Pressable onPress={onClose} style={styles.quiet} hitSlop={8}>
               <Text style={styles.quietLabel}>{t.paywallLater}</Text>
             </Pressable>
+
+            {/*
+              Apple требует на экране покупки условия автопродления и ссылки на
+              политику и условия (App Review Guidelines 3.1.2) — без них отказ.
+            */}
+            <Text style={styles.legal}>{t.paywallRenewNote}</Text>
+            <View style={styles.legalLinks}>
+              <Pressable onPress={() => void Linking.openURL(TERMS_URL).catch(() => {})} hitSlop={8}>
+                <Text style={styles.legalLink}>{t.terms}</Text>
+              </Pressable>
+              <Text style={styles.legal}>·</Text>
+              <Pressable onPress={() => void Linking.openURL(PRIVACY_URL).catch(() => {})} hitSlop={8}>
+                <Text style={styles.legalLink}>{t.privacy}</Text>
+              </Pressable>
+            </View>
           </ScrollView>
         </SafeAreaView>
       </SafeAreaProvider>
@@ -210,4 +225,7 @@ const createStyles = (theme: Theme) =>
 
     quiet: { alignItems: 'center', paddingVertical: 8 },
     quietLabel: { color: theme.neon, fontSize: 13 },
+    legal: { color: theme.textMuted, fontSize: 11, lineHeight: 16, textAlign: 'center' },
+    legalLinks: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8 },
+    legalLink: { color: theme.neon, fontSize: 12 },
   });
