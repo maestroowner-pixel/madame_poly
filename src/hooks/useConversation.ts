@@ -76,6 +76,12 @@ export function useConversation() {
 
   // Актуальные значения для колбэков конвейера — состояние обновляется асинхронно.
   const messagesRef = useRef<Message[]>([]);
+  /** Лимит реплик в беседе: у бесплатного тарифа, иначе null. Ставит App. */
+  const turnLimitRef = useRef<number | null>(null);
+  /** Сколько реплик человек сказал с начала этой беседы. */
+  const sessionTurnsRef = useRef(0);
+  /** Беседа закончилась, потому что кончились бесплатные реплики. */
+  const [turnLimitHit, setTurnLimitHit] = useState(false);
   messagesRef.current = messages;
   const languageRef = useRef<LanguageCode>(language);
   languageRef.current = language;
@@ -242,6 +248,11 @@ export function useConversation() {
       const history = messagesRef.current;
       persist((previous) => [...previous, userMessage]);
 
+      sessionTurnsRef.current += 1;
+      const limit = turnLimitRef.current;
+      const wrapUp = limit !== null && sessionTurnsRef.current >= limit;
+      if (wrapUp) setTurnLimitHit(true);
+
       const turn = await respond({
         history,
         userText: text,
@@ -250,6 +261,7 @@ export function useConversation() {
         topic: findTopic(currentLanguage, topicRef.current),
         name: profileRef.current.name || undefined,
         variant: variantRef.current,
+        wrapUp,
       });
 
       persist((previous) =>
@@ -295,6 +307,9 @@ export function useConversation() {
       await voice.stop();
       return;
     }
+
+    sessionTurnsRef.current = 0;
+    setTurnLimitHit(false);
 
     // С выбранной темой первым говорит партнёр — иначе непонятно, с чего начать.
     await voice.start(async () => {
@@ -450,6 +465,11 @@ export function useConversation() {
     [persist, voice.play, voiceRate, isActive],
   );
 
+  /** Лимит реплик в беседе (бесплатный тариф) или null — ставит App по тарифу. */
+  const setTurnLimit = useCallback((limit: number | null) => {
+    turnLimitRef.current = limit;
+  }, []);
+
   return {
     ready,
     language,
@@ -486,5 +506,7 @@ export function useConversation() {
     finishConversation,
     removeArchived,
     dismissError: () => setError(null),
+    setTurnLimit,
+    turnLimitHit,
   };
 }

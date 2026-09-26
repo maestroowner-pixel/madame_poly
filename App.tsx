@@ -42,7 +42,7 @@ import { useZoomScreen } from './src/hooks/useZoomScreen';
 import { locale, t } from './src/i18n';
 import { LANGUAGES } from './src/languages';
 import { CONTENT_MAX_WIDTH } from './src/layout';
-import { VOCABULARY_LANGUAGES } from './src/config';
+import { FREE_TURNS_PER_TALK, UNLIMITED_TALKS, VOCABULARY_LANGUAGES } from './src/config';
 import { dueCards } from './src/review';
 import { ensureMicrophone } from './src/services/microphone';
 import { syncReminders } from './src/services/reminders';
@@ -112,6 +112,13 @@ function Screen() {
     await subscription.useTalk();
     return true;
   }, [subscription]);
+
+  // Бесплатная беседа короткая: лимит реплик у бесплатного тарифа, у подписки — нет.
+  useEffect(() => {
+    conversation.setTurnLimit(
+      subscription.pro === false && !UNLIMITED_TALKS ? FREE_TURNS_PER_TALK : null,
+    );
+  }, [conversation.setTurnLimit, subscription.pro]);
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuAnchor, setMenuAnchor] = useState<Anchor | null>(null);
@@ -284,6 +291,24 @@ function Screen() {
               ) : (
                 <View style={styles.list}>
                   <ActivityIndicator color={theme.neon} />
+                </View>
+              )}
+
+              {/* Бесплатная беседа кончилась по лимиту реплик — говорим, что дальше. */}
+              {!conversation.sessionActive && conversation.turnLimitHit && (
+                <View style={styles.remind}>
+                  <Text style={styles.remindText}>{t.freeTalkEnded(FREE_TURNS_PER_TALK)}</Text>
+                  <View style={styles.remindRow}>
+                    <Pressable
+                      onPress={() => {
+                        setPaywallAnchor(null);
+                        setPaywallOpen(true);
+                      }}
+                      style={styles.remindButton}
+                    >
+                      <Text style={styles.remindLabel}>{t.subscription}</Text>
+                    </Pressable>
+                  </View>
                 </View>
               )}
 

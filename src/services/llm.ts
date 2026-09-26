@@ -240,8 +240,10 @@ export async function respond(params: {
   topic?: Topic | null;
   name?: string;
   variant?: EnglishVariant;
+  /** Последняя реплика бесплатной беседы: пора прощаться. */
+  wrapUp?: boolean;
 }): Promise<TurnResult> {
-  const { history, userText, language, level, topic, name, variant } = params;
+  const { history, userText, language, level, topic, name, variant, wrapUp } = params;
 
 
   const context: Anthropic.MessageParam[] = windowed(history).map((message) => ({
@@ -288,7 +290,21 @@ export async function respond(params: {
         // Разговорная латентность важнее глубины рассуждения: реплики короткие,
         // а пауза между «сказал» и «услышал ответ» ощущается сразу.
         thinking: { type: 'disabled' },
-        messages: [...cached, { role: 'user', content: userText }],
+        messages: [
+          ...cached,
+          {
+            role: 'user',
+            content: wrapUp
+              ? [
+                  { type: 'text', text: userText },
+                  {
+                    type: 'text',
+                    text: '(Note for you, not from the learner: this is the last turn of their free conversation today. Answer briefly, then say a warm goodbye and invite them back tomorrow. Set "farewell" to true.)',
+                  },
+                ]
+              : userText,
+          },
+        ],
         output_config: { format: zodOutputFormat(TurnSchema) },
       }),
     );
@@ -320,7 +336,8 @@ export async function respond(params: {
   return {
     reply,
     corrections,
-    farewell: parsed.farewell,
+    // На последней бесплатной реплике беседа закрывается, даже если модель забыла попрощаться.
+    farewell: parsed.farewell || Boolean(wrapUp),
   };
 }
 

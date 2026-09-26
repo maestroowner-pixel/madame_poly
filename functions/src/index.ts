@@ -62,7 +62,7 @@ const MAX_TTS_MP3_BITRATE = 128_000;
 
 type Tier = 'free' | 'pro' | 'max';
 /** Объёмы — те же, что в `src/config.ts`. */
-const MONTHLY_BUDGET_USD: Record<Tier, number> = { free: 1, pro: 3, max: 5 };
+const MONTHLY_BUDGET_USD: Record<Tier, number> = { free: 1.5, pro: 3, max: 5 };
 const PRO_ENTITLEMENT = 'pro';
 const MAX_ENTITLEMENT = 'max';
 
