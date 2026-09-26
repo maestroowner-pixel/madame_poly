@@ -126,7 +126,7 @@ export function Paywall({ visible, anchor, left, used, block, tier, onClose, onB
                 const current = plan === tier;
                 return (
                   <Pressable
-                    key={item.identifier}
+                    key={item.product.identifier}
                     disabled={busy || current}
                     onPress={() => void run(() => buy(item))}
                     style={[styles.plan, busy && styles.dimmed]}
