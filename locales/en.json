@@ -1,0 +1,11 @@
+{
+  "ios": {
+    "CFBundleDisplayName": "Madame Poly",
+    "NSMicrophoneUsageDescription": "Madame Poly listens to your speech to recognise it and reply.",
+    "NSPhotoLibraryUsageDescription": "Madame Poly uses a photo from your library as your avatar.",
+    "NSCameraUsageDescription": "Madame Poly opens the camera to take a photo for your avatar."
+  },
+  "android": {
+    "app_name": "Madame Poly"
+  }
+}

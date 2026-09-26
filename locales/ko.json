@@ -1,0 +1,11 @@
+{
+  "ios": {
+    "CFBundleDisplayName": "Madame Poly",
+    "NSMicrophoneUsageDescription": "폴리 선생님이 말을 듣고 인식해서 대답해요.",
+    "NSPhotoLibraryUsageDescription": "폴리 선생님이 사진 보관함의 사진을 아바타로 사용해요.",
+    "NSCameraUsageDescription": "폴리 선생님이 아바타 사진을 찍으려고 카메라를 열어요."
+  },
+  "android": {
+    "app_name": "Madame Poly"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "ios": {
+    "CFBundleDisplayName": "Madame Poly",
+    "NSMicrophoneUsageDescription": "マダム・ポリーはあなたの声を聞き取って認識し、返事をします。",
+    "NSPhotoLibraryUsageDescription": "マダム・ポリーはライブラリの写真をアバターに使います。",
+    "NSCameraUsageDescription": "マダム・ポリーはアバター用の写真を撮るためにカメラを開きます。"
+  },
+  "android": {
+    "app_name": "Madame Poly"
+  }
+}

@@ -9,7 +9,10 @@
     "ios": {
       "supportsTablet": true,
       "appleTeamId": "VL4B4R8D84",
-      "bundleIdentifier": "com.kukalab.polyglotta"
+      "bundleIdentifier": "com.kukalab.polyglotta",
+      "infoPlist": {
+        "CFBundleAllowMixedLocalizations": true
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -31,7 +34,7 @@
       [
         "expo-audio",
         {
-          "microphonePermission": "Madame Polyglotta listens to your speech to recognise it and reply."
+          "microphonePermission": "Madame Poly listens to your speech to recognise it and reply."
         }
       ],
       [
@@ -51,12 +54,42 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Madame Polyglotta uses a photo from your library as your avatar.",
-          "cameraPermission": "Madame Polyglotta opens the camera to take a photo for your avatar."
+          "photosPermission": "Madame Poly uses a photo from your library as your avatar.",
+          "cameraPermission": "Madame Poly opens the camera to take a photo for your avatar."
         }
       ],
       "expo-sharing",
-      "expo-localization",
+      [
+        "expo-localization",
+        {
+          "supportedLocales": {
+            "ios": [
+              "en",
+              "uk",
+              "es",
+              "ru",
+              "de",
+              "fr",
+              "pt",
+              "zh-Hans",
+              "ja",
+              "ko"
+            ],
+            "android": [
+              "en",
+              "uk",
+              "es",
+              "ru",
+              "de",
+              "fr",
+              "pt",
+              "zh",
+              "ja",
+              "ko"
+            ]
+          }
+        }
+      ],
       "./plugins/withSceneLifecycle",
       "expo-video",
       [
@@ -67,6 +100,18 @@
         }
       ]
     ],
-    "backgroundColor": "#EFF6FD"
+    "backgroundColor": "#EFF6FD",
+    "locales": {
+      "en": "./locales/en.json",
+      "uk": "./locales/uk.json",
+      "es": "./locales/es.json",
+      "ru": "./locales/ru.json",
+      "de": "./locales/de.json",
+      "fr": "./locales/fr.json",
+      "pt": "./locales/pt.json",
+      "zh-Hans": "./locales/zh-Hans.json",
+      "ja": "./locales/ja.json",
+      "ko": "./locales/ko.json"
+    }
   }
 }

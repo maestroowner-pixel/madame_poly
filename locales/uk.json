@@ -1,0 +1,11 @@
+{
+  "ios": {
+    "CFBundleDisplayName": "Madame Poly",
+    "NSMicrophoneUsageDescription": "Мадам Полі слухає ваше мовлення, щоб розпізнати його й відповісти.",
+    "NSPhotoLibraryUsageDescription": "Мадам Полі бере фото з вашої бібліотеки для аватарки.",
+    "NSCameraUsageDescription": "Мадам Полі відкриває камеру, щоб зробити фото для аватарки."
+  },
+  "android": {
+    "app_name": "Madame Poly"
+  }
+}

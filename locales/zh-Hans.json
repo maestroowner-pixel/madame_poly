@@ -1,0 +1,11 @@
+{
+  "ios": {
+    "CFBundleDisplayName": "Madame Poly",
+    "NSMicrophoneUsageDescription": "波莉夫人会听你说话，识别后作出回答。",
+    "NSPhotoLibraryUsageDescription": "波莉夫人会使用你相册中的照片作为头像。",
+    "NSCameraUsageDescription": "波莉夫人会打开相机，为你的头像拍照。"
+  },
+  "android": {
+    "app_name": "Madame Poly"
+  }
+}
