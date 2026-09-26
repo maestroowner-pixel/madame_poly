@@ -1,4 +1,5 @@
-import { StyleSheet, View } from 'react-native';
+import { useEffect, useRef } from 'react';
+import { Animated, Easing, StyleSheet, View } from 'react-native';
 
 import { UI_SCALE } from '../layout';
 
@@ -759,6 +760,164 @@ export function ChevronIcon({ size: base, color, direction }: ChevronProps) {
           ],
         }}
       />
+    </View>
+  );
+}
+
+/**
+ * Корона шахматного ферзя — вход в подписку. Контуром, как остальные значки,
+ * но золотая и с неоновым мерцанием: ломаная из пяти зубцов (центральный
+ * выше всех), шарики на концах и обод. Ломаная собрана из повёрнутых
+ * отрезков — фигурами иначе её не нарисовать.
+ */
+const CROWN_LINE: [number, number][] = [
+  [0.2, 0.7],
+  [0.12, 0.36],
+  [0.23, 0.53],
+  [0.31, 0.28],
+  [0.41, 0.53],
+  [0.5, 0.22],
+  [0.59, 0.53],
+  [0.69, 0.28],
+  [0.77, 0.53],
+  [0.88, 0.36],
+  [0.8, 0.7],
+];
+const CROWN_TIPS = [1, 3, 5, 7, 9];
+
+/** Нарисованная корона: линии заданной толщины, цвет, необязательная тень. */
+function CrownShape({
+  size,
+  color,
+  line,
+  ball,
+  glow,
+}: {
+  size: number;
+  color: string;
+  line: number;
+  ball: number;
+  /** Тень по силуэту (iOS) — неоновый ореол. */
+  glow?: { color: string; radius: number };
+}) {
+  const shadow = glow
+    ? { shadowColor: glow.color, shadowOpacity: 1, shadowRadius: glow.radius, shadowOffset: { width: 0, height: 0 } }
+    : null;
+
+  return (
+    <View style={{ position: 'absolute', width: size, height: size }}>
+      {CROWN_LINE.slice(1).map(([x2, y2], index) => {
+        const [x1, y1] = CROWN_LINE[index];
+        const dx = (x2 - x1) * size;
+        const dy = (y2 - y1) * size;
+        const length = Math.hypot(dx, dy);
+        return (
+          <View
+            key={index}
+            style={[
+              {
+                position: 'absolute',
+                left: ((x1 + x2) / 2) * size - length / 2,
+                top: ((y1 + y2) / 2) * size - line / 2,
+                width: length + line * 0.6,
+                height: line,
+                borderRadius: line / 2,
+                backgroundColor: color,
+                transform: [{ rotate: `${Math.atan2(dy, dx)}rad` }],
+              },
+              shadow,
+            ]}
+          />
+        );
+      })}
+      {CROWN_TIPS.map((index) => {
+        const [x, y] = CROWN_LINE[index];
+        return (
+          <View
+            key={`ball-${index}`}
+            style={[
+              {
+                position: 'absolute',
+                left: x * size - ball / 2,
+                top: y * size - ball * 0.85,
+                width: ball,
+                height: ball,
+                borderRadius: ball / 2,
+                backgroundColor: color,
+              },
+              shadow,
+            ]}
+          />
+        );
+      })}
+      {/* Обод: контурная полоса под зубцами. */}
+      <View
+        style={[
+          {
+            position: 'absolute',
+            left: size * 0.2 - line / 2,
+            top: size * 0.7 - line / 2,
+            width: size * 0.6 + line,
+            height: size * 0.16,
+            borderWidth: line,
+            borderColor: color,
+            borderRadius: line,
+          },
+          shadow,
+        ]}
+      />
+    </View>
+  );
+}
+
+/** Золото неоновой короны: сама корона и её свечение. */
+const CROWN_GOLD = '#F2C230';
+const CROWN_GLOW = '#FFD75A';
+
+export function CrownIcon({ size: base }: Props) {
+  /** На планшете значки крупнее вместе со всем интерфейсом. */
+  const size = base * UI_SCALE;
+  const line = Math.max(1.6, size * 0.08);
+  const ball = size * 0.13;
+
+  /**
+   * Неоновое мерцание по краю силуэта: под короной её же копия с линиями
+   * толще — ореол по контуру, — яркость которого медленно разгорается и
+   * гаснет. На iOS ореол ещё и светится тенью в цвет золота; на Android
+   * цветных теней нет, там мерцает сам ореол.
+   */
+  const pulse = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulse, { toValue: 1, duration: 1400, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
+        Animated.timing(pulse, { toValue: 0, duration: 1400, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
+      ]),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [pulse]);
+
+  return (
+    <View style={{ width: size, height: size }}>
+      <Animated.View
+        pointerEvents="none"
+        style={{
+          position: 'absolute',
+          width: size,
+          height: size,
+          opacity: pulse.interpolate({ inputRange: [0, 1], outputRange: [0.15, 0.6] }),
+        }}
+      >
+        <CrownShape
+          size={size}
+          color={CROWN_GLOW}
+          line={line * 1.8}
+          ball={ball * 1.35}
+          glow={{ color: CROWN_GLOW, radius: size * 0.12 }}
+        />
+      </Animated.View>
+      <CrownShape size={size} color={CROWN_GOLD} line={line} ball={ball} />
     </View>
   );
 }

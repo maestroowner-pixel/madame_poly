@@ -3,7 +3,8 @@ import { setAudioModeAsync, useAudioPlayer } from 'expo-audio';
 import type { ReactNode } from 'react';
 import { ActivityIndicator, LayoutAnimation, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { ChevronIcon } from './icons';
+import { ChevronIcon, CrownIcon } from './icons';
+import { NeonButton } from './NeonButton';
 import { ScreenTitle } from './ScreenMenu';
 import { ReminderRows } from './ReminderRows';
 import { TopicPicker } from './TopicPicker';
@@ -24,7 +25,7 @@ import {
 import { errorText } from '../errors';
 import { t } from '../i18n';
 import { LANGUAGES, LANGUAGE_CODES } from '../languages';
-import { CONTENT_MAX_WIDTH } from '../layout';
+import { BUTTON_ICON_SCALE, CONTENT_MAX_WIDTH } from '../layout';
 import { FONT_SCALES, useStyles, useTheme, type FontScale, type Theme } from '../theme';
 import { synthesize } from '../services/tts';
 import { loadVoice, saveVoice } from '../storage';
@@ -125,6 +126,7 @@ export function SettingsScreen({
   const archiveRef = useRef<View>(null);
   const accountRef = useRef<View>(null);
   const paywallRef = useRef<View>(null);
+  const crownRef = useRef<View>(null);
 
   const topic = findTopic(language, topicId);
 
@@ -171,6 +173,15 @@ export function SettingsScreen({
       <View style={styles.header}>
         {menu}
         <ScreenTitle screen="settings" title={t.settingsTitle} />
+        {/* Корона — постоянный вход в подписку, справа на строке заголовка. */}
+        <View ref={crownRef} collapsable={false} style={styles.crown}>
+          <NeonButton
+            onPress={() => measureAnchor(crownRef, onOpenPaywall)}
+            accessibilityLabel={t.subscription}
+          >
+            <CrownIcon size={24 * BUTTON_ICON_SCALE} color={theme.neon} />
+          </NeonButton>
+        </View>
       </View>
 
       <ScrollView contentContainerStyle={styles.panel}>
@@ -469,6 +480,7 @@ const createStyles = (theme: Theme) =>
       alignSelf: 'center',
     },
     title: { color: theme.text, fontSize: 18, fontWeight: '700' },
+    crown: { marginLeft: 'auto' },
     panel: {
       width: '100%',
       maxWidth: CONTENT_MAX_WIDTH,
