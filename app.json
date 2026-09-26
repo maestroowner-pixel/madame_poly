@@ -27,7 +27,7 @@
       "permissions": [
         "CAMERA"
       ],
-      "versionCode": 2
+      "versionCode": 10314
     },
     "web": {
       "favicon": "./assets/favicon.png"
