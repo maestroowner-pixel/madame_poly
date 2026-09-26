@@ -125,7 +125,9 @@ export async function linkAccount(userId: string | null): Promise<void> {
 
   try {
     if (userId) await Purchases.logIn(userId);
-    else await Purchases.logOut();
+    // Анонимного выводить некуда: SDK на это пишет ошибку в консоль, а при
+    // запуске, пока Firebase ещё не вошёл, сюда приходит именно null.
+    else if (!(await Purchases.isAnonymous())) await Purchases.logOut();
   } catch {
     // Связка — удобство, а не условие работы: молча остаёмся как были.
   }
