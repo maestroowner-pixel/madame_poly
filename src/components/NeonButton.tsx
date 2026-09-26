@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { Animated, Easing, Pressable, StyleSheet, View } from 'react-native';
 
+import { useButtonScale } from '../layout';
 import { useStyles, useTheme, type Theme } from '../theme';
 
 interface Props {
@@ -23,6 +24,10 @@ export function NeonButton({ onPress, accessibilityLabel, children, disabled, qu
   const { theme, scheme } = useTheme();
   const styles = useStyles(createStyles);
   const glow = useRef(new Animated.Value(0)).current;
+  /** На планшете кнопка крупнее; значок внутри увеличивает тот, кто его передаёт. */
+  const scale = useButtonScale();
+  const box = { width: 42 * scale, height: 42 * scale, borderRadius: 14 * scale };
+  const spot = { width: 34 * scale, height: 34 * scale, borderRadius: 17 * scale };
 
   const lit = scheme === 'dark' && !disabled && !quiet;
 
@@ -59,13 +64,14 @@ export function NeonButton({ onPress, accessibilityLabel, children, disabled, qu
       hitSlop={8}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
-      style={[styles.button, quiet && styles.quiet, disabled && styles.dimmed]}
+      style={[styles.button, box, quiet && styles.quiet, disabled && styles.dimmed]}
     >
       {lit && (
         <Animated.View
           pointerEvents="none"
           style={[
             styles.glow,
+            spot,
             {
               backgroundColor: theme.neon,
               opacity: glow.interpolate({ inputRange: [0, 1], outputRange: [0.1, 0.32] }),

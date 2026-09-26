@@ -2,6 +2,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 
+import { UI_SCALE } from './layout';
+
 /**
  * Палитра снята с иконки приложения: светлая тема берёт её холодную половину —
  * голубой верхний угол и белую монограмму, тёмная — индиго нижнего.
@@ -151,16 +153,65 @@ export function useTheme(): ThemeValue {
 
 type StyleMap = Record<string, Record<string, unknown>>;
 
-/** Проходит по готовым стилям и растягивает всё, что связано с размером текста. */
-function scaleFonts<T extends StyleMap>(styles: T, scale: number): T {
-  if (scale === 1) return styles;
+/** Размеры, которые растут вместе с интерфейсом на планшете. Рамки — нет: линии остаются тонкими. */
+const LAYOUT_FIELDS = [
+  'width',
+  'height',
+  'minWidth',
+  'minHeight',
+  'maxWidth',
+  'maxHeight',
+  'flexBasis',
+  'padding',
+  'paddingHorizontal',
+  'paddingVertical',
+  'paddingTop',
+  'paddingBottom',
+  'paddingLeft',
+  'paddingRight',
+  'margin',
+  'marginHorizontal',
+  'marginVertical',
+  'marginTop',
+  'marginBottom',
+  'marginLeft',
+  'marginRight',
+  'gap',
+  'rowGap',
+  'columnGap',
+  'top',
+  'bottom',
+  'left',
+  'right',
+  'borderRadius',
+  'borderTopLeftRadius',
+  'borderTopRightRadius',
+  'borderBottomLeftRadius',
+  'borderBottomRightRadius',
+  'shadowRadius',
+  'letterSpacing',
+] as const;
+
+/**
+ * Проходит по готовым стилям: шрифты растут на font × ui, размеры и отступы —
+ * на ui (масштаб планшета, UI_SCALE). Проценты и 'auto' не трогает.
+ */
+export function scaleStyles<T extends StyleMap>(styles: T, font: number, ui: number): T {
+  if (font === 1 && ui === 1) return styles;
 
   const scaled: StyleMap = {};
   for (const [key, rule] of Object.entries(styles)) {
     const next: Record<string, unknown> = { ...rule };
     for (const field of ['fontSize', 'lineHeight'] as const) {
       if (typeof next[field] === 'number') {
-        next[field] = Math.round((next[field] as number) * scale);
+        next[field] = Math.round((next[field] as number) * font * ui);
+      }
+    }
+    if (ui !== 1) {
+      for (const field of LAYOUT_FIELDS) {
+        if (typeof next[field] === 'number') {
+          next[field] = Math.round((next[field] as number) * ui * 10) / 10;
+        }
       }
     }
     scaled[key] = next;
@@ -170,9 +221,10 @@ function scaleFonts<T extends StyleMap>(styles: T, scale: number): T {
 
 /**
  * Стили компонента: собираются фабрикой от темы и сразу масштабируются под
- * выбранный размер шрифта. Иначе размер пришлось бы умножать в каждом правиле.
+ * выбранный размер шрифта и под экран планшета. Иначе множители пришлось бы
+ * вписывать в каждое правило вручную.
  */
 export function useStyles<T extends StyleMap>(create: (theme: Theme) => T): T {
   const { theme, fontScale } = useTheme();
-  return useMemo(() => scaleFonts(create(theme), fontScale), [create, theme, fontScale]);
+  return useMemo(() => scaleStyles(create(theme), fontScale, UI_SCALE), [create, theme, fontScale]);
 }

@@ -226,18 +226,23 @@ function Screen() {
     <SafeAreaProvider>
       <StatusBar style="auto" />
       <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
+        {/*
+          Шапка беседы — над колонкой: на планшете портрет и кнопки крупные, им
+          нужна вся ширина экрана. На телефоне шапка сама держит ширину колонки.
+        */}
+        {section === 'talk' && (
+          <TalkHeader
+            menu={menu}
+            portrait={<TutorStrip status={conversation.status} topicId={conversation.topicId} />}
+            canArchive={conversation.messages.length > 0 && !conversation.sessionActive}
+            onArchive={conversation.finishConversation}
+          />
+        )}
+
         {/* Колонка фиксированной ширины: на планшете растягивать ленту нельзя. */}
         <View style={styles.column}>
           {section === 'talk' && (
             <>
-              <TalkHeader
-                menu={menu}
-                portrait={
-                  <TutorStrip status={conversation.status} topicId={conversation.topicId} />
-                }
-                canArchive={conversation.messages.length > 0 && !conversation.sessionActive}
-                onArchive={conversation.finishConversation}
-              />
 
               {conversation.error && (
                 <Pressable onPress={conversation.dismissError} style={styles.error}>
@@ -306,23 +311,6 @@ function Screen() {
                 </View>
               )}
 
-              <View ref={recordRef} collapsable={false}>
-              <RecordButton
-                status={conversation.status}
-                sessionActive={conversation.sessionActive}
-                durationMillis={conversation.durationMillis}
-                mode={conversation.turnMode}
-                onToggleSession={toggleSession}
-                onEndTurn={conversation.endTurn}
-                onBeginTurn={conversation.beginTurn}
-                inputLevel={conversation.inputLevel}
-                onToggleMode={() =>
-                  void conversation.setTurnMode(
-                    conversation.turnMode === 'auto' ? 'manual' : 'auto',
-                  )
-                }
-              />
-              </View>
             </>
           )}
 
@@ -410,6 +398,32 @@ function Screen() {
           )}
         </View>
 
+        {/*
+          Кнопка беседы — под колонкой, как шапка над ней: своя ширина, не
+          зависящая от ленты.
+        */}
+        {section === 'talk' && (
+          <View
+            ref={recordRef}
+            collapsable={false}
+            style={styles.recordRow}
+          >
+            <RecordButton
+              status={conversation.status}
+              sessionActive={conversation.sessionActive}
+              durationMillis={conversation.durationMillis}
+              mode={conversation.turnMode}
+              onToggleSession={toggleSession}
+              onEndTurn={conversation.endTurn}
+              onBeginTurn={conversation.beginTurn}
+              inputLevel={conversation.inputLevel}
+              onToggleMode={() =>
+                void conversation.setTurnMode(conversation.turnMode === 'auto' ? 'manual' : 'auto')
+              }
+            />
+          </View>
+        )}
+
         {menuOpen && (
           <ScreenMenu
             current={section}
@@ -483,6 +497,7 @@ const createStyles = (theme: Theme) =>
   StyleSheet.create({
     screen: { flex: 1, backgroundColor: theme.bg },
     column: { flex: 1, width: '100%', maxWidth: CONTENT_MAX_WIDTH, alignSelf: 'center' },
+    recordRow: { width: '100%', maxWidth: CONTENT_MAX_WIDTH, alignSelf: 'center' },
 
     error: {
       marginHorizontal: 16,

@@ -1,11 +1,12 @@
-import { useEffect, useRef } from 'react';
-import { Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useMemo, useRef } from 'react';
+import { Animated, Easing, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 
 import { BookIcon, ChatIcon, EarIcon, ExamIcon, GrammarIcon, HomeIcon, PenIcon, WordsIcon } from './icons';
 import { NeonButton } from './NeonButton';
 import { measureAnchor, type Anchor } from '../anchor';
+import { BUTTON_ICON_SCALE, BUTTON_SCALE, IS_TABLET, UI_SCALE } from '../layout';
 import { t } from '../i18n';
-import { useStyles, useTheme, type Theme } from '../theme';
+import { scaleStyles, useStyles, useTheme, type Theme } from '../theme';
 
 /** Восемь разделов приложения. Порядок — от ежедневного к редкому. */
 export type Screen = 'talk' | 'listen' | 'write' | 'words' | 'grammar' | 'exam' | 'book' | 'settings';
@@ -40,12 +41,13 @@ export function screenLabels(): Record<Screen, string> {
  */
 export function MenuButton({ onPress }: { onPress: (anchor: Anchor | null) => void }) {
   const { theme } = useTheme();
+  const scale = BUTTON_ICON_SCALE;
   const ref = useRef<View>(null);
 
   return (
     <View ref={ref} collapsable={false}>
       <NeonButton onPress={() => measureAnchor(ref, onPress)} accessibilityLabel={t.screens}>
-        <HomeIcon size={24} color={theme.neon} />
+        <HomeIcon size={24 * scale} color={theme.neon} />
       </NeonButton>
     </View>
   );
@@ -114,21 +116,68 @@ interface MenuProps {
 }
 
 /**
- * Список разделов, выпадающий из-под домика. Нижней панели у нас нет намеренно:
- * она отнимала бы полоску экрана у ленты, а внизу и без того живёт кнопка
- * беседы — главный орган управления.
+ * Список разделов — панель, выезжающая слева из-за края экрана на высоте домика,
+ * как панелька «About Madame Poly» в настройках выезжает снизу. Нижней панели у
+ * нас нет намеренно: она отнимала бы полоску экрана у ленты, а внизу и без того
+ * живёт кнопка беседы — главный орган управления.
  */
+const SLIDE_MS = 220;
+/**
+ * На планшете меню крупнее остального интерфейса — посередине между ним и
+ * кнопкой шапки, из-под которой оно выпадает: мелкий список под большим
+ * домиком выглядел чужим.
+ */
+const MENU_SCALE = IS_TABLET ? (1 + BUTTON_SCALE / UI_SCALE) / 2 : 1;
+
 export function ScreenMenu({ current, hidden = [], badges = {}, anchor, onSelect, onClose }: MenuProps) {
   const { theme } = useTheme();
-  const styles = useStyles(createStyles);
+  const base = useStyles(createStyles);
+  const styles = useMemo(() => scaleStyles(base, 1, MENU_SCALE), [base]);
   const labels = screenLabels();
+  const { width: screenWidth } = useWindowDimensions();
+
+  /** 0 — панель за левым краем, 1 — на месте. */
+  const shown = useRef(new Animated.Value(0)).current;
+  const closing = useRef(false);
+
+  useEffect(() => {
+    Animated.timing(shown, {
+      toValue: 1,
+      duration: SLIDE_MS,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+  }, [shown]);
+
+  /** Сначала панель уезжает обратно за край, потом меню закрывается. */
+  const close = (then?: () => void) => {
+    if (closing.current) return;
+    closing.current = true;
+    Animated.timing(shown, {
+      toValue: 0,
+      duration: SLIDE_MS,
+      easing: Easing.in(Easing.cubic),
+      useNativeDriver: true,
+    }).start(() => {
+      then?.();
+      onClose();
+    });
+  };
 
   return (
     <View style={styles.overlay}>
       {/* Нажатие мимо списка закрывает его — так ведут себя все меню. */}
-      <Pressable style={styles.backdrop} onPress={onClose} />
+      <Animated.View style={[styles.backdrop, styles.shade, { opacity: shown }]}>
+        <Pressable style={styles.fill} onPress={() => close()} />
+      </Animated.View>
 
-      <View style={[styles.card, anchor ? { top: anchor.y + 28 } : null]}>
+      <Animated.View
+        style={[
+          styles.card,
+          anchor ? { top: anchor.y + 21 * BUTTON_SCALE + 7 } : null,
+          { transform: [{ translateX: shown.interpolate({ inputRange: [0, 1], outputRange: [-screenWidth, 0] }) }] },
+        ]}
+      >
         {(Object.keys(SCREEN_ICONS) as Screen[])
           .filter((screen) => !hidden.includes(screen))
           .map((screen) => {
@@ -137,13 +186,10 @@ export function ScreenMenu({ current, hidden = [], badges = {}, anchor, onSelect
           return (
             <Pressable
               key={screen}
-              onPress={() => {
-                onSelect(screen);
-                onClose();
-              }}
+              onPress={() => close(() => onSelect(screen))}
               style={[styles.row, active && styles.rowActive]}
             >
-              <Icon size={20} color={active ? theme.neon : theme.textMuted} />
+              <Icon size={20 * MENU_SCALE} color={active ? theme.neon : theme.textMuted} />
               <Text style={[styles.label, active && styles.labelActive]}>{labels[screen]}</Text>
               {badges[screen] ? (
                 <View style={styles.badge}>
@@ -153,7 +199,7 @@ export function ScreenMenu({ current, hidden = [], badges = {}, anchor, onSelect
             </Pressable>
           );
         })}
-      </View>
+      </Animated.View>
     </View>
   );
 }
@@ -162,14 +208,19 @@ const createStyles = (theme: Theme) =>
   StyleSheet.create({
     overlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 20 },
     backdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
-    /** Под домиком, а не по центру: видно, откуда список появился. */
+    shade: { backgroundColor: 'rgba(0,0,0,0.18)' },
+    fill: { flex: 1 },
+    /** Под домиком и вплотную к левому краю: выезжает из-за него. */
     card: {
       position: 'absolute',
       top: 96,
-      left: 16,
-      minWidth: 196,
+      left: 0,
+      minWidth: 212,
       padding: 6,
-      borderRadius: 16,
+      paddingLeft: 12,
+      borderTopRightRadius: 16,
+      borderBottomRightRadius: 16,
+      borderLeftWidth: 0,
       backgroundColor: theme.surface,
       borderWidth: 1,
       borderColor: theme.border,

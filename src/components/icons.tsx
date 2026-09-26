@@ -1,5 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 
+import { UI_SCALE } from '../layout';
+
 interface Props {
   size: number;
   color: string;
@@ -11,7 +13,9 @@ const RAY_COUNT = 8;
  * Значки нарисованы фигурами, а не глифами: шрифтовые символы выходят разными
  * по весу, а на iOS солнце ещё и подменяется цветным эмодзи.
  */
-export function SunIcon({ size, color }: Props) {
+export function SunIcon({ size: base, color }: Props) {
+  /** На планшете значки крупнее вместе со всем интерфейсом. */
+  const size = base * UI_SCALE;
   const core = size * 0.42;
   const rayLength = size * 0.2;
   const rayWidth = Math.max(2, size * 0.085);
@@ -52,7 +56,9 @@ interface MoonProps extends Props {
   cutout: string;
 }
 
-export function MoonIcon({ size, color, cutout }: MoonProps) {
+export function MoonIcon({ size: base, color, cutout }: MoonProps) {
+  /** На планшете значки крупнее вместе со всем интерфейсом. */
+  const size = base * UI_SCALE;
   const disc = size * 0.82;
 
   return (
@@ -85,7 +91,9 @@ const styles = StyleSheet.create({
 });
 
 /** Коробка архива: крышка, корпус и прорезь под ярлык. */
-export function ArchiveIcon({ size, color }: Props) {
+export function ArchiveIcon({ size: base, color }: Props) {
+  /** На планшете значки крупнее вместе со всем интерфейсом. */
+  const size = base * UI_SCALE;
   const lid = size * 0.26;
   const gap = size * 0.08;
 
@@ -126,7 +134,9 @@ export function ArchiveIcon({ size, color }: Props) {
 }
 
 /** Тетрадь: обложка со спиралью слева и двумя строками. */
-export function NotebookIcon({ size, color }: Props) {
+export function NotebookIcon({ size: base, color }: Props) {
+  /** На планшете значки крупнее вместе со всем интерфейсом. */
+  const size = base * UI_SCALE;
   const line = Math.max(1.5, size * 0.08);
 
   return (
@@ -168,7 +178,9 @@ export function NotebookIcon({ size, color }: Props) {
  * выходящая из неё вверх. Стрелка рисуется стволом и уголком — повёрнутый
  * квадрат с двумя сторонами читается как остриё чётче, чем глиф.
  */
-export function ShareIcon({ size, color }: Props) {
+export function ShareIcon({ size: base, color }: Props) {
+  /** На планшете значки крупнее вместе со всем интерфейсом. */
+  const size = base * UI_SCALE;
   const line = Math.max(1.6, size * 0.075);
   const boxWidth = size * 0.62;
   const boxHeight = size * 0.5;
@@ -219,7 +231,9 @@ export function ShareIcon({ size, color }: Props) {
 }
 
 /** Крестик: две перекрещенные полоски вместо символа «×» ради ровных концов. */
-export function CloseIcon({ size, color }: Props) {
+export function CloseIcon({ size: base, color }: Props) {
+  /** На планшете значки крупнее вместе со всем интерфейсом. */
+  const size = base * UI_SCALE;
   const line = Math.max(1.6, size * 0.085);
   const bar = {
     position: 'absolute' as const,
@@ -238,7 +252,9 @@ export function CloseIcon({ size, color }: Props) {
 }
 
 /** Галочка: короткая и длинная полоски под углом, как в системном чекбоксе. */
-export function CheckIcon({ size, color }: Props) {
+export function CheckIcon({ size: base, color }: Props) {
+  /** На планшете значки крупнее вместе со всем интерфейсом. */
+  const size = base * UI_SCALE;
   const line = Math.max(1.6, size * 0.12);
 
   return (
@@ -272,7 +288,9 @@ export function CheckIcon({ size, color }: Props) {
 }
 
 /** Домик: скат — повёрнутый квадрат о двух сторонах, под ним коробка стен. */
-export function HomeIcon({ size, color }: Props) {
+export function HomeIcon({ size: base, color }: Props) {
+  /** На планшете значки крупнее вместе со всем интерфейсом. */
+  const size = base * UI_SCALE;
   const line = Math.max(1.6, size * 0.085);
   const roof = size * 0.5;
   const wallWidth = size * 0.62;
@@ -312,7 +330,9 @@ export function HomeIcon({ size, color }: Props) {
 }
 
 /** Реплика: скруглённый прямоугольник с хвостиком в нижнем углу. */
-export function ChatIcon({ size, color }: Props) {
+export function ChatIcon({ size: base, color }: Props) {
+  /** На планшете значки крупнее вместе со всем интерфейсом. */
+  const size = base * UI_SCALE;
   const line = Math.max(1.6, size * 0.085);
 
   return (
@@ -346,7 +366,9 @@ export function ChatIcon({ size, color }: Props) {
 }
 
 /** Слух: две дуги звука рядом с точкой — ухо в линиях читается хуже. */
-export function EarIcon({ size, color }: Props) {
+export function EarIcon({ size: base, color }: Props) {
+  /** На планшете значки крупнее вместе со всем интерфейсом. */
+  const size = base * UI_SCALE;
   const line = Math.max(1.6, size * 0.085);
 
   return (
@@ -384,7 +406,9 @@ export function EarIcon({ size, color }: Props) {
 }
 
 /** Перо: наклонная линия с остриём и черта строки под ним. */
-export function PenIcon({ size, color }: Props) {
+export function PenIcon({ size: base, color }: Props) {
+  /** На планшете значки крупнее вместе со всем интерфейсом. */
+  const size = base * UI_SCALE;
   const line = Math.max(1.6, size * 0.085);
 
   return (
@@ -418,7 +442,9 @@ export function PenIcon({ size, color }: Props) {
 }
 
 /** Слова: три строки разной длины с точкой-маркером перед каждой. */
-export function WordsIcon({ size, color }: Props) {
+export function WordsIcon({ size: base, color }: Props) {
+  /** На планшете значки крупнее вместе со всем интерфейсом. */
+  const size = base * UI_SCALE;
   const line = Math.max(1.6, size * 0.085);
   const dot = Math.max(3, size * 0.14);
 
@@ -452,7 +478,9 @@ export function WordsIcon({ size, color }: Props) {
  * Грамматика: таблица форм, как в учебнике, — рамка, строка заголовка
  * жирнее и разделитель столбцов.
  */
-export function GrammarIcon({ size, color }: Props) {
+export function GrammarIcon({ size: base, color }: Props) {
+  /** На планшете значки крупнее вместе со всем интерфейсом. */
+  const size = base * UI_SCALE;
   const line = Math.max(1.6, size * 0.085);
   const inset = size * 0.12;
   const inner = size - inset * 2;
@@ -506,7 +534,9 @@ export function GrammarIcon({ size, color }: Props) {
 }
 
 /** Экзамен: планшет экзаменатора — лист с зажимом сверху и строками ответов. */
-export function ExamIcon({ size, color }: Props) {
+export function ExamIcon({ size: base, color }: Props) {
+  /** На планшете значки крупнее вместе со всем интерфейсом. */
+  const size = base * UI_SCALE;
   const line = Math.max(1.6, size * 0.085);
 
   return (
@@ -550,7 +580,9 @@ export function ExamIcon({ size, color }: Props) {
 }
 
 /** Книга: две страницы, разделённые корешком. */
-export function BookIcon({ size, color }: Props) {
+export function BookIcon({ size: base, color }: Props) {
+  /** На планшете значки крупнее вместе со всем интерфейсом. */
+  const size = base * UI_SCALE;
   const line = Math.max(1.6, size * 0.085);
 
   return (
@@ -584,7 +616,9 @@ interface EyeProps extends Props {
 }
 
 /** Глаз: скруглённый контур со зрачком; закрытый — перечёркнут, как «eye-off». */
-export function EyeIcon({ size, color, closed, cutout }: EyeProps) {
+export function EyeIcon({ size: base, color, closed, cutout }: EyeProps) {
+  /** На планшете значки крупнее вместе со всем интерфейсом. */
+  const size = base * UI_SCALE;
   const line = Math.max(1.6, size * 0.085);
   const pupil = size * 0.28;
 
@@ -633,7 +667,9 @@ export function EyeIcon({ size, color, closed, cutout }: EyeProps) {
  * Динамик: корпус, раструб и две дуги звука. Раструб — треугольник из
  * прозрачных рамок, дуги — правая кромка скруглённой рамки.
  */
-export function SpeakerIcon({ size, color }: Props) {
+export function SpeakerIcon({ size: base, color }: Props) {
+  /** На планшете значки крупнее вместе со всем интерфейсом. */
+  const size = base * UI_SCALE;
   const line = Math.max(1.6, size * 0.085);
   const cone = size * 0.62;
 
@@ -701,7 +737,9 @@ const CHEVRON = {
  * Уголок стрелки: квадрат с двумя сторонами, повёрнутый на 45°. Шрифтовые
  * «‹ ›» сидят ниже строки и в кнопке рядом с цифрами смотрятся криво.
  */
-export function ChevronIcon({ size, color, direction }: ChevronProps) {
+export function ChevronIcon({ size: base, color, direction }: ChevronProps) {
+  /** На планшете значки крупнее вместе со всем интерфейсом. */
+  const size = base * UI_SCALE;
   const line = Math.max(1.8, size * 0.11);
   const side = size * 0.42;
 
