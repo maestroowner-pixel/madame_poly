@@ -3,7 +3,7 @@ import { setAudioModeAsync, useAudioPlayer } from 'expo-audio';
 import type { ReactNode } from 'react';
 import { ActivityIndicator, LayoutAnimation, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { ChevronIcon, CrownIcon } from './icons';
+import { ChevronIcon, CrownIcon, MoonIcon, SunIcon } from './icons';
 import { NeonButton } from './NeonButton';
 import { ScreenTitle } from './ScreenMenu';
 import { ReminderRows } from './ReminderRows';
@@ -110,7 +110,7 @@ export function SettingsScreen({
   onOpenPaywall,
 }: Props) {
   const styles = useStyles(createStyles);
-  const { theme, fontScale, setFontScale } = useTheme();
+  const { theme, scheme, toggle, fontScale, setFontScale } = useTheme();
   /** Подвал свёрнут в ручку внизу экрана и раскрывается вверх. */
   const [aboutOpen, setAboutOpen] = useState(false);
 
@@ -173,14 +173,26 @@ export function SettingsScreen({
       <View style={styles.header}>
         {menu}
         <ScreenTitle screen="settings" title={t.settingsTitle} />
-        {/* Корона — постоянный вход в подписку, справа на строке заголовка. */}
-        <View ref={crownRef} collapsable={false} style={styles.crown}>
-          <NeonButton
-            onPress={() => measureAnchor(crownRef, onOpenPaywall)}
-            accessibilityLabel={t.subscription}
-          >
-            <CrownIcon size={24 * BUTTON_ICON_SCALE} color={theme.neon} />
+        {/*
+          Справа на строке заголовка: смена темы — та же, что в шапке беседы,
+          чтобы не ходить за ней туда, — и корона, постоянный вход в подписку.
+        */}
+        <View style={styles.headerRight}>
+          <NeonButton onPress={toggle} accessibilityLabel={t.themeToggle}>
+            {scheme === 'dark' ? (
+              <MoonIcon size={26 * BUTTON_ICON_SCALE} color={theme.neon} cutout={theme.surfaceAlt} />
+            ) : (
+              <SunIcon size={26 * BUTTON_ICON_SCALE} color={theme.neon} />
+            )}
           </NeonButton>
+          <View ref={crownRef} collapsable={false}>
+            <NeonButton
+              onPress={() => measureAnchor(crownRef, onOpenPaywall)}
+              accessibilityLabel={t.subscription}
+            >
+              <CrownIcon size={24 * BUTTON_ICON_SCALE} color={theme.neon} />
+            </NeonButton>
+          </View>
         </View>
       </View>
 
@@ -480,7 +492,7 @@ const createStyles = (theme: Theme) =>
       alignSelf: 'center',
     },
     title: { color: theme.text, fontSize: 18, fontWeight: '700' },
-    crown: { marginLeft: 'auto' },
+    headerRight: { marginLeft: 'auto', flexDirection: 'row', alignItems: 'center', gap: 8 },
     panel: {
       width: '100%',
       maxWidth: CONTENT_MAX_WIDTH,
