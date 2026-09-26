@@ -77,7 +77,22 @@ export async function loadPackages(): Promise<PurchasesPackage[]> {
   if (!PURCHASES_READY) return [];
 
   const offerings = await Purchases.getOfferings();
-  return offerings.current?.availablePackages ?? [];
+  const current = offerings.current?.availablePackages ?? [];
+
+  // Правильно — оба тарифа в текущем наборе. Но если Pro и Max разложены по
+  // разным наборам (так однажды и было: текущим стоял набор с одним Max),
+  // собираем пакеты из всех наборов, чтобы на экране были оба тарифа.
+  const tiers = new Set(current.map(packageTier));
+  if (tiers.has('pro') && tiers.has('max')) return current;
+
+  const seen = new Set<string>();
+  return [current, ...Object.values(offerings.all).map((offering) => offering.availablePackages)]
+    .flat()
+    .filter((item) => {
+      if (seen.has(item.product.identifier)) return false;
+      seen.add(item.product.identifier);
+      return true;
+    });
 }
 
 /** Какой тариф даёт пакет: у Max в идентификаторе продукта есть «max». */
