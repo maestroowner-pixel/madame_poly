@@ -269,7 +269,12 @@ function Screen() {
                       onExplain={conversation.explain}
                     />
                   )}
-                  ListEmptyComponent={<Text style={styles.empty}>{t.emptyChat}</Text>}
+                  ListEmptyComponent={
+                    <View style={styles.emptyBox}>
+                      <Text style={styles.emptyTitle}>{t.emptyChatTitle}</Text>
+                      <Text style={styles.empty}>{t.emptyChat}</Text>
+                    </View>
+                  }
                 />
               ) : (
                 <View style={styles.list}>
@@ -394,6 +399,7 @@ function Screen() {
               accountEmail={account.email}
               onOpenAccount={accountScreen.show}
               pro={subscription.pro}
+              tier={subscription.tier}
               talksLeft={subscription.left}
               used={subscription.used}
               onOpenPaywall={(point) => {
@@ -463,6 +469,7 @@ function Screen() {
         left={subscription.left}
         used={subscription.used}
         block={subscription.block}
+        tier={subscription.tier}
         onClose={() => setPaywallOpen(false)}
         onBought={() => void subscription.refresh()}
       />
@@ -488,12 +495,14 @@ const createStyles = (theme: Theme) =>
     },
     errorText: { color: theme.dangerText, fontSize: 12 },
     list: { flexGrow: 1, paddingHorizontal: 16, paddingBottom: 8, justifyContent: 'center' },
+    /** Пустая беседа — первое, что видит человек: Мадам Поли представляется. */
+    emptyBox: { gap: 10, paddingHorizontal: 24 },
+    emptyTitle: { color: theme.text, textAlign: 'center', fontSize: 22, fontWeight: '700' },
     empty: {
       color: theme.textMuted,
       textAlign: 'center',
       fontSize: 14,
       lineHeight: 20,
-      paddingHorizontal: 24,
     },
 
     remind: {

@@ -225,7 +225,7 @@ const LEVEL_GUIDANCE: Record<Level, string> = {
 
 /**
  * System prompt роли языкового партнёра. Язык и уровень — параметры, поэтому
- * все четыре языка обслуживаются одним промптом.
+ * все языки обслуживаются одним промптом.
  */
 /** Чем отличается вариант английского: словарь, написание, регистр речи. */
 const VARIANTS: Record<EnglishVariant, string[]> = {
@@ -292,7 +292,7 @@ export function buildSystemPrompt(
     '',
     'Role play:',
     `- ${topic ? (ROLEPLAY_SCENES[topic.id] ?? topic.label) : ''}`,
-    '- Stay in the role for the whole conversation. Do not step out of it to comment on the practice and do not narrate what you are doing.',
+    '- For this conversation you are that person, not Madame Poly. Stay in the role for the whole conversation. Do not step out of it to comment on the practice and do not narrate what you are doing.',
     '- Speak the way that person speaks to a customer: practical questions, short answers, one thing at a time.',
     '- Keep to their level even though the setting is real — a clerk they cannot understand teaches them nothing.',
     '- If they get stuck, help them along inside the role: offer the two or three phrases a real employee would offer.',
@@ -302,7 +302,8 @@ export function buildSystemPrompt(
   const variety = language === 'en' && variant ? VARIANTS[variant] : [];
 
   return [
-    `You are a warm, curious conversation partner helping someone practise spoken ${englishName}.`,
+    `You are Madame Poly — Poly for short — a digital language tutor helping someone practise spoken ${englishName} by simply talking with them.`,
+    'You have a personality: warm, curious, lively, a little witty. You have your own tastes and opinions and share them briefly when it keeps the conversation going. If asked who you are, you are Madame Poly, their tutor.',
     `Their level is CEFR ${level}. ${LEVEL_GUIDANCE[level]}`,
     '',
     ...(name

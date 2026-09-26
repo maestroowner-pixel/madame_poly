@@ -10,11 +10,12 @@ import type { PurchasesPackage } from 'react-native-purchases';
 import { CloseIcon } from './icons';
 import { ZoomModal } from './ZoomModal';
 import type { Anchor } from '../anchor';
+import type { Tier } from '../config';
 import type { Block } from '../hooks/useSubscription';
 import { t } from '../i18n';
 import { errorText } from '../errors';
 import { CONTENT_MAX_WIDTH } from '../layout';
-import { buy, loadPackages, restore } from '../services/purchases';
+import { buy, loadPackages, packageTier, restore } from '../services/purchases';
 import { useStyles, useTheme, type Theme } from '../theme';
 
 interface Props {
@@ -26,6 +27,8 @@ interface Props {
   used: number;
   /** Что сейчас не даёт говорить: экран объясняет именно это. */
   block: Block;
+  /** Нынешний тариф: его карточка помечена и не нажимается. */
+  tier: Tier | null;
   onClose: () => void;
   /** Подписка появилась — экрану выше пора перечитать состояние. */
   onBought: () => void;
@@ -39,7 +42,7 @@ function periodLabel(item: PurchasesPackage): string | null {
   return null;
 }
 
-export function Paywall({ visible, anchor, left, used, block, onClose, onBought }: Props) {
+export function Paywall({ visible, anchor, left, used, block, tier, onClose, onBought }: Props) {
   const { theme } = useTheme();
   const styles = useStyles(createStyles);
 
@@ -53,7 +56,8 @@ export function Paywall({ visible, anchor, left, used, block, onClose, onBought 
     let alive = true;
     setError(null);
     void loadPackages()
-      .then((list) => alive && setItems(list))
+      // Pro выше Max: сначала дешёвый, дорогой — следом, как ступенька.
+      .then((list) => alive && setItems([...list].sort((a, b) => Number(packageTier(a) === 'max') - Number(packageTier(b) === 'max'))))
       .catch(() => alive && setItems([]));
     return () => {
       alive = false;
@@ -118,15 +122,20 @@ export function Paywall({ visible, anchor, left, used, block, onClose, onBought 
             ) : (
               items.map((item) => {
                 const period = periodLabel(item);
+                const plan = packageTier(item);
+                const current = plan === tier;
                 return (
                   <Pressable
                     key={item.identifier}
-                    disabled={busy}
+                    disabled={busy || current}
                     onPress={() => void run(() => buy(item))}
                     style={[styles.plan, busy && styles.dimmed]}
                   >
+                    <Text style={styles.planName}>{plan === 'max' ? 'Max' : 'Pro'}</Text>
+                    <Text style={styles.planWhat}>{plan === 'max' ? t.planMax : t.planPro}</Text>
                     <Text style={styles.planPrice}>{item.product.priceString}</Text>
                     {period && <Text style={styles.planPeriod}>{period}</Text>}
+                    {current && <Text style={styles.planCurrent}>{t.planCurrent}</Text>}
                   </Pressable>
                 );
               })
@@ -193,8 +202,11 @@ const createStyles = (theme: Theme) =>
       borderColor: theme.ctaBorder,
     },
     dimmed: { opacity: 0.5 },
+    planName: { color: theme.ctaText, fontSize: 16, fontWeight: '700', letterSpacing: 1 },
+    planWhat: { color: theme.ctaText, fontSize: 13, lineHeight: 18, textAlign: 'center', paddingHorizontal: 16, marginBottom: 6 },
     planPrice: { color: theme.ctaText, fontSize: 20, fontWeight: '700' },
     planPeriod: { color: theme.ctaText, fontSize: 12 },
+    planCurrent: { color: theme.ctaText, fontSize: 12, fontWeight: '700', marginTop: 4 },
 
     quiet: { alignItems: 'center', paddingVertical: 8 },
     quietLabel: { color: theme.neon, fontSize: 13 },

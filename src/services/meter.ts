@@ -2,11 +2,13 @@ import type Anthropic from '@anthropic-ai/sdk';
 
 import {
   CLAUDE_PRICE,
-  PRO_MONTHLY_BUDGET_USD,
+  MAX_TTS_PRICE_PER_CHAR,
+  MONTHLY_BUDGET_USD,
   RECORDING_BITRATE,
   TTS_PRICE_PER_CHAR,
   UNLIMITED_TALKS,
   WHISPER_PRICE_PER_MINUTE,
+  type Tier,
 } from '../config';
 import { t } from '../i18n';
 import { addSpend, loadSpend, type Spend } from '../storage';
@@ -20,12 +22,14 @@ import { addSpend, loadSpend, type Spend } from '../storage';
  * сервер заведомо отвергнет.
  */
 
-/** Объём, пока подписка не известна: щедрый, чтобы платящий не упёрся на старте. */
-let budgetUsd = PRO_MONTHLY_BUDGET_USD;
+/** Тариф, пока подписка не известна: щедрый, чтобы платящий не упёрся на старте. */
+let tier: Tier = 'max';
+let budgetUsd = MONTHLY_BUDGET_USD.max;
 
-/** Подписка выяснилась — задать объём её тарифа. */
-export function setBudget(usd: number): void {
-  budgetUsd = usd;
+/** Подписка выяснилась — задать объём её тарифа; от тарифа зависит и цена озвучки. */
+export function setTier(next: Tier): void {
+  tier = next;
+  budgetUsd = MONTHLY_BUDGET_USD[next];
 }
 
 /** Ошибка объёма отдельным классом: экрану нужно отличать её от сетевых. */
@@ -84,7 +88,7 @@ export function whisperCost(bytes: number): number {
   return minutes * WHISPER_PRICE_PER_MINUTE;
 }
 
-/** Стоимость озвучки текста. */
+/** Стоимость озвучки текста: у Max голоса gpt-4o, они дороже tts-1. */
 export function ttsCost(text: string): number {
-  return text.length * TTS_PRICE_PER_CHAR;
+  return text.length * (tier === 'max' ? MAX_TTS_PRICE_PER_CHAR : TTS_PRICE_PER_CHAR);
 }

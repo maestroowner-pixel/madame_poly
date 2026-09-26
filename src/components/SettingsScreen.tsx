@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { setAudioModeAsync, useAudioPlayer } from 'expo-audio';
 import type { ReactNode } from 'react';
-import { ActivityIndicator, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, LayoutAnimation, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { ChevronIcon } from './icons';
 import { ScreenTitle } from './ScreenMenu';
 import { ReminderRows } from './ReminderRows';
 import { TopicPicker } from './TopicPicker';
@@ -10,9 +11,10 @@ import { measureAnchor, type Anchor } from '../anchor';
 import {
   CONTACT_EMAIL,
   COPYRIGHT,
-  POLY_VOICES,
+  MAX_VOICES,
+  type MaxVoice,
+  type Tier,
   SPEECH_RATES,
-  type PolyVoice,
   type SpeechMode,
   PRIVACY_URL,
   SITE_LABEL,
@@ -35,6 +37,9 @@ const VOICE_SAMPLES: Record<LanguageCode, string> = {
   de: 'Hallo, ich bin Poly! Wollen wir ein bisschen plaudern?',
   fr: 'Bonjour, je suis Poly ! On discute un peu ?',
   es: '¡Hola, soy Poly! ¿Charlamos un rato?',
+  it: 'Ciao, sono Poly! Facciamo due chiacchiere?',
+  pt: 'Olá, sou a Poly! Vamos conversar um bocadinho?',
+  uk: 'Привіт, я Полі! Поговоримо трохи?',
 };
 
 interface Props {
@@ -62,6 +67,8 @@ interface Props {
   onOpenAccount: (anchor: Anchor | null) => void;
   /** Есть ли подписка; null — ещё выясняем. */
   pro: boolean | null;
+  /** Тариф: выбор голоса открыт только у Max. */
+  tier: Tier | null;
   /** Сколько бесплатных бесед осталось сегодня. */
   talksLeft: number;
   /** Доля месячного объёма, уже потраченная, 0…1. */
@@ -94,12 +101,20 @@ export function SettingsScreen({
   accountEmail,
   onOpenAccount,
   pro,
+  tier,
   talksLeft,
   used,
   onOpenPaywall,
 }: Props) {
   const styles = useStyles(createStyles);
-  const { fontScale, setFontScale } = useTheme();
+  const { theme, fontScale, setFontScale } = useTheme();
+  /** Подвал свёрнут в ручку внизу экрана и раскрывается вверх. */
+  const [aboutOpen, setAboutOpen] = useState(false);
+
+  const toggleAbout = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setAboutOpen((open) => !open);
+  };
 
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pickerAnchor, setPickerAnchor] = useState<Anchor | null>(null);
@@ -111,18 +126,27 @@ export function SettingsScreen({
 
   const topic = findTopic(language, topicId);
 
+  const voiceRef = useRef<View>(null);
   const player = useAudioPlayer(null);
-  const [voice, setVoice] = useState<PolyVoice>(POLY_VOICES[0]);
+  const [voice, setVoice] = useState<MaxVoice>(MAX_VOICES[0]);
   /** Голос, который сейчас озвучивается для пробы. */
-  const [sampling, setSampling] = useState<PolyVoice | null>(null);
+  const [sampling, setSampling] = useState<MaxVoice | null>(null);
   const [voiceError, setVoiceError] = useState<string | null>(null);
+  const voiceOpen = tier === 'max';
 
   useEffect(() => {
     void loadVoice().then(setVoice);
   }, []);
 
-  /** Выбор голоса сразу даёт его послушать — на изучаемом языке и в выбранном темпе. */
-  const pickVoice = async (next: PolyVoice) => {
+  /**
+   * У Max выбор голоса сразу даёт его послушать — на изучаемом языке и в
+   * выбранном темпе. У остальных голоса видны, но нажатие ведёт к тарифам.
+   */
+  const pickVoice = async (next: MaxVoice) => {
+    if (!voiceOpen) {
+      measureAnchor(voiceRef, onOpenPaywall);
+      return;
+    }
     setVoice(next);
     setVoiceError(null);
     void saveVoice(next);
@@ -148,7 +172,7 @@ export function SettingsScreen({
       </View>
 
       <ScrollView contentContainerStyle={styles.panel}>
-      <View style={styles.row}>
+      <View style={styles.languages}>
         {LANGUAGE_CODES.map((code) => {
           const active = code === language;
           return (
@@ -234,10 +258,10 @@ export function SettingsScreen({
         </View>
       )}
 
-      <Text style={styles.sectionLabel}>{t.voice}</Text>
-      <View style={styles.row}>
-        {POLY_VOICES.map((value) => {
-          const active = value === voice;
+      <Text style={styles.sectionLabel}>{t.voice}{voiceOpen ? '' : ' · Max'}</Text>
+      <View ref={voiceRef} style={[styles.row, !voiceOpen && styles.locked]}>
+        {MAX_VOICES.map((value) => {
+          const active = voiceOpen && value === voice;
           return (
             <Pressable
               key={value}
@@ -260,7 +284,7 @@ export function SettingsScreen({
           );
         })}
       </View>
-      <Text style={styles.sectionHint}>{voiceError ?? t.voiceHint}</Text>
+      <Text style={styles.sectionHint}>{voiceError ?? (voiceOpen ? t.voiceHint : t.voiceMaxOnly)}</Text>
 
       <Text style={styles.sectionLabel}>{t.speechRate}</Text>
       <View style={styles.row}>
@@ -341,7 +365,11 @@ export function SettingsScreen({
       >
         <Text style={styles.topicCaption}>{t.subscription}</Text>
         <Text style={styles.topicValue} numberOfLines={1}>
-          {pro === null ? '…' : pro ? t.paywallUsed(used) : t.paywallLeft(talksLeft)}
+          {pro === null
+            ? '…'
+            : pro
+              ? `${tier === 'max' ? 'Max' : 'Pro'} · ${t.paywallUsed(used)}`
+              : t.paywallLeft(talksLeft)}
         </Text>
         <Text style={styles.topicChevron}>›</Text>
       </Pressable>
@@ -360,21 +388,39 @@ export function SettingsScreen({
 
       {/* Напоминания — в самом низу: их ставят один раз. */}
       <ReminderRows />
-      <View style={styles.footer}>
-        <View style={styles.footerLinks}>
-          <FooterLink label={t.privacy} url={PRIVACY_URL} />
-          <Text style={styles.footerDot}>·</Text>
-          <FooterLink label={t.terms} url={TERMS_URL} />
-        </View>
-
-        {/* Адрес сайта показан целиком: по подписи не видно, куда он ведёт. */}
-        <Text style={styles.footerLine}>{t.about}</Text>
-        <FooterLink label={SITE_LABEL} url={SITE_URL} />
-
-        <Text style={[styles.footerLine, styles.footerCopy]}>{COPYRIGHT}</Text>
-        <FooterLink label={t.writeUs} url={`mailto:${CONTACT_EMAIL}`} />
-      </View>
       </ScrollView>
+
+      {/*
+        Подвал — ручка, прижатая к низу экрана: ссылки нужны редко и не должны
+        занимать место под настройками. Раскрывается вверх, сжимая список.
+      */}
+      <View style={styles.drawer}>
+        {aboutOpen && (
+          <View style={styles.footer}>
+            <View style={styles.footerLinks}>
+              <FooterLink label={t.privacy} url={PRIVACY_URL} />
+              <Text style={styles.footerDot}>·</Text>
+              <FooterLink label={t.terms} url={TERMS_URL} />
+            </View>
+
+            {/* Адрес сайта показан целиком: по подписи не видно, куда он ведёт. */}
+            <FooterLink label={SITE_LABEL} url={SITE_URL} />
+
+            <Text style={[styles.footerLine, styles.footerCopy]}>{COPYRIGHT}</Text>
+            <FooterLink label={t.writeUs} url={`mailto:${CONTACT_EMAIL}`} />
+          </View>
+        )}
+        <Pressable
+          onPress={toggleAbout}
+          style={styles.drawerHandle}
+          hitSlop={6}
+          accessibilityRole="button"
+          accessibilityState={{ expanded: aboutOpen }}
+        >
+          <Text style={styles.drawerTitle}>{t.about}</Text>
+          <ChevronIcon size={14} color={theme.textMuted} direction={aboutOpen ? 'down' : 'up'} />
+        </Pressable>
+      </View>
       <TopicPicker
         visible={pickerOpen}
         anchor={pickerAnchor}
@@ -421,15 +467,35 @@ const createStyles = (theme: Theme) =>
       alignSelf: 'center',
       gap: 10,
       paddingHorizontal: 16,
-      paddingBottom: 32,
-      // Тянем содержимое на всю высоту, иначе подвалу не от чего оттолкнуться вниз.
-      flexGrow: 1,
+      paddingBottom: 24,
     },
     row: { flexDirection: 'row', justifyContent: 'center', gap: 10 },
+    /** Семь языков — сеткой по четыре в ряд: в одну строку плитки прежнего размера не влезают. */
+    languages: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      justifyContent: 'center',
+      gap: 10,
+      alignSelf: 'center',
+      width: 78 * 4 + 10 * 3,
+    },
 
-    // marginTop: auto прижимает подвал к низу, когда настройки не заполнили
-    // экран, и оставляет его под ними, когда список длиннее экрана.
-    footer: { alignItems: 'center', gap: 6, paddingTop: 22, marginTop: 'auto' },
+    drawer: {
+      width: '100%',
+      maxWidth: CONTENT_MAX_WIDTH,
+      alignSelf: 'center',
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.border,
+    },
+    drawerHandle: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 6,
+      paddingVertical: 10,
+    },
+    drawerTitle: { color: theme.textMuted, fontSize: 12 },
+    footer: { alignItems: 'center', gap: 6, paddingTop: 14 },
     footerLinks: { flexDirection: 'row', alignItems: 'center', gap: 8 },
     footerLink: { color: theme.neon, fontSize: 12 },
     footerDot: { color: theme.textMuted, fontSize: 12 },
@@ -472,6 +538,8 @@ const createStyles = (theme: Theme) =>
     },
     variantLabel: { color: theme.textMuted, fontSize: 11, fontWeight: '700' },
     sectionLabel: { color: theme.textMuted, fontSize: 13, marginBottom: -4 },
+    /** Голоса без Max видны, но приглушены: понятно, что есть, и где взять. */
+    locked: { opacity: 0.5 },
     sectionHint: { color: theme.textMuted, fontSize: 12, lineHeight: 17, marginTop: -4 },
     square: {
       width: 46,

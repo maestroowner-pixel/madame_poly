@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import { POLY_VOICES, SPEECH_RATES, type PolyVoice, type SpeechMode } from './config';
+import { MAX_VOICES, SPEECH_RATES, type MaxVoice, type SpeechMode } from './config';
 import { LANGUAGE_CODES } from './languages';
 import { touch } from './services/sync';
 import type {
@@ -160,13 +160,16 @@ export async function saveSpeechRate(rate: SpeechMode): Promise<void> {
   await write(KEY_RATE, String(rate));
 }
 
-/** Голос собеседницы. Незнакомое значение — голос по умолчанию. */
-export async function loadVoice(): Promise<PolyVoice> {
+/**
+ * Голос Max. Незнакомое значение — голос по умолчанию: так же читается и
+ * голос, выбранный в сборках, где список был другим.
+ */
+export async function loadVoice(): Promise<MaxVoice> {
   const raw = await AsyncStorage.getItem(KEY_VOICE);
-  return (POLY_VOICES as readonly string[]).includes(raw ?? '') ? (raw as PolyVoice) : POLY_VOICES[0];
+  return (MAX_VOICES as readonly string[]).includes(raw ?? '') ? (raw as MaxVoice) : MAX_VOICES[0];
 }
 
-export async function saveVoice(voice: PolyVoice): Promise<void> {
+export async function saveVoice(voice: MaxVoice): Promise<void> {
   await write(KEY_VOICE, voice);
 }
 

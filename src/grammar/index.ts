@@ -3,6 +3,9 @@ import { GERMAN } from './de';
 import { ENGLISH } from './en';
 import { SPANISH } from './es';
 import { FRENCH } from './fr';
+import { ITALIAN } from './it';
+import { PORTUGUESE } from './pt';
+import { UKRAINIAN } from './uk';
 import { bandOf, type GrammarModule, type GrammarUnit, type Syllabus } from './types';
 
 export { bandOf, type Band, type GrammarModule, type GrammarUnit } from './types';
@@ -12,6 +15,9 @@ const SYLLABI: Record<LanguageCode, Syllabus> = {
   de: GERMAN,
   fr: FRENCH,
   es: SPANISH,
+  it: ITALIAN,
+  pt: PORTUGUESE,
+  uk: UKRAINIAN,
 };
 
 /** Модули ступени, к которой относится уровень: A2 → программа A1–A2. */

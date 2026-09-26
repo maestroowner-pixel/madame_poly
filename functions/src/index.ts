@@ -30,12 +30,20 @@ const CLAUDE_MODEL = 'claude-sonnet-5';
  */
 const CLAUDE_MAX_TOKENS = 16384;
 /**
- * Голоса собеседницы — те же, что в `POLY_VOICES` приложения. Все женские:
- * на портрете женщина. Голоса OpenAI не привязаны к языку, один голос читает
- * все четыре. Прочие значения не пускаем; не прислан голос — первый, nova
- * (так ходят сборки, где выбора голоса ещё не было).
+ * Голос собеседницы без подписки и на Pro — nova на tts-1, один на все четыре
+ * языка. Другие голоса tts-1 пробовали — звучат хуже.
  */
-const TTS_VOICES = ['nova', 'shimmer', 'coral', 'sage'];
+const TTS_VOICE = 'nova';
+/**
+ * Max — gpt-4o-mini-tts с голосом на выбор; список тот же, что `MAX_VOICES`
+ * приложения (shimmer на испанском звучит по-мужски — его нет). Прочие
+ * значения не пускаем, берём первый.
+ */
+const MAX_TTS_MODEL = 'gpt-4o-mini-tts';
+const MAX_VOICES = ['nova', 'coral', 'sage', 'marin'];
+/** С этой подачей делались пробы, которые понравились. */
+const MAX_TTS_INSTRUCTIONS =
+  'You are Poly, a warm, friendly language tutor chatting with a learner. Speak naturally and clearly, at a relaxed conversational pace, with a smile in your voice.';
 const TTS_MAX_CHARS = 4096;
 /** Предел Whisper — 25 МБ на файл. */
 const AUDIO_MAX_BYTES = 25 * 1024 * 1024;
@@ -44,11 +52,19 @@ const AUDIO_MAX_BYTES = 25 * 1024 * 1024;
 const CLAUDE_PRICE = { input: 2 / 1e6, output: 10 / 1e6, cacheWrite: 2.5 / 1e6, cacheRead: 0.2 / 1e6 };
 const WHISPER_PRICE_PER_MINUTE = 0.006;
 const TTS_PRICE_PER_CHAR = 15 / 1e6;
+/**
+ * gpt-4o-mini-tts: $12 за миллион токенов звука, ~22.7 токена на секунду
+ * (замерено) — около $0.017 за минуту. Длительность — из размера mp3: он
+ * отдаётся с постоянным битрейтом 128 кбит/с.
+ */
+const MAX_TTS_PRICE_PER_SECOND = 22.7 * (12 / 1e6);
+const MAX_TTS_MP3_BITRATE = 128_000;
 
+type Tier = 'free' | 'pro' | 'max';
 /** Объёмы — те же, что в `src/config.ts`. */
-const PRO_MONTHLY_BUDGET_USD = 5;
-const FREE_MONTHLY_BUDGET_USD = 1;
+const MONTHLY_BUDGET_USD: Record<Tier, number> = { free: 1, pro: 3, max: 5 };
 const PRO_ENTITLEMENT = 'pro';
+const MAX_ENTITLEMENT = 'max';
 
 class HttpError extends Error {
   constructor(
@@ -79,17 +95,17 @@ async function verify(req: Request): Promise<string> {
 // --- Подписка ---
 
 /** Ответ RevenueCat кэшируем на пять минут: он нужен на каждом ходе беседы. */
-const proCache = new Map<string, { pro: boolean; until: number }>();
+const tierCache = new Map<string, { tier: Tier; until: number }>();
 
-async function isPro(uid: string): Promise<boolean> {
+async function tierOf(uid: string): Promise<Tier> {
   const key = REVENUECAT_SECRET_KEY.value().trim();
-  // Магазины не настроены — в приложении тогда тоже «подписка есть».
-  if (!key || key === 'none') return true;
+  // Магазины не настроены — в приложении тогда тоже старшая подписка.
+  if (!key || key === 'none') return 'max';
 
-  const cached = proCache.get(uid);
-  if (cached && cached.until > Date.now()) return cached.pro;
+  const cached = tierCache.get(uid);
+  if (cached && cached.until > Date.now()) return cached.tier;
 
-  let pro = false;
+  let tier: Tier = 'free';
   try {
     const response = await fetch(`https://api.revenuecat.com/v1/subscribers/${encodeURIComponent(uid)}`, {
       headers: { Authorization: `Bearer ${key}` },
@@ -98,18 +114,22 @@ async function isPro(uid: string): Promise<boolean> {
       const body = (await response.json()) as {
         subscriber?: { entitlements?: Record<string, { expires_date: string | null }> };
       };
-      const entitlement = body.subscriber?.entitlements?.[PRO_ENTITLEMENT];
-      pro = entitlement !== undefined && (entitlement.expires_date === null || Date.parse(entitlement.expires_date) > Date.now());
+      const entitlements = body.subscriber?.entitlements ?? {};
+      const live = (name: string) => {
+        const entitlement = entitlements[name];
+        return entitlement !== undefined && (entitlement.expires_date === null || Date.parse(entitlement.expires_date) > Date.now());
+      };
+      tier = live(MAX_ENTITLEMENT) ? 'max' : live(PRO_ENTITLEMENT) ? 'pro' : 'free';
     } else {
       logger.warn('RevenueCat', response.status);
     }
   } catch (e) {
     // RevenueCat недоступен — не рвём беседу платящему, но и не кэшируем ответ.
     logger.warn('RevenueCat unreachable', e);
-    return cached?.pro ?? false;
+    return cached?.tier ?? 'free';
   }
-  proCache.set(uid, { pro, until: Date.now() + 5 * 60_000 });
-  return pro;
+  tierCache.set(uid, { tier, until: Date.now() + 5 * 60_000 });
+  return tier;
 }
 
 // --- Расход ---
@@ -117,12 +137,13 @@ async function isPro(uid: string): Promise<boolean> {
 const month = () => new Date().toISOString().slice(0, 7);
 const spendDoc = (uid: string) => getFirestore().collection('spend').doc(uid);
 
-async function assertBudget(uid: string): Promise<void> {
-  const [snapshot, pro] = await Promise.all([spendDoc(uid).get(), isPro(uid)]);
+/** Проверяет объём и отдаёт тариф: озвучке он нужен, чтобы выбрать модель. */
+async function assertBudget(uid: string): Promise<Tier> {
+  const [snapshot, tier] = await Promise.all([spendDoc(uid).get(), tierOf(uid)]);
   const data = snapshot.data() as { month?: string; usd?: number } | undefined;
   const usd = data?.month === month() ? (data.usd ?? 0) : 0;
-  const budget = pro ? PRO_MONTHLY_BUDGET_USD : FREE_MONTHLY_BUDGET_USD;
-  if (usd >= budget) throw new HttpError(402, 'budget_exceeded', 'Monthly budget exhausted');
+  if (usd >= MONTHLY_BUDGET_USD[tier]) throw new HttpError(402, 'budget_exceeded', 'Monthly budget exhausted');
+  return tier;
 }
 
 /** Запись расхода. Сбой не должен отнять уже полученный ответ. */
@@ -225,17 +246,29 @@ async function transcribe(req: Request, res: Response, uid: string): Promise<voi
   res.json({ text });
 }
 
-async function speak(req: Request, res: Response, uid: string): Promise<void> {
+/**
+ * Озвучка. Max — gpt-4o-mini-tts с присланным голосом и «разговорной»
+ * подачей; остальным — tts-1 с nova, присланный голос не слушаем.
+ */
+async function speak(req: Request, res: Response, uid: string, tier: Tier): Promise<void> {
   const { text, speed, voice } = (req.body ?? {}) as { text?: unknown; speed?: unknown; voice?: unknown };
   if (typeof text !== 'string' || !text.trim()) throw new HttpError(400, 'invalid_request_error', 'Empty text');
   if (text.length > TTS_MAX_CHARS) throw new HttpError(400, 'invalid_request_error', 'Text too long');
   const pace = typeof speed === 'number' ? Math.min(4, Math.max(0.25, speed)) : 1;
-  const chosen = typeof voice === 'string' && TTS_VOICES.includes(voice) ? voice : TTS_VOICES[0];
+  const max = tier === 'max';
+
+  const request = max
+    ? {
+        model: MAX_TTS_MODEL,
+        voice: typeof voice === 'string' && MAX_VOICES.includes(voice) ? voice : MAX_VOICES[0],
+        instructions: MAX_TTS_INSTRUCTIONS,
+      }
+    : { model: 'tts-1', voice: TTS_VOICE };
 
   const upstream = await fetch('https://api.openai.com/v1/audio/speech', {
     method: 'POST',
     headers: { Authorization: `Bearer ${OPENAI_API_KEY.value()}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model: 'tts-1', voice: chosen, input: text, response_format: 'mp3', speed: pace }),
+    body: JSON.stringify({ ...request, input: text, response_format: 'mp3', speed: pace }),
   });
   if (!upstream.ok) {
     logger.error('TTS', upstream.status, await upstream.text());
@@ -243,7 +276,9 @@ async function speak(req: Request, res: Response, uid: string): Promise<void> {
   }
 
   const audio = Buffer.from(await upstream.arrayBuffer());
-  await charge(uid, text.length * TTS_PRICE_PER_CHAR);
+  // Ускоренная речь короче, но токены, вероятно, считаются по обычной — берём большее.
+  const seconds = ((audio.length * 8) / MAX_TTS_MP3_BITRATE) * Math.max(1, pace);
+  await charge(uid, max ? seconds * MAX_TTS_PRICE_PER_SECOND : text.length * TTS_PRICE_PER_CHAR);
   res.type('audio/mpeg').send(audio);
 }
 
@@ -261,11 +296,11 @@ export const api = onRequest(
     try {
       if (req.method !== 'POST') throw new HttpError(405, 'invalid_request_error', 'POST only');
       const uid = await verify(req);
-      await assertBudget(uid);
+      const tier = await assertBudget(uid);
 
       if (req.path === '/claude/v1/messages') await claude(req, res, uid);
       else if (req.path === '/transcribe') await transcribe(req, res, uid);
-      else if (req.path === '/speak') await speak(req, res, uid);
+      else if (req.path === '/speak') await speak(req, res, uid, tier);
       else throw new HttpError(404, 'not_found_error', 'Unknown route');
     } catch (e) {
       if (e instanceof HttpError) sendError(res, e);

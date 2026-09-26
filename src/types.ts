@@ -1,4 +1,4 @@
-export type LanguageCode = 'en' | 'de' | 'fr' | 'es';
+export type LanguageCode = 'en' | 'de' | 'fr' | 'es' | 'it' | 'pt' | 'uk';
 
 /**
  * Вариант английского. Меняет словарь, написание и обороты собеседницы, но не

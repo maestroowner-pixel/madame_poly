@@ -16,6 +16,14 @@ export const LANGUAGES: Record<LanguageCode, LanguageMeta> = {
   de: { label: 'Deutsch', englishName: 'German', whisper: 'de', flag: '🇩🇪' },
   fr: { label: 'Français', englishName: 'French', whisper: 'fr', flag: '🇫🇷' },
   es: { label: 'Español', englishName: 'Spanish', whisper: 'es', flag: '🇪🇸' },
+  it: { label: 'Italiano', englishName: 'Italian', whisper: 'it', flag: '🇮🇹' },
+  /**
+   * Европейская норма: под неё есть экзамены по шкале CEFR (CAPLE), и она
+   * ближе европейской аудитории. Название с «European» уходит во все промпты —
+   * модель иначе сбивается на бразильский вариант.
+   */
+  pt: { label: 'Português', englishName: 'European Portuguese', whisper: 'pt', flag: '🇵🇹' },
+  uk: { label: 'Українська', englishName: 'Ukrainian', whisper: 'uk', flag: '🇺🇦' },
 };
 
 export const LANGUAGE_CODES = Object.keys(LANGUAGES) as LanguageCode[];

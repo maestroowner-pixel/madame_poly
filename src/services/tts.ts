@@ -1,7 +1,7 @@
 import { Directory, File, Paths } from 'expo-file-system';
 
+import type { MaxVoice } from '../config';
 import { t } from '../i18n';
-import type { PolyVoice } from '../config';
 import { loadVoice } from '../storage';
 import { assertBudget, charge, ttsCost } from './meter';
 import { proxy } from './proxy';
@@ -41,10 +41,11 @@ async function readBytes(response: Response): Promise<Uint8Array> {
 }
 
 /**
- * Модель выбирает сервер; приложение передаёт текст, темп и голос — голос
- * из настроек, если его не задали явно (так делает прослушивание в настройках).
+ * Модель выбирает сервер по тарифу: Max — gpt-4o с выбранным голосом,
+ * остальным — tts-1 с nova. Голос приложение шлёт всегда (из настроек, если
+ * не задан явно, как при прослушивании), сервер слушает его только у Max.
  */
-async function synthesizeOpenAI(text: string, speed: number, voice?: PolyVoice): Promise<Uint8Array> {
+async function synthesizeOpenAI(text: string, speed: number, voice?: MaxVoice): Promise<Uint8Array> {
   await assertBudget();
 
   const response = await proxy('/speak', {
@@ -61,7 +62,7 @@ async function synthesizeOpenAI(text: string, speed: number, voice?: PolyVoice):
  * голос один на все четыре, модель читает их без подсказки. Темп — параметр:
  * в аудировании на A1 читают медленнее, чем на C2.
  */
-export async function synthesize(text: string, speed = 1, voice?: PolyVoice): Promise<string> {
+export async function synthesize(text: string, speed = 1, voice?: MaxVoice): Promise<string> {
   // Пустую строку сервис отвергает с ошибкой — ловим её здесь, не тратя запрос.
   if (!text.trim()) throw new Error(t.nothingToSpeak);
 

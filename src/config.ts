@@ -12,15 +12,6 @@ export const API_URL =
   process.env.EXPO_PUBLIC_API_URL ||
   `https://europe-west1-${process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID ?? ''}.cloudfunctions.net/api`;
 
-/**
- * Голоса собеседницы на выбор. Все женские — на портрете женщина; голоса
- * OpenAI не привязаны к языку, так что выбранный читает все четыре. Первый —
- * голос по умолчанию. Тот же список держит сервер (`functions/`): прочие
- * значения он не пускает.
- */
-export const POLY_VOICES = ['nova', 'shimmer', 'coral', 'sage'] as const;
-export type PolyVoice = (typeof POLY_VOICES)[number];
-
 /** Модель диалога. */
 export const CLAUDE_MODEL = 'claude-sonnet-5';
 
@@ -38,6 +29,13 @@ export const CLAUDE_PRICE = {
 /** Whisper берёт за минуту записи, tts-1 — за символ текста. */
 export const WHISPER_PRICE_PER_MINUTE = 0.006;
 export const TTS_PRICE_PER_CHAR = 15 / 1e6;
+/**
+ * gpt-4o-mini-tts (голоса Max) берёт за токены звука — около $0.017 за минуту.
+ * Сервер считает по длительности ответа; здесь, для экрана, — по символам:
+ * замерено ~$18 за миллион символов, с «разговорной» подачей голос тянет
+ * фразу на четверть дольше, отсюда 24.
+ */
+export const MAX_TTS_PRICE_PER_CHAR = 24 / 1e6;
 
 /**
  * Битрейт записи (`RecordingPresets.HIGH_QUALITY`), бит/с. Длительность
@@ -96,8 +94,24 @@ export const COPYRIGHT = 'Mykhaylo Osypov · Kuka Lab · 2026';
 export const REVENUECAT_IOS_KEY = process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY ?? '';
 export const REVENUECAT_ANDROID_KEY = process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY ?? '';
 
-/** Название права доступа в RevenueCat — по нему проверяется подписка. */
+/**
+ * Тарифы: без подписки, Pro и Max. Max отличается объёмом — беседа самая
+ * дорогая часть — и голосами gpt-4o на выбор: они дороже tts-1.
+ */
+export type Tier = 'free' | 'pro' | 'max';
+
+/**
+ * Права доступа в RevenueCat. Подписка Max привязана к обоим: так всё, что
+ * проверяет просто «есть ли подписка», видит её и у Max.
+ */
 export const PRO_ENTITLEMENT = 'pro';
+export const MAX_ENTITLEMENT = 'max';
+
+/**
+ * Как пейвол отличает Max от Pro: по идентификатору продукта в магазине —
+ * у Max в нём есть «max» (например, `poly_max_monthly`).
+ */
+export const MAX_PRODUCT_MARK = 'max';
 
 /**
  * Сколько бесед в день без подписки. Аудирование, письмо и тетрадь лимита не
@@ -113,25 +127,35 @@ export const FREE_TALKS_PER_DAY = 1;
 export const UNLIMITED_TALKS = false;
 
 /**
- * Цена подписки, евро в месяц. Сама цена живёт в App Store Connect и Google
- * Play — приложение получает от RevenueCat готовую строку в валюте магазина, и
- * тут её не отобразить. Здесь она точка отсчёта для месячного объёма ниже.
+ * Цены подписок, евро в месяц. Сами цены живут в App Store Connect и Google
+ * Play — приложение получает от RevenueCat готовую строку в валюте магазина.
+ * Здесь они точка отсчёта для месячного объёма ниже.
  */
-export const PRO_PRICE_EUR = 7;
+export const TIER_PRICE_EUR = { pro: 5, max: 7 } as const;
 
 /**
- * Сколько долларов API отпускается в месяц. Из семи евро магазин забирает
- * 15–30 %, остаётся около шести долларов; беседа на пятнадцать реплик стоит
- * $0.10–0.15 (Sonnet с кэшем, Whisper, озвучка), так что пять долларов — это
- * 35–50 бесед в месяц, а доллар сверху остаётся на аудирование и письмо.
+ * Сколько долларов API отпускается в месяц по тарифам. Беседа на пятнадцать
+ * реплик стоит $0.10–0.15 (Sonnet с кэшем, Whisper, озвучка), с голосами Max
+ * на цент-два больше. Pro — 3 $, это 20–30 бесед; Max — 5 $, 35–45. Из пяти и
+ * семи евро магазин забирает 15–30 % и НДС, так что объём близок к тому, что
+ * доходит: полностью выбранный лимит почти не оставляет маржи — решение
+ * сознательное, большинство выбирает меньше.
  * Без объёма одна беседа длиной в вечер съедала бы подписку за неделю.
  *
  * Бесплатный объём — примерно восемь бесед: дневной лимит держит темп, а
  * этот — сумму, иначе одной бесплатной беседе в день ничто не мешало бы
  * длиться час.
  */
-export const PRO_MONTHLY_BUDGET_USD = 5;
-export const FREE_MONTHLY_BUDGET_USD = 1;
+export const MONTHLY_BUDGET_USD: Record<Tier, number> = { free: 1, pro: 3, max: 5 };
+
+/**
+ * Голоса Max — модель gpt-4o-mini-tts. Все женские: на портрете женщина.
+ * shimmer в ней на испанском звучит по-мужски, поэтому его нет. Первый — голос
+ * по умолчанию. Тот же список держит сервер (`functions/`). У Pro и без
+ * подписки голос один — nova на tts-1.
+ */
+export const MAX_VOICES = ['nova', 'coral', 'sage', 'marin'] as const;
+export type MaxVoice = (typeof MAX_VOICES)[number];
 
 /**
  * Языки, для которых открыт раздел «Слова». Списки генерируются под любой язык,

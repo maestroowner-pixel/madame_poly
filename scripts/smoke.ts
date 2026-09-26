@@ -38,6 +38,9 @@ const SAMPLES: Record<LanguageCode, string> = {
   de: 'Gestern ich habe gegangen zum Supermarkt und ich kaufte zwei Brot.',
   fr: "Hier je suis allé au magasin et j'ai acheté deux pain pour mon petit déjeuner.",
   es: 'Ayer yo fui a la tienda y compré dos pan para mi desayuno.',
+  it: 'Ieri io sono andato al negozio e ho comprato due pane per la mia colazione.',
+  pt: 'Ontem eu fui na loja e comprei dois pão para o meu pequeno-almoço.',
+  uk: 'Вчора я пішов в магазин і купив два хліба на мій сніданок.',
 };
 
 /** Анонимный вход через REST: SDK Firebase тянет за собой AsyncStorage. */
@@ -99,7 +102,7 @@ async function main(): Promise<void> {
   const client = new Anthropic({ apiKey: 'proxy', baseURL: `${api}/claude`, defaultHeaders: auth });
   const message = await client.messages.create({
     model: 'claude-sonnet-5',
-    max_tokens: 512,
+    max_tokens: 2048,
     messages: [
       {
         role: 'user',
@@ -108,6 +111,7 @@ async function main(): Promise<void> {
     ],
   });
   for (const block of message.content) if (block.type === 'text') console.log(`\n${block.text}`);
+  console.log(`\n  Блоки: ${message.content.map((block) => block.type).join(', ')}; stop: ${message.stop_reason}`);
   console.log(`\n  Токены: ${message.usage.input_tokens} ввод, ${message.usage.output_tokens} вывод`);
   console.log('\nГотово.\n');
 }

@@ -6,9 +6,12 @@ import Purchases, {
 } from 'react-native-purchases';
 
 import {
+  MAX_ENTITLEMENT,
+  MAX_PRODUCT_MARK,
   PRO_ENTITLEMENT,
   REVENUECAT_ANDROID_KEY,
   REVENUECAT_IOS_KEY,
+  type Tier,
 } from '../config';
 
 const API_KEY = Platform.select({
@@ -20,7 +23,9 @@ const API_KEY = Platform.select({
 /**
  * Без ключа платежей нет вовсе. На вебе и в сборке без ключей приложение должно
  * работать целиком, иначе разработку пришлось бы вести с оглядкой на магазин,
- * поэтому все функции ниже в этом случае молча отвечают «подписка есть».
+ * поэтому покупка и восстановление в этом случае молча отвечают «подписка
+ * есть». А тариф — бесплатный: иначе сборка без ключей не знала бы дневного
+ * лимита. Снять лимиты для проверки — `UNLIMITED_TALKS`.
  */
 export const PURCHASES_READY = Boolean(API_KEY) && Platform.OS !== 'web';
 
@@ -35,34 +40,34 @@ export function startPurchases(): void {
   Purchases.configure({ apiKey: API_KEY });
 }
 
-function active(info: CustomerInfo): boolean {
-  return info.entitlements.active[PRO_ENTITLEMENT] !== undefined;
+function tierOf(info: CustomerInfo): Tier {
+  const { active } = info.entitlements;
+  if (active[MAX_ENTITLEMENT]) return 'max';
+  if (active[PRO_ENTITLEMENT]) return 'pro';
+  return 'free';
 }
 
-/**
- * Есть ли подписка. Без ключей — да: иначе при разработке беседа упиралась бы в
- * лимит на второй попытке.
- */
-export async function isPro(): Promise<boolean> {
-  if (!PURCHASES_READY) return true;
+/** Какая подписка. Без ключей — никакой: магазина нет, купить нечего. */
+export async function loadTier(): Promise<Tier> {
+  if (!PURCHASES_READY) return 'free';
 
   try {
-    return active(await Purchases.getCustomerInfo());
+    return tierOf(await Purchases.getCustomerInfo());
   } catch {
     /**
      * Сеть могла отвалиться, а RevenueCat кэширует последний известный ответ и
      * отдаёт его сам. Если не отдал даже кэш — считаем, что подписки нет: иначе
      * достаточно было бы выключить интернет, чтобы снять лимит.
      */
-    return false;
+    return 'free';
   }
 }
 
 /** Подписка меняется и вне приложения — продлилась, отменилась, вернули деньги. */
-export function watchPro(onChange: (pro: boolean) => void): () => void {
+export function watchTier(onChange: (tier: Tier) => void): () => void {
   if (!PURCHASES_READY) return () => {};
 
-  const listener = (info: CustomerInfo) => onChange(active(info));
+  const listener = (info: CustomerInfo) => onChange(tierOf(info));
   Purchases.addCustomerInfoUpdateListener(listener);
   return () => Purchases.removeCustomerInfoUpdateListener(listener);
 }
@@ -75,19 +80,24 @@ export async function loadPackages(): Promise<PurchasesPackage[]> {
   return offerings.current?.availablePackages ?? [];
 }
 
+/** Какой тариф даёт пакет: у Max в идентификаторе продукта есть «max». */
+export function packageTier(item: PurchasesPackage): Exclude<Tier, 'free'> {
+  return item.product.identifier.toLowerCase().includes(MAX_PRODUCT_MARK) ? 'max' : 'pro';
+}
+
 /** Возвращает true, если после покупки подписка активна. */
 export async function buy(item: PurchasesPackage): Promise<boolean> {
   if (!PURCHASES_READY) return true;
 
   const { customerInfo } = await Purchases.purchasePackage(item);
-  return active(customerInfo);
+  return tierOf(customerInfo) !== 'free';
 }
 
 /** Восстановление покупок — Apple требует эту кнопку на экране подписки. */
 export async function restore(): Promise<boolean> {
   if (!PURCHASES_READY) return true;
 
-  return active(await Purchases.restorePurchases());
+  return tierOf(await Purchases.restorePurchases()) !== 'free';
 }
 
 /**

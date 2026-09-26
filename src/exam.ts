@@ -81,17 +81,44 @@ const LABELS: Record<LanguageCode, Record<ExamTopicId, string>> = {
     travel: 'Los viajes y el turismo',
     culture: 'La cultura y las artes',
   },
+  it: {
+    work: 'Il lavoro e la carriera',
+    environment: "L'ambiente",
+    technology: 'La tecnologia',
+    education: "L'istruzione",
+    health: 'La salute e lo stile di vita',
+    travel: 'I viaggi e il turismo',
+    culture: 'La cultura e le arti',
+  },
+  pt: {
+    work: 'O trabalho e a carreira',
+    environment: 'O ambiente',
+    technology: 'A tecnologia',
+    education: 'A educação',
+    health: 'A saúde e o estilo de vida',
+    travel: 'As viagens e o turismo',
+    culture: 'A cultura e as artes',
+  },
+  uk: {
+    work: 'Робота та кар’єра',
+    environment: 'Довкілля',
+    technology: 'Технології',
+    education: 'Освіта',
+    health: 'Здоров’я та спосіб життя',
+    travel: 'Подорожі та туризм',
+    culture: 'Культура та мистецтво',
+  },
 };
 
 /** Названия на языке интерфейса — под названием темы в списке. */
 const GLOSSES: Record<ExamTopicId, Record<UiLocale, string>> = {
-  work: { en: 'Work and careers', uk: 'Робота та кар’єра', es: 'Trabajo y carrera', ru: 'Работа и карьера' },
-  environment: { en: 'The environment', uk: 'Довкілля', es: 'Medio ambiente', ru: 'Экология' },
-  technology: { en: 'Technology', uk: 'Технології', es: 'Tecnología', ru: 'Технологии' },
-  education: { en: 'Education', uk: 'Освіта', es: 'Educación', ru: 'Образование' },
-  health: { en: 'Health and lifestyle', uk: 'Здоров’я та спосіб життя', es: 'Salud y estilo de vida', ru: 'Здоровье и образ жизни' },
-  travel: { en: 'Travel and tourism', uk: 'Подорожі та туризм', es: 'Viajes y turismo', ru: 'Путешествия и туризм' },
-  culture: { en: 'Culture and the arts', uk: 'Культура та мистецтво', es: 'Cultura y artes', ru: 'Культура и искусство' },
+  work: { en: 'Work and careers', uk: 'Робота та кар’єра', es: 'Trabajo y carrera', ru: 'Работа и карьера', de: 'Arbeit und Beruf', fr: 'Le travail et la carrière' , pt: 'O trabalho e a carreira' },
+  environment: { en: 'The environment', uk: 'Довкілля', es: 'Medio ambiente', ru: 'Экология', de: 'Umwelt', fr: 'L\'environnement' , pt: 'O meio ambiente' },
+  technology: { en: 'Technology', uk: 'Технології', es: 'Tecnología', ru: 'Технологии', de: 'Technik und Digitalisierung', fr: 'Les nouvelles technologies' , pt: 'A tecnologia' },
+  education: { en: 'Education', uk: 'Освіта', es: 'Educación', ru: 'Образование', de: 'Bildung', fr: 'L\'éducation' , pt: 'A educação' },
+  health: { en: 'Health and lifestyle', uk: 'Здоров’я та спосіб життя', es: 'Salud y estilo de vida', ru: 'Здоровье и образ жизни', de: 'Gesundheit und Lebensstil', fr: 'La santé et le mode de vie' , pt: 'A saúde e o estilo de vida' },
+  travel: { en: 'Travel and tourism', uk: 'Подорожі та туризм', es: 'Viajes y turismo', ru: 'Путешествия и туризм', de: 'Reisen und Tourismus', fr: 'Les voyages et le tourisme' , pt: 'As viagens e o turismo' },
+  culture: { en: 'Culture and the arts', uk: 'Культура та мистецтво', es: 'Cultura y artes', ru: 'Культура и искусство', de: 'Kultur und Kunst', fr: 'La culture et les arts' , pt: 'A cultura e as artes' },
 };
 
 export function examTopics(language: LanguageCode): ExamTopic[] {
@@ -167,6 +194,39 @@ const EXAM_FORMATS: Record<ExamLevel, Record<LanguageCode, ExamFormat>> = {
           'Tarea 4 (situación simulada): a short role play in an everyday situation connected to the topic. You are the other person — a travel agent, a colleague, a friend — and the candidate has to explain what they need and agree on a solution with you.',
       },
     },
+    it: {
+      name: 'CILS UNO-B1',
+      parts: {
+        interview:
+          "Conversazione faccia a faccia: simple questions about the candidate's everyday life connected to the topic — family, work or studies, free time, habits.",
+        longTurn:
+          'Produzione orale (monologo): give the candidate a simple everyday situation or question on the topic and ask them to describe or tell a story about it on their own for about a minute and a half — what happened, where, who was there, how they felt. Afterwards ask one simple question about it.',
+        discussion:
+          'Closing conversation: talk about the topic a little more — their likes, experience and plans — with simple follow-up questions and a small everyday choice to make and justify.',
+      },
+    },
+    pt: {
+      name: 'CAPLE DEPLE (B1)',
+      parts: {
+        interview:
+          "Interação oral, first part: simple questions about the candidate's own life connected to the topic — where they live, what they do, what they like.",
+        longTurn:
+          'Produção oral: in the real exam the task starts from a picture or a short text. There are none here, so describe an everyday situation related to the topic in two or three simple sentences and ask the candidate to talk about it on their own for about a minute and a half — what they see in it, their own experience, what they would do. Afterwards ask one simple question about it.',
+        discussion:
+          'Interação oral, second part: a short everyday exchange on the topic — agree on a plan, choose between options, solve a small problem — with the candidate giving reasons for their choice.',
+      },
+    },
+    uk: {
+      name: 'Українська як іноземна, B1',
+      parts: {
+        interview:
+          "Introductory conversation: simple questions about the candidate's everyday life connected to the topic — family, work or studies, free time.",
+        longTurn:
+          'Monologue: give the candidate a simple question on the topic and ask them to speak on their own for about a minute and a half — their own experience, what they like and dislike, how it is where they live. Afterwards ask one simple question about it.',
+        discussion:
+          'Dialogue in a situation: a short everyday role play connected to the topic — you are a neighbour, a colleague or a shop assistant, and the candidate has to ask for something, agree on a plan or sort out a small problem.',
+      },
+    },
   },
   B2: {
     en: {
@@ -211,6 +271,39 @@ const EXAM_FORMATS: Record<ExamLevel, Record<LanguageCode, ExamFormat>> = {
           'Tarea 1 (valorar propuestas): describe a problem related to the topic and give three or four proposed solutions in one sentence each. Ask the candidate to evaluate them — advantages, drawbacks, which one they would choose — speaking on their own for a couple of minutes. Afterwards ask one question about their evaluation.',
         discussion:
           'Conversation, as at the end of Tarea 1 and in Tarea 3: ask their opinion on wider questions about the topic, with follow-up questions and a counter-argument now and then.',
+      },
+    },
+    it: {
+      name: 'CILS DUE-B2',
+      parts: {
+        interview:
+          "Conversazione faccia a faccia: questions about the candidate's own experience of the topic, expecting fuller answers of several sentences.",
+        longTurn:
+          'Produzione orale (monologo): give a concrete question on the topic and ask the candidate to present it on their own for about two minutes — describe the situation, give their view with arguments and examples, and compare it with their own country. Afterwards ask one question about their view.',
+        discussion:
+          'Discussion: broader questions about the topic — causes, consequences, advantages and disadvantages, what should change. Take the opposite view now and then so they have to argue their case.',
+      },
+    },
+    pt: {
+      name: 'CAPLE DIPLE (B2)',
+      parts: {
+        interview:
+          "Interação oral, first part: questions about the candidate's own experience of the topic, expecting fuller answers of several sentences.",
+        longTurn:
+          'Produção oral: give a short statement on the topic in one or two sentences, in place of the text or picture of the real exam, and ask the candidate to comment on it on their own for about two minutes — what issue it raises, their opinion, arguments and examples. Afterwards ask one question about it.',
+        discussion:
+          'Interação oral, debate: discuss wider questions about the topic, take a different view at times and ask them to clarify and defend their position.',
+      },
+    },
+    uk: {
+      name: 'Українська як іноземна, B2',
+      parts: {
+        interview:
+          "Introductory conversation: questions about the candidate's own experience of the topic, expecting fuller answers of several sentences.",
+        longTurn:
+          'Monologue: give a short statement on the topic in one or two sentences and ask the candidate to comment on it on their own for about two minutes — the issue it raises, their view, arguments and examples. Afterwards ask one question about their view.',
+        discussion:
+          'Discussion: broader questions about the topic — causes, consequences, what should change. Take a different view now and then so they have to argue their case.',
       },
     },
   },

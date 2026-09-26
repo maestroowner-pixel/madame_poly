@@ -1,20 +1,17 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import {
-  FREE_MONTHLY_BUDGET_USD,
-  FREE_TALKS_PER_DAY,
-  UNLIMITED_TALKS,
-  PRO_MONTHLY_BUDGET_USD,
-} from '../config';
-import { allowance, setBudget } from '../services/meter';
-import { isPro, startPurchases, watchPro } from '../services/purchases';
+import { FREE_TALKS_PER_DAY, UNLIMITED_TALKS, type Tier } from '../config';
+import { allowance, setTier as setMeterTier } from '../services/meter';
+import { loadTier, startPurchases, watchTier } from '../services/purchases';
 import { countTalk, loadUsage } from '../storage';
 
 /** Что именно не даёт начать беседу. */
 export type Block = 'talks' | 'budget' | null;
 
 export interface Subscription {
-  /** null, пока состояние подписки ещё не известно. */
+  /** Тариф; null, пока состояние подписки ещё не известно. */
+  tier: Tier | null;
+  /** Есть ли подписка, любая — Pro или Max; null, пока не известно. */
   pro: boolean | null;
   /** Бесед начато сегодня. */
   talks: number;
@@ -39,7 +36,7 @@ export interface Subscription {
  * когда он исчерпан.
  */
 export function useSubscription(): Subscription {
-  const [pro, setPro] = useState<boolean | null>(null);
+  const [tier, setTier] = useState<Tier | null>(null);
   const [talks, setTalks] = useState(0);
   const [used, setUsed] = useState(0);
   const [exhausted, setExhausted] = useState(false);
@@ -54,11 +51,11 @@ export function useSubscription(): Subscription {
     startPurchases();
 
     let alive = true;
-    void isPro().then((value) => alive && setPro(value));
+    void loadTier().then((value) => alive && setTier(value));
     void loadUsage().then((usage) => alive && setTalks(usage.talks));
 
     // Подписка меняется и вне приложения: продлилась, отменилась, вернули деньги.
-    const stop = watchPro(setPro);
+    const stop = watchTier(setTier);
     return () => {
       alive = false;
       stop();
@@ -68,10 +65,10 @@ export function useSubscription(): Subscription {
   // Объём тарифа задаётся счётчику, как только подписка известна, и
   // перечитывается: доля от нового объёма другая.
   useEffect(() => {
-    if (pro === null) return;
-    setBudget(pro ? PRO_MONTHLY_BUDGET_USD : FREE_MONTHLY_BUDGET_USD);
+    if (tier === null) return;
+    setMeterTier(tier);
     void readSpend();
-  }, [pro, readSpend]);
+  }, [tier, readSpend]);
 
   const useTalk = useCallback(async () => {
     const usage = await countTalk();
@@ -79,11 +76,12 @@ export function useSubscription(): Subscription {
   }, []);
 
   const refresh = useCallback(async () => {
-    setPro(await isPro());
+    setTier(await loadTier());
     setTalks((await loadUsage()).talks);
     await readSpend();
   }, [readSpend]);
 
+  const pro = tier === null ? null : tier !== 'free';
   const left = Math.max(0, FREE_TALKS_PER_DAY - talks);
 
   // Пока подписка не известна, беседу не запрещаем: проверка занимает
@@ -97,6 +95,7 @@ export function useSubscription(): Subscription {
         : null;
 
   return {
+    tier,
     pro,
     talks,
     left,

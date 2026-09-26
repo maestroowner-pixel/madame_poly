@@ -66,6 +66,7 @@ export function Splash({ onDone }: Props) {
         <View style={styles.caption}>
           <Text style={styles.title}>Madame Poly</Text>
           <Text style={styles.tagline}>{t.tagline}</Text>
+          <Text style={styles.taglineMore}>{t.taglineMore}</Text>
         </View>
 
         <View style={styles.footer}>
@@ -103,7 +104,16 @@ const createStyles = () =>
     },
     caption: { position: 'absolute', left: 0, right: 0, bottom: 96, alignItems: 'center', gap: 4 },
     title: { color: '#FFFFFF', fontSize: 30, fontWeight: '700' },
-    tagline: { color: '#FFFFFF', fontSize: 14, opacity: 0.85 },
+    tagline: { color: '#FFFFFF', fontSize: 16, fontWeight: '600', opacity: 0.9 },
+    taglineMore: {
+      color: '#FFFFFF',
+      fontSize: 13,
+      lineHeight: 18,
+      opacity: 0.75,
+      textAlign: 'center',
+      paddingHorizontal: 32,
+      marginTop: 4,
+    },
     footer: { position: 'absolute', left: 0, right: 0, bottom: 26, alignItems: 'center', gap: 2 },
     footerText: { color: '#FFFFFF', fontSize: 12, opacity: 0.8 },
     footerVersion: { color: '#FFFFFF', fontSize: 11, opacity: 0.6, marginTop: 2 },
