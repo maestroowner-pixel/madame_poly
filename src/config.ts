@@ -138,7 +138,7 @@ export const UNLIMITED_TALKS = false;
  * Play — приложение получает от RevenueCat готовую строку в валюте магазина.
  * Здесь они точка отсчёта для месячного объёма ниже.
  */
-export const TIER_PRICE_EUR = { pro: 5, max: 7 } as const;
+export const TIER_PRICE_EUR = { pro: 7, max: 10 } as const;
 
 /**
  * Сколько долларов API отпускается в месяц по тарифам. Беседа на пятнадцать
