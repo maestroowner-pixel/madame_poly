@@ -1,4 +1,4 @@
-import { module, type Syllabus } from './types';
+import { module, type GrammarModule } from './types';
 
 /**
  * Бразильский португальский — по программе пользователя: A2 (Plataforma), B1
@@ -6,8 +6,12 @@ import { module, type Syllabus } from './types';
  * уровня — отдельные модули. A1 в программе нет — он собран из первого
  * списка тем португальского и переделан под бразильскую норму (você вместо
  * tu, seu вместо teu, «por que»). Пояснения — из программы.
+ *
+ * Как и украинский, это один сквозной курс без выбора уровня: модули идут
+ * подряд от A1 до C2. Буквы ступеней в module() остаются — ключи юнитов от них
+ * зависят, и уже написанные уроки не теряются.
  */
-export const BRAZILIAN: Syllabus = {
+const BANDS = {
   A: [
     module('A', 'A1 — Iniciação', [
       ['O alfabeto e as regras de leitura', 'sons do português do Brasil; acentos e sinais: á, â, ã, ç'],
@@ -65,3 +69,5 @@ export const BRAZILIAN: Syllabus = {
     ]),
   ],
 };
+
+export const BRAZILIAN: GrammarModule[] = [...BANDS.A, ...BANDS.B, ...BANDS.C];

@@ -28,6 +28,7 @@ import { CONTENT_MAX_WIDTH } from '../layout';
 import { FONT_SCALES, useStyles, useTheme, type FontScale, type Theme } from '../theme';
 import { synthesize } from '../services/tts';
 import { loadVoice, saveVoice } from '../storage';
+import { isSingleCourse } from '../grammar';
 import { findTopic } from '../topics';
 import { LEVELS, type EnglishVariant, type LanguageCode, type Level } from '../types';
 
@@ -192,22 +193,28 @@ export function SettingsScreen({
         })}
       </View>
 
-      {/* Уровень — сразу под языком: две вещи, которые задают всё остальное. */}
-      <View style={styles.row}>
-        {LEVELS.map((value) => {
-          const active = value === level;
-          return (
-            <Pressable
-              key={value}
-              disabled={disabled}
-              onPress={() => onSelectLevel(value)}
-              style={[styles.square, active && styles.tileActive, disabled && styles.dimmed]}
-            >
-              <Text style={[styles.squareLabel, active && styles.activeLabel]}>{value}</Text>
-            </Pressable>
-          );
-        })}
-      </View>
+      {/*
+        Уровень — сразу под языком: две вещи, которые задают всё остальное.
+        У языков, которые учат одним сквозным курсом (украинский, бразильский
+        португальский), уровней нет — ряд не показываем.
+      */}
+      {!isSingleCourse(language) && (
+        <View style={styles.row}>
+          {LEVELS.map((value) => {
+            const active = value === level;
+            return (
+              <Pressable
+                key={value}
+                disabled={disabled}
+                onPress={() => onSelectLevel(value)}
+                style={[styles.square, active && styles.tileActive, disabled && styles.dimmed]}
+              >
+                <Text style={[styles.squareLabel, active && styles.activeLabel]}>{value}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      )}
 
       <Pressable
         disabled={disabled}
