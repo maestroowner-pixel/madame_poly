@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import { Animated, Easing, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 
 import { BookIcon, ChatIcon, EarIcon, ExamIcon, GrammarIcon, HomeIcon, PenIcon, WordsIcon } from './icons';
+import { GlassPanel } from './GlassPanel';
 import { NeonButton } from './NeonButton';
 import { measureAnchor, type Anchor } from '../anchor';
 import { BUTTON_ICON_SCALE, BUTTON_SCALE, IS_TABLET, UI_SCALE } from '../layout';
@@ -178,6 +179,7 @@ export function ScreenMenu({ current, hidden = [], badges = {}, anchor, onSelect
           { transform: [{ translateX: shown.interpolate({ inputRange: [0, 1], outputRange: [-screenWidth, 0] }) }] },
         ]}
       >
+        <GlassPanel style={styles.glass}>
         {(Object.keys(SCREEN_ICONS) as Screen[])
           .filter((screen) => !hidden.includes(screen))
           .map((screen) => {
@@ -199,6 +201,7 @@ export function ScreenMenu({ current, hidden = [], badges = {}, anchor, onSelect
             </Pressable>
           );
         })}
+        </GlassPanel>
       </Animated.View>
     </View>
   );
@@ -210,25 +213,28 @@ const createStyles = (theme: Theme) =>
     backdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
     shade: { backgroundColor: 'rgba(0,0,0,0.18)' },
     fill: { flex: 1 },
-    /** Под домиком и вплотную к левому краю: выезжает из-за него. */
+    /**
+     * Под домиком и вплотную к левому краю: выезжает из-за него. Сама карточка
+     * — только место и тень; стекло рисует GlassPanel внутри.
+     */
     card: {
       position: 'absolute',
       top: 96,
       left: 0,
       minWidth: 212,
-      padding: 6,
-      paddingLeft: 12,
-      borderTopRightRadius: 16,
-      borderBottomRightRadius: 16,
-      borderLeftWidth: 0,
-      backgroundColor: theme.surface,
-      borderWidth: 1,
-      borderColor: theme.border,
       shadowColor: '#000',
       shadowOpacity: 0.35,
       shadowRadius: 18,
       shadowOffset: { width: 0, height: 8 },
       elevation: 8,
+    },
+    /** Стекло: скругление только справа — слева панель уходит за край экрана. */
+    glass: {
+      padding: 6,
+      paddingLeft: 12,
+      borderTopRightRadius: 16,
+      borderBottomRightRadius: 16,
+      overflow: 'hidden',
     },
     row: {
       flexDirection: 'row',
