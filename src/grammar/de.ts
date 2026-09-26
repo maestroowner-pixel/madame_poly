@@ -1,10 +1,13 @@
 import { module, type Syllabus } from './types';
 
 /**
- * Немецкий. A1–A2 — программа Wortkraft A2 по перечню грамматики Goethe-
- * Zertifikat A2 «Fit in Deutsch 2» (стр. 104–109). B1–B2 и C1–C2 составлены
- * по перечням Goethe-Zertifikat B1–C1 и Profile Deutsch: в пробных экзаменах
- * B1–C1 списка грамматики нет.
+ * Немецкий, по программам пользователя:
+ * - A1–A2 — программа Wortkraft A2 по перечню грамматики Goethe-Zertifikat A2
+ *   «Fit in Deutsch 2» (стр. 104–109);
+ * - B1–B2 — «Grammatik aktiv B2/C1» (Cornelsen): разделы A–G, короткие главы
+ *   под живую речь и экзамен;
+ * - C1–C2 — «Übungsgrammatik für die Oberstufe» (Hueber, B2–C2): §§ 1–12,
+ *   трансформация текстов и синтаксис.
  */
 export const GERMAN: Syllabus = {
   A: [
@@ -122,147 +125,100 @@ export const GERMAN: Syllabus = {
     ]),
   ],
   B: [
-    module('B', 'Vergangenheit und Zukunft', [
-      ['Präteritum: regelmäßige Verben', 'machte, sagte, arbeitete'],
-      ['Präteritum: unregelmäßige Verben', 'ging, kam, fand, dachte, brachte'],
-      ['Perfekt oder Präteritum?', 'Mündlich und schriftlich erzählen'],
-      ['Plusquamperfekt', 'hatte gemacht, war gegangen; nachdem'],
-      ['Futur I', 'werden + Infinitiv: Plan, Versprechen, Vermutung'],
-      ['Futur II', 'wird gemacht haben: Vermutung über Vergangenes'],
-    ]),
-    module('B', 'Konjunktiv', [
-      ['Konjunktiv II: Gegenwart', 'würde, wäre, hätte, könnte, müsste'],
-      ['Irreale Wünsche', 'Wenn ich doch … hätte! Ich wünschte, …'],
-      ['Irreale Bedingungen', 'Wenn ich Zeit hätte, würde ich …'],
-      ['Konjunktiv II: Vergangenheit', 'hätte gemacht, wäre gegangen'],
-      ['Ratschläge und höfliche Bitten', 'Du solltest … An deiner Stelle würde ich … Würden Sie …?'],
-      ['Irreale Vergleiche', 'als ob, als wenn, als + Verb'],
-      ['Konjunktiv I: indirekte Rede', 'er sagt, er habe / sei / komme'],
-    ]),
-    module('B', 'Passiv', [
-      ['Passiv Präsens und Präteritum', 'wird gebaut, wurde gebaut; von + Dativ'],
-      ['Passiv Perfekt und Plusquamperfekt', 'ist gebaut worden, war gebaut worden'],
-      ['Passiv mit Modalverben', 'muss repariert werden'],
-      ['Zustandspassiv', 'Die Tür ist geschlossen.'],
-      ['Passiversatz', 'man; sich lassen; -bar; sein + zu + Infinitiv'],
-    ]),
+    // «Grammatik aktiv B2/C1», Teil A: Verben.
     module('B', 'Verben', [
-      ['Verben mit Präpositionen', 'warten auf, sich freuen über / auf, denken an'],
-      ['da- und wo-Wörter', 'darauf, worauf, damit, womit'],
-      ['Reflexive Verben: Akkusativ und Dativ', 'ich wasche mich / ich wasche mir die Hände'],
-      ['Infinitiv mit zu', 'Ich habe keine Lust, … zu …; es ist wichtig, … zu …'],
-      ['lassen', 'etwas machen lassen; jemanden etwas tun lassen'],
-      ['brauchen … zu', 'Du brauchst nicht zu kommen.'],
-      ['Modalverben: subjektive Bedeutung', 'Er muss / dürfte / könnte krank sein; soll, will'],
-      ['Wechselpräpositionen: stellen / stehen, legen / liegen', 'hängen, setzen / sitzen, stecken'],
-      ['Trennbare und untrennbare Präfixe', 'über-, unter-, um-, durch-, wieder-'],
-      ['Nomen-Verb-Verbindungen', 'eine Entscheidung treffen, in Frage kommen'],
+      ['Perfekt, Präteritum, Plusquamperfekt', 'die Vergangenheitstempora im Gebrauch'],
+      ['Futur I und Futur II', 'Zukunft und Vermutung: Er wird krank sein. Er wird es vergessen haben.'],
+      ['Vorgangspassiv', 'werden + Partizip II in allen Zeiten'],
+      ['Zustandspassiv', 'sein + Partizip II: Die Tür ist geschlossen.'],
+      ['Unpersönliches Passiv', 'Hier wird getanzt. Es wurde lange diskutiert.'],
+      ['Passiversatzformen in der Argumentation', 'Das lässt sich machen; sein + zu; -bar, -lich'],
+      ['Subjektiver Gebrauch der Modalverben', 'Er will / soll / muss es gewusst haben.'],
     ]),
-    module('B', 'Nomen und Adjektiv', [
-      ['n-Deklination', 'der Kunde, den Kunden, des Kunden; Herr, Name'],
-      ['Genitiv', 'des Mannes, der Frau; Genitiv oder von'],
-      ['Adjektivdeklination: bestimmter Artikel', 'der alte Mann, mit dem alten Mann'],
-      ['Adjektivdeklination: unbestimmter Artikel', 'ein alter Mann, mit einem alten Mann'],
-      ['Adjektivdeklination: ohne Artikel', 'frischer Kaffee, mit frischem Brot'],
-      ['Komparativ und Superlativ vor Nomen', 'das schnellere Auto, der höchste Berg'],
-      ['Adjektive als Nomen', 'der Bekannte, ein Bekannter, etwas Neues'],
-      ['Partizip I und II als Adjektiv', 'das weinende Kind, die gekochten Eier'],
-      ['Ordinalzahlen und Datum', 'am dritten Mai, vom 1. bis zum 5.'],
+    // Teil B: Konjunktiv.
+    module('B', 'Konjunktiv und indirekte Rede', [
+      ['Konjunktiv II in hypothetischen Diskussionen', 'Wenn …, würde …; hätte, wäre, könnte'],
+      ['Konjunktiv I und indirekte Rede', 'Texte referieren: Er sagt, er habe keine Zeit.'],
     ]),
-    module('B', 'Pronomen', [
-      ['Relativpronomen: Nominativ und Akkusativ', 'der Mann, der …; den …'],
-      ['Relativpronomen: Dativ und Genitiv', 'dem, denen; dessen, deren'],
-      ['Relativsätze mit Präposition', 'die Stadt, in der …; der Freund, mit dem …'],
-      ['Relativsätze mit wo, was, wer', 'alles, was …; der Ort, wo …; Wer …, der …'],
-      ['Indefinitpronomen', 'einer, keiner, welche, jemand, niemand, irgendwer'],
-      ['Das Wort es', 'es regnet; es gibt; Es freut mich, dass …'],
+    // Teil C: Nomen, Artikel und Pronomen.
+    module('B', 'Nomen, Artikel und Pronomen', [
+      ['N-Deklination', 'der Kollege, des Kollegen; der Name, des Namens'],
+      ['Der Genitiv und abstrakte Begriffe', 'wegen des Wetters; die Bedeutung der Freiheit'],
+      ['es, selbst, einander', 'es als Platzhalter; selbst / selber; miteinander, voneinander'],
     ]),
+    // Teil D: Adjektive und Adverbien.
+    module('B', 'Adjektive und Adverbien', [
+      ['Partizip I und II als Attribut', 'der lachende Junge, das gelesene Buch'],
+      ['Erweiterte Attribute', 'die seit Jahren steigenden Preise'],
+    ]),
+    // Teil E: Präpositionen.
     module('B', 'Präpositionen', [
-      ['Präpositionen mit Genitiv', 'wegen, trotz, während, statt, innerhalb, außerhalb'],
-      ['Temporale Präpositionen', 'ab, seit, vor, bei, innerhalb, außerhalb, über'],
-      ['Lokale Präpositionen', 'gegenüber, entlang, um … herum, durch'],
-      ['Kausale und konzessive Präpositionen', 'wegen, aufgrund, dank, trotz'],
+      ['Präpositionen: Ort, Zeit, Grund, Art und Weise', 'wegen, trotz, während, innerhalb, aufgrund'],
+      ['Feste Verbindungen', 'Verben, Adjektive und Nomen mit Präpositionen: sich interessieren für, stolz auf, Angst vor'],
     ]),
-    module('B', 'Nebensätze', [
-      ['Nebensatz: Verb am Ende', 'dass, weil, wenn, ob; Nebensatz vor dem Hauptsatz'],
-      ['als, wenn, wann', 'einmal in der Vergangenheit / wiederholt / Frage'],
-      ['Temporale Nebensätze', 'während, bevor, nachdem, seitdem, bis, sobald, solange'],
-      ['obwohl und trotzdem', 'Nebensatz und Hauptsatz'],
-      ['Finale Sätze', 'damit, um … zu'],
-      ['Konsekutive Sätze', 'sodass, so … dass, deshalb, also'],
-      ['Modale Sätze', 'indem, dadurch dass, ohne dass, ohne … zu, (an)statt … zu'],
-      ['Konditionale Sätze', 'wenn, falls, sonst'],
-      ['Indirekte Fragesätze', 'Ich weiß nicht, ob / wann / wie …'],
-      ['je … desto', 'Je mehr ich lerne, desto besser …'],
+    // Teil F: Satzverbindungen.
+    module('B', 'Satzverbindungen', [
+      ['Kausal- und Konzessivsätze', 'weil, da, zumal; obwohl, obgleich, trotzdem'],
+      ['Final- und Konsekutivsätze', 'damit, um … zu; sodass, so … dass'],
+      ['Zweiteilige Konnektoren', 'je … desto, nicht nur … sondern auch, entweder … oder, weder … noch, zwar … aber'],
+      ['Infinitivkonstruktionen', 'um … zu, ohne … zu, (an)statt … zu'],
     ]),
-    module('B', 'Satzbau und Konnektoren', [
-      ['Konnektoren im Hauptsatz', 'deshalb, darum, trotzdem, sonst, außerdem, dann'],
-      ['Zweiteilige Konnektoren', 'sowohl … als auch, weder … noch, entweder … oder, nicht nur … sondern auch, zwar … aber'],
-      ['Wortstellung im Mittelfeld', 'Dativ vor Akkusativ; Pronomen zuerst'],
-      ['Position von nicht', 'Satznegation und Teilnegation; sondern'],
-    ]),
-    module('B', 'Wortbildung', [
-      ['Nomen aus Verben und Adjektiven', '-ung, -heit, -keit, -schaft, -e, das Lesen'],
-      ['Adjektive mit Suffixen', '-ig, -lich, -isch, -bar, -sam, -voll'],
-      ['Komposita', 'Bestimmungswort und Grundwort, Fugen-s'],
+    // Teil G: Stil und Text.
+    module('B', 'Stil und Text', [
+      ['Nominalstil und Verbalstil', 'Vorbereitung auf Aufsatz und Lesen'],
+      ['Funktionsverbgefüge', 'zur Verfügung stellen, in Frage kommen, eine Entscheidung treffen'],
+      ['Modalpartikeln', 'doch, ja, mal, eben, halt, wohl'],
     ]),
   ],
   C: [
-    module('C', 'Nominal- und Verbalstil', [
-      ['Nominalisierung von Verben', 'untersuchen → die Untersuchung; Ergänzungen im Genitiv'],
-      ['Nebensatz → Präpositionalausdruck', 'weil … → wegen; obwohl … → trotz; als … → bei'],
-      ['Präpositionalausdruck → Nebensatz', 'Umformung in den Verbalstil'],
-      ['Funktionsverbgefüge', 'zur Verfügung stellen, in Kraft treten, Kritik üben'],
+    // «Übungsgrammatik für die Oberstufe», §§ 1–12.
+    module('C', '§ 1 Das Substantiv', [
+      ['Kasus und Deklination', 'N-Deklination, Genitiv'],
+      ['Pluralbildung und Sonderformen', 'die Museen, die Kaufleute, die Ratschläge'],
     ]),
-    module('C', 'Partizipien', [
-      ['Erweiterte Partizipialattribute', 'die seit Jahren steigenden Preise'],
-      ['Partizipialattribut ↔ Relativsatz', 'Umformung in beide Richtungen'],
-      ['Gerundivum', 'die zu lösende Aufgabe'],
-      ['Partizipialkonstruktionen', 'In Berlin angekommen, …; genau genommen'],
+    module('C', '§ 2 Artikel und Pronomen', [
+      ['Bestimmter, unbestimmter und Nullartikel', 'Gebrauch der Artikel'],
+      ['Pronomen als Stellvertreter', 'dessen, deren, derjenige, derselbe'],
     ]),
-    module('C', 'Passiv und Alternativen', [
-      ['Passiv in allen Zeiten', 'wird gebaut werden, soll gebaut worden sein'],
-      ['Passiv mit Modalverben in der Vergangenheit', 'hätte gemacht werden müssen'],
-      ['Passiversatzformen', 'sich lassen, sein + zu, -bar, -lich, bekommen-Passiv'],
-      ['Unpersönliches Passiv', 'Hier wird nicht geraucht. Es wird getanzt.'],
+    module('C', '§ 3 Das Adjektiv', [
+      ['Adjektivdeklination und Komparation', 'nach Artikelwörtern und ohne Artikel; Steigerung'],
+      ['Substantivierte Adjektive', 'das Neue, der Bekannte, etwas Wichtiges'],
     ]),
-    module('C', 'Modalität', [
-      ['Subjektive Modalverben in der Vergangenheit', 'Er muss / kann / dürfte es gewusst haben.'],
-      ['sollen und wollen: fremde Behauptung', 'Er soll reich sein. Sie will es gesehen haben.'],
-      ['Modalverbähnliche Verben', 'scheinen zu, drohen zu, versprechen zu, pflegen zu'],
-      ['haben / sein + zu + Infinitiv', 'Du hast zu gehorchen. Das ist nicht zu ändern.'],
-      ['Futur zur Vermutung', 'Er wird wohl krank sein. Sie wird es vergessen haben.'],
-      ['Modalpartikeln', 'doch, ja, mal, eben, halt, wohl, schon, eigentlich'],
+    module('C', '§ 4 Präpositionen', [
+      ['Präpositionen mit Genitiv, Dativ und Akkusativ', 'Rektion der Präpositionen'],
+      ['Präpositionale Ausdrücke im Wissenschaftsstil', 'im Hinblick auf, in Bezug auf, zwecks, mittels'],
     ]),
-    module('C', 'Konjunktiv', [
-      ['Konjunktiv I: alle Formen', 'sei, habe, werde; Ersatz durch Konjunktiv II'],
-      ['Redewiedergabe in Texten', 'Redeeinleitende Verben; Zeitstufen in der indirekten Rede'],
-      ['Konjunktiv II: Präteritalformen', 'gäbe, käme, ginge, wüsste, bräuchte'],
-      ['Irreale Folgesätze', 'zu …, als dass; ohne dass; als ob mit Vergangenheit'],
-      ['Konjunktiv II in höflicher und distanzierter Rede', 'Ich würde meinen …; Es wäre zu überlegen'],
+    module('C', '§ 5 Die Tempora des Indikativs', [
+      ['Präteritum und Perfekt im Gebrauch', 'schriftliche und mündliche Vergangenheit'],
+      ['Futur I und II als Vermutung', 'Sie wird wohl schon angekommen sein.'],
     ]),
-    module('C', 'Komplexe Sätze', [
-      ['Konnektoren: Gegensatz', 'hingegen, wohingegen, während, dagegen, allerdings'],
-      ['Konnektoren: Folge und Grund', 'infolgedessen, demzufolge, folglich, zumal, da'],
-      ['Konnektoren: Bedingung und Einschränkung', 'sofern, soweit, insofern als, es sei denn, vorausgesetzt'],
-      ['Konzessive Sätze', 'wenn auch, auch wenn, so … auch, wie … auch'],
-      ['Infinitivsätze in allen Zeiten', 'gesehen zu haben, gefragt zu werden, gelobt worden zu sein'],
-      ['Satzgliedstellung und Hervorhebung', 'Vorfeld, Nachfeld, Ausklammerung'],
-      ['Korrelate', 'darauf …, dass; es …, dass; dafür …, zu'],
+    module('C', '§ 6 Konjunktiv II', [
+      ['Irreale Bedingungen, Wünsche und Vergleiche', 'Gegenwart und Vergangenheit: als ob, wenn … doch'],
     ]),
-    module('C', 'Präpositionen und Rektion', [
-      ['Präpositionen mit Genitiv (gehoben)', 'angesichts, aufgrund, bezüglich, zwecks, ungeachtet, zufolge, mangels'],
-      ['Nachgestellte Präpositionen', 'der Sache wegen, dem Bericht zufolge, meiner Meinung nach'],
-      ['Verben mit Genitiv', 'bedürfen, gedenken, sich einer Sache bewusst sein'],
-      ['Adjektive mit Präposition', 'stolz auf, abhängig von, zuständig für'],
-      ['Nomen mit Präposition', 'Interesse an, Angst vor, Rücksicht auf'],
+    module('C', '§ 7 Konjunktiv I und indirekte Rede', [
+      ['Formen des Konjunktiv I', 'er sei, er habe, er komme; Ersatzformen'],
+      ['Indirekte Rede in der Presse', 'Regeln des Zitierens'],
     ]),
-    module('C', 'Wortbildung und Stil', [
-      ['Verbpräfixe: be-, ver-, zer-, ent-, er-', 'Bedeutungsveränderung: bearbeiten, verarbeiten'],
-      ['Adjektivbildung', '-haft, -mäßig, -artig, -weise; zusammengesetzte Adjektive'],
-      ['Fremdwörter und Suffixe', '-ität, -ismus, -ieren, -ant'],
-      ['Textverweise', 'Pronominaladverbien, dieser / jener, Ersteres / Letzteres'],
-      ['Register', 'Umgangssprache, Standardsprache, Schriftsprache'],
+    module('C', '§ 8 Modalverben', [
+      ['Objektiver Gebrauch der Modalverben', 'Notwendigkeit, Fähigkeit, Erlaubnis'],
+      ['Subjektiver Gebrauch der Modalverben', 'Vermutung, Gerücht, fremde Behauptung'],
+    ]),
+    module('C', '§ 9 Modalverbähnliche Verben', [
+      ['Infinitiv ohne zu', 'bleiben, lassen, sehen, hören'],
+      ['haben / sein + zu + Infinitiv', 'Der Antrag ist bis Montag einzureichen.'],
+    ]),
+    module('C', '§ 10 Nominalisierung – Verbalisierung', [
+      ['Nominalstil und Verbalstil', 'Amts- und Wissenschaftssprache'],
+      ['Verbale Ausdrücke nominalisieren', 'Umformung von Verbal- in Nominalstrukturen und zurück'],
+    ]),
+    module('C', '§ 11 Passiv und Passiversatzformen', [
+      ['Vorgangs- und Zustandspassiv in allen Zeiten', 'wurde gebaut, ist gebaut worden, war gebaut'],
+      ['sich lassen, sein + zu, -bar und -lich', 'Das lässt sich lösen. Das ist lösbar.'],
+    ]),
+    module('C', '§ 12 Der Satz', [
+      ['Konzessiv-, Konsekutiv- und Restriktivsätze', 'wenn auch, als dass, soweit, insofern'],
+      ['Das erweiterte Attribut', 'die von der Regierung beschlossene Reform'],
+      ['Funktionsverbgefüge', 'zur Sprache bringen, in Kraft treten'],
     ]),
   ],
 };
