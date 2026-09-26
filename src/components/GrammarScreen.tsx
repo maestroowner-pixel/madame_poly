@@ -5,7 +5,7 @@ import { ExerciseCard } from './HomeworkScreen';
 import { CheckIcon, ChevronIcon } from './icons';
 import { ScreenTitle } from './ScreenMenu';
 import { errorText } from '../errors';
-import { bandOf, findUnit, syllabus, type GrammarUnit } from '../grammar';
+import { bandOf, findUnit, isSingleCourse, syllabus, type GrammarUnit } from '../grammar';
 import { t } from '../i18n';
 import { CONTENT_MAX_WIDTH } from '../layout';
 import { generateGrammarLesson, regenerateGrammarExercises } from '../services/llm';
@@ -47,6 +47,8 @@ export function GrammarScreen({ menu, language, level }: Props) {
   const modules = useMemo(() => syllabus(language, level), [language, level]);
   const numbers = useMemo(() => numbering(modules), [modules]);
   const band = bandOf(level);
+  /** Подпись ступени; у сквозного курса ступеней нет. */
+  const bandLabel = isSingleCourse(language) ? t.grammarCourse : t.grammarBand(band);
 
   const [progress, setProgress] = useState<GrammarProgress>({ built: [], done: [] });
   /** Раскрытые модули; по умолчанию — первый, где ещё есть непройденное. */
@@ -135,7 +137,7 @@ export function GrammarScreen({ menu, language, level }: Props) {
         <View style={styles.header}>
           {menu}
           <ScreenTitle screen="grammar" />
-          <Text style={styles.level}>{t.grammarBand(band)}</Text>
+          <Text style={styles.level}>{bandLabel}</Text>
         </View>
 
         <ScrollView contentContainerStyle={styles.body}>
@@ -253,7 +255,7 @@ export function GrammarScreen({ menu, language, level }: Props) {
       <View style={styles.header}>
         {menu}
         <ScreenTitle screen="grammar" />
-        <Text style={styles.level}>{t.grammarBand(band)}</Text>
+        <Text style={styles.level}>{bandLabel}</Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.body}>

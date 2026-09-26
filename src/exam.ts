@@ -14,6 +14,16 @@ export type ExamLevel = 'B1' | 'B2';
 export const EXAM_LEVELS: ExamLevel[] = ['B1', 'B2'];
 
 /**
+ * Украинский как иностранный учат одним сквозным курсом, без ступеней (см.
+ * src/grammar/uk.ts), и экзамен у него один — без переключателя B1/B2. Уровень
+ * для сложности вопросов и строгости разбора берётся из настроек беседы и на
+ * экране не показывается.
+ */
+export function examHasLevels(language: LanguageCode): boolean {
+  return language !== 'uk';
+}
+
+/**
  * С какого уровня экзамена начать, пока человек не выбрал сам: ближайший к его
  * уровню в беседе. На A2 честнее начинать с B1, на C1 — с B2.
  */
@@ -217,7 +227,7 @@ const EXAM_FORMATS: Record<ExamLevel, Record<LanguageCode, ExamFormat>> = {
       },
     },
     uk: {
-      name: 'Українська як іноземна, B1',
+      name: 'Українська як іноземна',
       parts: {
         interview:
           "Introductory conversation: simple questions about the candidate's everyday life connected to the topic — family, work or studies, free time.",
@@ -296,7 +306,7 @@ const EXAM_FORMATS: Record<ExamLevel, Record<LanguageCode, ExamFormat>> = {
       },
     },
     uk: {
-      name: 'Українська як іноземна, B2',
+      name: 'Українська як іноземна',
       parts: {
         interview:
           "Introductory conversation: questions about the candidate's own experience of the topic, expecting fuller answers of several sentences.",

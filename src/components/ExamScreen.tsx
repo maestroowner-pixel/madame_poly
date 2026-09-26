@@ -8,6 +8,7 @@ import type { SpeechMode } from '../config';
 import {
   EXAM_LEVELS,
   defaultExamLevel,
+  examHasLevels,
   examFormat,
   examTopicGloss,
   examTopics,
@@ -59,12 +60,18 @@ export function ExamScreen({
 }: Props) {
   const styles = useStyles(createStyles);
   const [examLevel, setExamLevel] = useState<ExamLevel>(defaultExamLevel(level));
+  const leveled = examHasLevels(language);
 
   useEffect(() => {
+    // Без ступеней уровень экзамена — из уровня беседы, сохранённый не нужен.
+    if (!leveled) {
+      setExamLevel(defaultExamLevel(level));
+      return;
+    }
     void loadExamLevel(language).then((stored) =>
       setExamLevel(stored === 'B1' || stored === 'B2' ? stored : defaultExamLevel(level)),
     );
-  }, [language, level]);
+  }, [language, level, leveled]);
 
   const chooseLevel = (next: ExamLevel) => {
     setExamLevel(next);
@@ -112,19 +119,21 @@ export function ExamScreen({
         {menu}
         <ScreenTitle screen="exam" />
         {/* Уровень меняет формат экзамена, план частей и строгость разбора. */}
-        <View style={styles.levels}>
-          {EXAM_LEVELS.map((item) => (
-            <Pressable
-              key={item}
-              onPress={() => chooseLevel(item)}
-              style={[styles.levelChip, item === examLevel && styles.levelChipActive]}
-            >
-              <Text style={[styles.levelLabel, item === examLevel && styles.levelLabelActive]}>
-                {item}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
+        {leveled && (
+          <View style={styles.levels}>
+            {EXAM_LEVELS.map((item) => (
+              <Pressable
+                key={item}
+                onPress={() => chooseLevel(item)}
+                style={[styles.levelChip, item === examLevel && styles.levelChipActive]}
+              >
+                <Text style={[styles.levelLabel, item === examLevel && styles.levelLabelActive]}>
+                  {item}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        )}
       </View>
 
       <ScrollView contentContainerStyle={styles.body}>
@@ -170,7 +179,8 @@ export function ExamScreen({
                 {findExamTopic(item.language, item.topicId)?.label ?? item.topicId}
               </Text>
               <Text style={styles.rowMeta}>
-                {item.level} · {formatDate(item.startedAt)} · {t.examAnswers(item.answerCount)} ·{' '}
+                {examHasLevels(item.language) ? `${item.level} · ` : ''}
+                {formatDate(item.startedAt)} · {t.examAnswers(item.answerCount)} ·{' '}
                 {item.errorCount === null ? t.examNoReview : t.examErrors(item.errorCount)}
               </Text>
             </View>
