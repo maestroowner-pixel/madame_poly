@@ -5,6 +5,7 @@ import { SPANISH } from './es';
 import { FRENCH } from './fr';
 import { ITALIAN } from './it';
 import { PORTUGUESE } from './pt';
+import { BRAZILIAN } from './br';
 import { UKRAINIAN } from './uk';
 import { bandOf, type GrammarModule, type GrammarUnit, type Syllabus } from './types';
 
@@ -21,6 +22,7 @@ const SYLLABI: Record<LanguageCode, Syllabus | GrammarModule[]> = {
   es: SPANISH,
   it: ITALIAN,
   pt: PORTUGUESE,
+  br: BRAZILIAN,
   uk: UKRAINIAN,
 };
 

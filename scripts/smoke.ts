@@ -13,6 +13,7 @@ import { join } from 'node:path';
 
 import Anthropic from '@anthropic-ai/sdk';
 
+import { LANGUAGES } from '../src/languages';
 import { LEVELS, type LanguageCode, type Level } from '../src/types';
 
 /** .env читаем сами: скрипт запускается вне бандлера Expo. */
@@ -40,6 +41,7 @@ const SAMPLES: Record<LanguageCode, string> = {
   es: 'Ayer yo fui a la tienda y compré dos pan para mi desayuno.',
   it: 'Ieri io sono andato al negozio e ho comprato due pane per la mia colazione.',
   pt: 'Ontem eu fui na loja e comprei dois pão para o meu pequeno-almoço.',
+  br: 'Ontem eu ir na loja e comprei dois pão pra meu café da manhã.',
   uk: 'Вчора я пішов в магазин і купив два хліба на мій сніданок.',
 };
 
@@ -88,7 +90,8 @@ async function main(): Promise<void> {
   console.log(`      ok — ${(audio.length / 1024).toFixed(1)} КБ → ${audioPath}`);
 
   console.log('\n[2/3] Whisper — распознаю обратно');
-  const stt = await fetch(`${api}/transcribe?language=${language}`, {
+  // Код Whisper, а не код языка: у бразильского португальского он «pt», «br» Whisper не знает.
+  const stt = await fetch(`${api}/transcribe?language=${LANGUAGES[language].whisper}`, {
     method: 'POST',
     headers: { ...auth, 'Content-Type': 'audio/mpeg' },
     body: audio,

@@ -39,6 +39,7 @@ const VOICE_SAMPLES: Record<LanguageCode, string> = {
   es: '¡Hola, soy Poly! ¿Charlamos un rato?',
   it: 'Ciao, sono Poly! Facciamo due chiacchiere?',
   pt: 'Olá, sou a Poly! Vamos conversar um bocadinho?',
+  br: 'Oi, eu sou a Poly! Vamos bater um papo?',
   uk: 'Привіт, я Полі! Поговоримо трохи?',
 };
 
@@ -470,7 +471,7 @@ const createStyles = (theme: Theme) =>
       paddingBottom: 24,
     },
     row: { flexDirection: 'row', justifyContent: 'center', gap: 10 },
-    /** Семь языков — сеткой по четыре в ряд: в одну строку плитки прежнего размера не влезают. */
+    /** Восемь языков — сеткой по четыре в ряд: в одну строку плитки прежнего размера не влезают. */
     languages: {
       flexDirection: 'row',
       flexWrap: 'wrap',

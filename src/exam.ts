@@ -20,7 +20,9 @@ export const EXAM_LEVELS: ExamLevel[] = ['B1', 'B2'];
  * экране не показывается.
  */
 export function examHasLevels(language: LanguageCode): boolean {
-  return language !== 'uk';
+  // Celpe-Bras тоже один: уровень (Intermediário … Avançado Superior) он
+  // ставит по результату, отдельных экзаменов B1 и B2 у него нет.
+  return language !== 'uk' && language !== 'br';
 }
 
 /**
@@ -118,17 +120,26 @@ const LABELS: Record<LanguageCode, Record<ExamTopicId, string>> = {
     travel: 'Подорожі та туризм',
     culture: 'Культура та мистецтво',
   },
+  br: {
+    work: 'O trabalho e a carreira',
+    environment: 'O meio ambiente',
+    technology: 'A tecnologia',
+    education: 'A educação',
+    health: 'A saúde e o estilo de vida',
+    travel: 'As viagens e o turismo',
+    culture: 'A cultura e as artes',
+  },
 };
 
 /** Названия на языке интерфейса — под названием темы в списке. */
 const GLOSSES: Record<ExamTopicId, Record<UiLocale, string>> = {
-  work: { en: 'Work and careers', uk: 'Робота та кар’єра', es: 'Trabajo y carrera', ru: 'Работа и карьера', de: 'Arbeit und Beruf', fr: 'Le travail et la carrière' , pt: 'O trabalho e a carreira' },
-  environment: { en: 'The environment', uk: 'Довкілля', es: 'Medio ambiente', ru: 'Экология', de: 'Umwelt', fr: 'L\'environnement' , pt: 'O meio ambiente' },
-  technology: { en: 'Technology', uk: 'Технології', es: 'Tecnología', ru: 'Технологии', de: 'Technik und Digitalisierung', fr: 'Les nouvelles technologies' , pt: 'A tecnologia' },
-  education: { en: 'Education', uk: 'Освіта', es: 'Educación', ru: 'Образование', de: 'Bildung', fr: 'L\'éducation' , pt: 'A educação' },
-  health: { en: 'Health and lifestyle', uk: 'Здоров’я та спосіб життя', es: 'Salud y estilo de vida', ru: 'Здоровье и образ жизни', de: 'Gesundheit und Lebensstil', fr: 'La santé et le mode de vie' , pt: 'A saúde e o estilo de vida' },
-  travel: { en: 'Travel and tourism', uk: 'Подорожі та туризм', es: 'Viajes y turismo', ru: 'Путешествия и туризм', de: 'Reisen und Tourismus', fr: 'Les voyages et le tourisme' , pt: 'As viagens e o turismo' },
-  culture: { en: 'Culture and the arts', uk: 'Культура та мистецтво', es: 'Cultura y artes', ru: 'Культура и искусство', de: 'Kultur und Kunst', fr: 'La culture et les arts' , pt: 'A cultura e as artes' },
+  work: { en: 'Work and careers', uk: 'Робота та кар’єра', es: 'Trabajo y carrera', ru: 'Работа и карьера', de: 'Arbeit und Beruf', fr: 'Le travail et la carrière' , pt: 'O trabalho e a carreira' , zh: '工作与职业', ja: '仕事とキャリア', ko: '일과 직업' },
+  environment: { en: 'The environment', uk: 'Довкілля', es: 'Medio ambiente', ru: 'Экология', de: 'Umwelt', fr: 'L\'environnement' , pt: 'O meio ambiente' , zh: '环境', ja: '環境', ko: '환경' },
+  technology: { en: 'Technology', uk: 'Технології', es: 'Tecnología', ru: 'Технологии', de: 'Technik und Digitalisierung', fr: 'Les nouvelles technologies' , pt: 'A tecnologia' , zh: '科技', ja: 'テクノロジー', ko: '기술' },
+  education: { en: 'Education', uk: 'Освіта', es: 'Educación', ru: 'Образование', de: 'Bildung', fr: 'L\'éducation' , pt: 'A educação' , zh: '教育', ja: '教育', ko: '교육' },
+  health: { en: 'Health and lifestyle', uk: 'Здоров’я та спосіб життя', es: 'Salud y estilo de vida', ru: 'Здоровье и образ жизни', de: 'Gesundheit und Lebensstil', fr: 'La santé et le mode de vie' , pt: 'A saúde e o estilo de vida' , zh: '健康与生活方式', ja: '健康とライフスタイル', ko: '건강과 생활 방식' },
+  travel: { en: 'Travel and tourism', uk: 'Подорожі та туризм', es: 'Viajes y turismo', ru: 'Путешествия и туризм', de: 'Reisen und Tourismus', fr: 'Les voyages et le tourisme' , pt: 'As viagens e o turismo' , zh: '旅行与旅游', ja: '旅行と観光', ko: '여행과 관광' },
+  culture: { en: 'Culture and the arts', uk: 'Культура та мистецтво', es: 'Cultura y artes', ru: 'Культура и искусство', de: 'Kultur und Kunst', fr: 'La culture et les arts' , pt: 'A cultura e as artes' , zh: '文化与艺术', ja: '文化と芸術', ko: '문화와 예술' },
 };
 
 export function examTopics(language: LanguageCode): ExamTopic[] {
@@ -237,6 +248,17 @@ const EXAM_FORMATS: Record<ExamLevel, Record<LanguageCode, ExamFormat>> = {
           'Dialogue in a situation: a short everyday role play connected to the topic — you are a neighbour, a colleague or a shop assistant, and the candidate has to ask for something, agree on a plan or sort out a small problem.',
       },
     },
+    br: {
+      name: 'Celpe-Bras',
+      parts: {
+        interview:
+          "Entrevista, first part of the real exam's face-to-face interview: questions about the candidate's life, studies or work and interests connected to the topic.",
+        longTurn:
+          "Elemento provocador: in the real exam the candidate comments on an image or a short text. There are none here, so describe a situation or give a short statement related to the topic in two or three sentences, and ask the candidate to comment on it on their own for about two minutes — what it shows, what they think, how it is in their own country. Afterwards ask one question about it.",
+        discussion:
+          'Conversation on the elemento provocador: discuss the topic further with follow-up questions, ask for their opinion and reasons, and take a different view now and then.',
+      },
+    },
   },
   B2: {
     en: {
@@ -314,6 +336,17 @@ const EXAM_FORMATS: Record<ExamLevel, Record<LanguageCode, ExamFormat>> = {
           'Monologue: give a short statement on the topic in one or two sentences and ask the candidate to comment on it on their own for about two minutes — the issue it raises, their view, arguments and examples. Afterwards ask one question about their view.',
         discussion:
           'Discussion: broader questions about the topic — causes, consequences, what should change. Take a different view now and then so they have to argue their case.',
+      },
+    },
+    br: {
+      name: 'Celpe-Bras',
+      parts: {
+        interview:
+          "Entrevista, first part of the real exam's face-to-face interview: questions about the candidate's life, studies or work and interests connected to the topic.",
+        longTurn:
+          "Elemento provocador: in the real exam the candidate comments on an image or a short text. There are none here, so describe a situation or give a short statement related to the topic in two or three sentences, and ask the candidate to comment on it on their own for about two minutes — what it shows, what they think, how it is in their own country. Afterwards ask one question about it.",
+        discussion:
+          'Conversation on the elemento provocador: discuss the topic further with follow-up questions, ask for their opinion and reasons, and take a different view now and then.',
       },
     },
   },

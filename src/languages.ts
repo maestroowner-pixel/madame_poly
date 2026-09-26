@@ -23,6 +23,12 @@ export const LANGUAGES: Record<LanguageCode, LanguageMeta> = {
    * модель иначе сбивается на бразильский вариант.
    */
   pt: { label: 'Português', englishName: 'European Portuguese', whisper: 'pt', flag: '🇵🇹' },
+  /**
+   * Бразильский португальский — отдельный язык, а не вариант: другая норма
+   * (você, герундий, проклиза в начале фразы), своя программа и свой экзамен
+   * (Celpe-Bras). Whisper у обоих вариантов один — «pt».
+   */
+  br: { label: 'Brasileiro', englishName: 'Brazilian Portuguese', whisper: 'pt', flag: '🇧🇷' },
   uk: { label: 'Українська', englishName: 'Ukrainian', whisper: 'uk', flag: '🇺🇦' },
 };
 
