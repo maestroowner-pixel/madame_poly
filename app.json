@@ -12,7 +12,8 @@
       "bundleIdentifier": "com.kukalab.polyglotta",
       "infoPlist": {
         "CFBundleAllowMixedLocalizations": true
-      }
+      },
+      "buildNumber": "10314"
     },
     "android": {
       "adaptiveIcon": {
@@ -25,7 +26,8 @@
       "package": "com.kukalab.polyglotta",
       "permissions": [
         "CAMERA"
-      ]
+      ],
+      "versionCode": 2
     },
     "web": {
       "favicon": "./assets/favicon.png"
