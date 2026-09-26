@@ -42,6 +42,7 @@ import {
   saveVocabulary,
 } from '../storage';
 import { useStyles, useTheme, type Theme } from '../theme';
+import { isSingleCourse } from '../grammar';
 import { findTopic } from '../topics';
 import type {
   CardDirection,
@@ -352,7 +353,8 @@ export function VocabularyScreen({ menu, language, level, topicId }: Props) {
       <View style={styles.header}>
         {menu}
         <ScreenTitle screen="words" />
-        <Text style={styles.level}>{vocabulary?.level ?? level}</Text>
+        {/* У сквозного курса (украинский, бразильский) уровня нет — не показываем. */}
+        {!isSingleCourse(language) && <Text style={styles.level}>{vocabulary?.level ?? level}</Text>}
       </View>
 
       <ScrollView contentContainerStyle={styles.body}>

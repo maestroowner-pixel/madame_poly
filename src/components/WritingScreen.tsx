@@ -26,6 +26,7 @@ import {
   type WritingState,
 } from '../storage';
 import { useStyles, useTheme, type Theme } from '../theme';
+import { isSingleCourse } from '../grammar';
 import { findTopic } from '../topics';
 import type { LanguageCode, Level } from '../types';
 
@@ -181,7 +182,8 @@ export function WritingScreen({ menu, language, level, topicId }: Props) {
       <View style={styles.header}>
         {menu}
         <ScreenTitle screen="write" />
-        <Text style={styles.level}>{level}</Text>
+        {/* У сквозного курса (украинский, бразильский) уровня нет — не показываем. */}
+        {!isSingleCourse(language) && <Text style={styles.level}>{level}</Text>}
       </View>
 
       <View style={[styles.flex, { paddingBottom: keyboard }]}>

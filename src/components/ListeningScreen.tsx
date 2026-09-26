@@ -36,6 +36,7 @@ import {
   saveListeningStats,
 } from '../storage';
 import { useStyles, useTheme, type Theme } from '../theme';
+import { isSingleCourse } from '../grammar';
 import { findTopic } from '../topics';
 import type {
   LanguageCode,
@@ -290,7 +291,8 @@ export function ListeningScreen({ menu, language, level, topicId }: Props) {
           <View style={styles.header}>
             {menu}
             <ScreenTitle screen="listen" title={listening?.title} />
-            <Text style={styles.level}>{level}</Text>
+            {/* У сквозного курса (украинский, бразильский) уровня нет — не показываем. */}
+            {!isSingleCourse(language) && <Text style={styles.level}>{level}</Text>}
           </View>
 
           {/* Письменные ответы — те же поля, что и в аккаунте: без этого тап по
