@@ -1,6 +1,8 @@
 import { Directory, File, Paths } from 'expo-file-system';
 
 import { t } from '../i18n';
+import type { PolyVoice } from '../config';
+import { loadVoice } from '../storage';
 import { assertBudget, charge, ttsCost } from './meter';
 import { proxy } from './proxy';
 
@@ -38,12 +40,15 @@ async function readBytes(response: Response): Promise<Uint8Array> {
   return bytes;
 }
 
-/** Голос и модель выбирает сервер: приложение передаёт только текст и темп. */
-async function synthesizeOpenAI(text: string, speed: number): Promise<Uint8Array> {
+/**
+ * Модель выбирает сервер; приложение передаёт текст, темп и голос — голос
+ * из настроек, если его не задали явно (так делает прослушивание в настройках).
+ */
+async function synthesizeOpenAI(text: string, speed: number, voice?: PolyVoice): Promise<Uint8Array> {
   await assertBudget();
 
   const response = await proxy('/speak', {
-    body: JSON.stringify({ text, speed }),
+    body: JSON.stringify({ text, speed, voice: voice ?? (await loadVoice()) }),
     contentType: 'application/json',
   });
 
@@ -56,11 +61,11 @@ async function synthesizeOpenAI(text: string, speed: number): Promise<Uint8Array
  * голос один на все четыре, модель читает их без подсказки. Темп — параметр:
  * в аудировании на A1 читают медленнее, чем на C2.
  */
-export async function synthesize(text: string, speed = 1): Promise<string> {
+export async function synthesize(text: string, speed = 1, voice?: PolyVoice): Promise<string> {
   // Пустую строку сервис отвергает с ошибкой — ловим её здесь, не тратя запрос.
   if (!text.trim()) throw new Error(t.nothingToSpeak);
 
-  const bytes = await synthesizeOpenAI(text, speed);
+  const bytes = await synthesizeOpenAI(text, speed, voice);
 
   const file = audioFile();
   file.create({ overwrite: true });

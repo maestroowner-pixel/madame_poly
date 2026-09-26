@@ -18,9 +18,8 @@ import {
 } from 'react-native-safe-area-context';
 
 import { AVATARS, AVATAR_GROUPS } from '../avatars';
-import { SPEECH_RATES, type SpeechMode } from '../config';
 import { CONTENT_MAX_WIDTH } from '../layout';
-import { FONT_SCALES, useStyles, useTheme, type Theme, type FontScale } from '../theme';
+import { useStyles, useTheme, type Theme } from '../theme';
 import type { Profile } from '../types';
 import { UserAvatar } from './Avatar';
 import type { Anchor } from '../anchor';
@@ -29,9 +28,6 @@ import { t } from '../i18n';
 
 interface Props {
   visible: boolean;
-  /** Темп речи собеседницы: живёт рядом с размером шрифта — обе про удобство. */
-  speechRate: SpeechMode;
-  onSelectRate: (rate: SpeechMode) => void;
   /** Значок, из которого экран вырос. */
   anchor: Anchor | null;
   profile: Profile;
@@ -42,13 +38,11 @@ interface Props {
 export function ProfileScreen({
   visible,
   anchor,
-  speechRate,
-  onSelectRate,
   profile,
   onSave,
   onClose,
 }: Props) {
-  const { theme, fontScale, setFontScale } = useTheme();
+  const { theme } = useTheme();
   const styles = useStyles(createStyles);
   /** Клавиатуру отмеряем сами: во весь экран Android окно не сжимает. */
   const keyboard = useKeyboardInset();
@@ -171,54 +165,6 @@ export function ProfileScreen({
                 {t.nameHint}
               </Text>
 
-              <Text style={styles.label}>{t.speechRate}</Text>
-              <View style={styles.fontRow}>
-                {([...SPEECH_RATES, 'auto'] as SpeechMode[]).map((rate, index) => {
-                  const active = rate === speechRate;
-                  return (
-                    <Pressable
-                      key={String(rate)}
-                      onPress={() => onSelectRate(rate)}
-                      style={[styles.fontButton, active && styles.fontButtonActive]}
-                    >
-                      <Text
-                        style={[styles.fontSample, active && styles.fontSampleActive]}
-                        numberOfLines={1}
-                        adjustsFontSizeToFit
-                        minimumFontScale={0.7}
-                      >
-                        {[t.rateSlow, t.rateNormal, t.rateFast, t.rateMatch][index]}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
-              <Text style={styles.hint}>{t.rateMatchHint}</Text>
-
-              <Text style={styles.label}>{t.textSize}</Text>
-              <View style={styles.fontRow}>
-                {FONT_SCALES.map((scale, index) => {
-                  const active = scale === fontScale;
-                  return (
-                    <Pressable
-                      key={scale}
-                      onPress={() => setFontScale(scale as FontScale)}
-                      style={[styles.fontButton, active && styles.fontButtonActive]}
-                    >
-                      <Text
-                        style={[
-                          styles.fontSample,
-                          { fontSize: 13 + index * 4 },
-                          active && styles.fontSampleActive,
-                        ]}
-                      >
-                        {[t.fontNormal, t.fontLarge, t.fontHuge][index]}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
-
               {AVATAR_GROUPS.map(({ group, title }) => (
                 <View key={group} style={styles.group}>
                   <Text style={styles.groupTitle}>{title}</Text>
@@ -307,19 +253,6 @@ const createStyles = (theme: Theme) =>
     },
     hint: { color: theme.textMuted, fontSize: 12, lineHeight: 17 },
 
-    fontRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-    fontButton: {
-      paddingVertical: 9,
-      paddingHorizontal: 14,
-      borderRadius: 999,
-      backgroundColor: theme.surface,
-      borderWidth: 1,
-      borderColor: theme.border,
-    },
-    fontButtonActive: { backgroundColor: theme.accent, borderColor: theme.accent },
-    /** Размер образца задан на месте: кнопка должна показывать, что выбираешь. */
-    fontSample: { color: theme.textMuted, fontWeight: '600' },
-    fontSampleActive: { color: theme.accentText },
 
     group: { gap: 8, marginTop: 12 },
     groupTitle: {

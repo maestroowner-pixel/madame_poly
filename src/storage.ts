@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import { SPEECH_RATES, type SpeechMode } from './config';
+import { POLY_VOICES, SPEECH_RATES, type PolyVoice, type SpeechMode } from './config';
 import { LANGUAGE_CODES } from './languages';
 import { touch } from './services/sync';
 import type {
@@ -36,6 +36,7 @@ const KEY_ARCHIVE = 'polyglotta:archive';
 const KEY_PROFILE = 'polyglotta:profile';
 const KEY_MODE = 'polyglotta:turnMode';
 const KEY_RATE = 'polyglotta:speechRate';
+const KEY_VOICE = 'polyglotta:voice';
 const KEY_WPM = 'polyglotta:userWpm';
 const KEY_VARIANT = 'polyglotta:englishVariant';
 const keyArchived = (id: string) => `polyglotta:archive:${id}`;
@@ -157,6 +158,16 @@ export async function loadSpeechRate(): Promise<SpeechMode> {
 
 export async function saveSpeechRate(rate: SpeechMode): Promise<void> {
   await write(KEY_RATE, String(rate));
+}
+
+/** Голос собеседницы. Незнакомое значение — голос по умолчанию. */
+export async function loadVoice(): Promise<PolyVoice> {
+  const raw = await AsyncStorage.getItem(KEY_VOICE);
+  return (POLY_VOICES as readonly string[]).includes(raw ?? '') ? (raw as PolyVoice) : POLY_VOICES[0];
+}
+
+export async function saveVoice(voice: PolyVoice): Promise<void> {
+  await write(KEY_VOICE, voice);
 }
 
 /** Замеренный темп речи человека, слов в минуту; null — ещё не мерили. */

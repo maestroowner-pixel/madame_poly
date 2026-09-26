@@ -30,10 +30,12 @@ const CLAUDE_MODEL = 'claude-sonnet-5';
  */
 const CLAUDE_MAX_TOKENS = 16384;
 /**
- * Голос собеседницы. Один на все четыре языка: у неё одно лицо во всех ролях,
- * значит и голос должен быть один. Голоса OpenAI не привязаны к языку.
+ * Голоса собеседницы — те же, что в `POLY_VOICES` приложения. Все женские:
+ * на портрете женщина. Голоса OpenAI не привязаны к языку, один голос читает
+ * все четыре. Прочие значения не пускаем; не прислан голос — первый, nova
+ * (так ходят сборки, где выбора голоса ещё не было).
  */
-const TTS_VOICE = 'nova';
+const TTS_VOICES = ['nova', 'shimmer', 'coral', 'sage'];
 const TTS_MAX_CHARS = 4096;
 /** Предел Whisper — 25 МБ на файл. */
 const AUDIO_MAX_BYTES = 25 * 1024 * 1024;
@@ -224,15 +226,16 @@ async function transcribe(req: Request, res: Response, uid: string): Promise<voi
 }
 
 async function speak(req: Request, res: Response, uid: string): Promise<void> {
-  const { text, speed } = (req.body ?? {}) as { text?: unknown; speed?: unknown };
+  const { text, speed, voice } = (req.body ?? {}) as { text?: unknown; speed?: unknown; voice?: unknown };
   if (typeof text !== 'string' || !text.trim()) throw new HttpError(400, 'invalid_request_error', 'Empty text');
   if (text.length > TTS_MAX_CHARS) throw new HttpError(400, 'invalid_request_error', 'Text too long');
   const pace = typeof speed === 'number' ? Math.min(4, Math.max(0.25, speed)) : 1;
+  const chosen = typeof voice === 'string' && TTS_VOICES.includes(voice) ? voice : TTS_VOICES[0];
 
   const upstream = await fetch('https://api.openai.com/v1/audio/speech', {
     method: 'POST',
     headers: { Authorization: `Bearer ${OPENAI_API_KEY.value()}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model: 'tts-1', voice: TTS_VOICE, input: text, response_format: 'mp3', speed: pace }),
+    body: JSON.stringify({ model: 'tts-1', voice: chosen, input: text, response_format: 'mp3', speed: pace }),
   });
   if (!upstream.ok) {
     logger.error('TTS', upstream.status, await upstream.text());

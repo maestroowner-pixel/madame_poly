@@ -1,6 +1,7 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { setAudioModeAsync, useAudioPlayer } from 'expo-audio';
 import type { ReactNode } from 'react';
-import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { ScreenTitle } from './ScreenMenu';
 import { ReminderRows } from './ReminderRows';
@@ -9,17 +10,32 @@ import { measureAnchor, type Anchor } from '../anchor';
 import {
   CONTACT_EMAIL,
   COPYRIGHT,
+  POLY_VOICES,
+  SPEECH_RATES,
+  type PolyVoice,
+  type SpeechMode,
   PRIVACY_URL,
   SITE_LABEL,
   SITE_URL,
   TERMS_URL,
 } from '../config';
+import { errorText } from '../errors';
 import { t } from '../i18n';
 import { LANGUAGES, LANGUAGE_CODES } from '../languages';
 import { CONTENT_MAX_WIDTH } from '../layout';
-import { useStyles, type Theme } from '../theme';
+import { FONT_SCALES, useStyles, useTheme, type FontScale, type Theme } from '../theme';
+import { synthesize } from '../services/tts';
+import { loadVoice, saveVoice } from '../storage';
 import { findTopic } from '../topics';
 import { LEVELS, type EnglishVariant, type LanguageCode, type Level } from '../types';
+
+/** Проба голоса — фраза на изучаемом языке: слушают, как Poly звучит именно на нём. */
+const VOICE_SAMPLES: Record<LanguageCode, string> = {
+  en: "Hi, I'm Poly! Shall we have a little chat?",
+  de: 'Hallo, ich bin Poly! Wollen wir ein bisschen plaudern?',
+  fr: 'Bonjour, je suis Poly ! On discute un peu ?',
+  es: '¡Hola, soy Poly! ¿Charlamos un rato?',
+};
 
 interface Props {
   /** Домик со списком разделов. */
@@ -38,6 +54,9 @@ interface Props {
   onOpenProfile: (anchor: Anchor | null) => void;
   englishVariant: EnglishVariant;
   onSelectVariant: (variant: EnglishVariant) => void;
+  /** Темп речи собеседницы — в настройках, где его и ищут. */
+  speechRate: SpeechMode;
+  onSelectRate: (rate: SpeechMode) => void;
   /** Почта вошедшего; null — вход не выполнен. */
   accountEmail: string | null;
   onOpenAccount: (anchor: Anchor | null) => void;
@@ -70,6 +89,8 @@ export function SettingsScreen({
   onOpenProfile,
   englishVariant,
   onSelectVariant,
+  speechRate,
+  onSelectRate,
   accountEmail,
   onOpenAccount,
   pro,
@@ -78,6 +99,7 @@ export function SettingsScreen({
   onOpenPaywall,
 }: Props) {
   const styles = useStyles(createStyles);
+  const { fontScale, setFontScale } = useTheme();
 
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pickerAnchor, setPickerAnchor] = useState<Anchor | null>(null);
@@ -88,6 +110,35 @@ export function SettingsScreen({
   const paywallRef = useRef<View>(null);
 
   const topic = findTopic(language, topicId);
+
+  const player = useAudioPlayer(null);
+  const [voice, setVoice] = useState<PolyVoice>(POLY_VOICES[0]);
+  /** Голос, который сейчас озвучивается для пробы. */
+  const [sampling, setSampling] = useState<PolyVoice | null>(null);
+  const [voiceError, setVoiceError] = useState<string | null>(null);
+
+  useEffect(() => {
+    void loadVoice().then(setVoice);
+  }, []);
+
+  /** Выбор голоса сразу даёт его послушать — на изучаемом языке и в выбранном темпе. */
+  const pickVoice = async (next: PolyVoice) => {
+    setVoice(next);
+    setVoiceError(null);
+    void saveVoice(next);
+    if (sampling) return;
+    setSampling(next);
+    try {
+      const uri = await synthesize(VOICE_SAMPLES[language], speechRate === 'auto' ? 1 : speechRate, next);
+      await setAudioModeAsync({ playsInSilentMode: true, allowsRecording: false });
+      player.replace({ uri });
+      player.play();
+    } catch (e: unknown) {
+      setVoiceError(errorText(e));
+    } finally {
+      setSampling(null);
+    }
+  };
 
   return (
     <View style={styles.screen}>
@@ -182,6 +233,80 @@ export function SettingsScreen({
           })}
         </View>
       )}
+
+      <Text style={styles.sectionLabel}>{t.voice}</Text>
+      <View style={styles.row}>
+        {POLY_VOICES.map((value) => {
+          const active = value === voice;
+          return (
+            <Pressable
+              key={value}
+              onPress={() => void pickVoice(value)}
+              style={[styles.variant, active && styles.tileActive]}
+            >
+              {sampling === value ? (
+                <ActivityIndicator size="small" />
+              ) : (
+                <Text
+                  style={[styles.variantLabel, active && styles.activeLabel]}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.65}
+                >
+                  {t.voiceNames[value]}
+                </Text>
+              )}
+            </Pressable>
+          );
+        })}
+      </View>
+      <Text style={styles.sectionHint}>{voiceError ?? t.voiceHint}</Text>
+
+      <Text style={styles.sectionLabel}>{t.speechRate}</Text>
+      <View style={styles.row}>
+        {([...SPEECH_RATES, 'auto'] as SpeechMode[]).map((rate, index) => {
+          const active = rate === speechRate;
+          return (
+            <Pressable
+              key={String(rate)}
+              onPress={() => onSelectRate(rate)}
+              style={[styles.variant, active && styles.tileActive]}
+            >
+              <Text
+                style={[styles.variantLabel, active && styles.activeLabel]}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.65}
+              >
+                {[t.rateSlow, t.rateNormal, t.rateFast, t.rateMatch][index]}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+      <Text style={styles.sectionHint}>{t.rateMatchHint}</Text>
+
+      {/* Подпись растёт вместе с размером — сразу видно, что выбираешь. */}
+      <Text style={styles.sectionLabel}>{t.textSize}</Text>
+      <View style={styles.row}>
+        {FONT_SCALES.map((scale, index) => {
+          const active = scale === fontScale;
+          return (
+            <Pressable
+              key={scale}
+              onPress={() => setFontScale(scale as FontScale)}
+              style={[styles.variant, active && styles.tileActive]}
+            >
+              <Text
+                style={[styles.variantLabel, { fontSize: 11 + index * 3 }, active && styles.activeLabel]}
+                numberOfLines={1}
+              >
+                {[t.fontNormal, t.fontLarge, t.fontHuge][index]}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
 
       <Pressable
         ref={profileRef}
@@ -346,6 +471,8 @@ const createStyles = (theme: Theme) =>
       backgroundColor: theme.surfaceAlt,
     },
     variantLabel: { color: theme.textMuted, fontSize: 11, fontWeight: '700' },
+    sectionLabel: { color: theme.textMuted, fontSize: 13, marginBottom: -4 },
+    sectionHint: { color: theme.textMuted, fontSize: 12, lineHeight: 17, marginTop: -4 },
     square: {
       width: 46,
       height: 46,

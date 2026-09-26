@@ -12,6 +12,15 @@ export const API_URL =
   process.env.EXPO_PUBLIC_API_URL ||
   `https://europe-west1-${process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID ?? ''}.cloudfunctions.net/api`;
 
+/**
+ * Голоса собеседницы на выбор. Все женские — на портрете женщина; голоса
+ * OpenAI не привязаны к языку, так что выбранный читает все четыре. Первый —
+ * голос по умолчанию. Тот же список держит сервер (`functions/`): прочие
+ * значения он не пускает.
+ */
+export const POLY_VOICES = ['nova', 'shimmer', 'coral', 'sage'] as const;
+export type PolyVoice = (typeof POLY_VOICES)[number];
+
 /** Модель диалога. */
 export const CLAUDE_MODEL = 'claude-sonnet-5';
 

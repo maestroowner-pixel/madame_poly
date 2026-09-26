@@ -381,6 +381,8 @@ function Screen() {
               onOpenProfile={profileScreen.show}
               englishVariant={conversation.englishVariant}
               onSelectVariant={conversation.setEnglishVariant}
+              speechRate={conversation.speechRate}
+              onSelectRate={conversation.setSpeechRate}
               accountEmail={account.email}
               onOpenAccount={accountScreen.show}
               pro={subscription.pro}
@@ -423,8 +425,6 @@ function Screen() {
       <ProfileScreen
         visible={profileScreen.open}
         anchor={profileScreen.anchor}
-        speechRate={conversation.speechRate}
-        onSelectRate={conversation.setSpeechRate}
         profile={conversation.profile}
         onSave={conversation.setProfile}
         onClose={profileScreen.hide}
