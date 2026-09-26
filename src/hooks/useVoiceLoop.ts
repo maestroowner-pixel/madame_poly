@@ -24,6 +24,7 @@ import { transcribe } from '../services/stt';
 import { synthesize } from '../services/tts';
 import type { LanguageCode, TurnMode } from '../types';
 import { t } from '../i18n';
+import { requireMicrophone } from '../services/microphone';
 import { errorText } from '../errors';
 
 export type Status = 'idle' | 'listening' | 'transcribing' | 'thinking' | 'speaking';
@@ -127,6 +128,7 @@ export function useVoiceLoop(options: VoiceLoopOptions) {
       return;
     }
     try {
+      await requireMicrophone();
       await setAudioModeAsync({ playsInSilentMode: true, allowsRecording: true });
       await recorder.prepareToRecordAsync();
       recorder.record();

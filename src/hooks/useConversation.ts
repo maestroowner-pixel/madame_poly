@@ -1,4 +1,3 @@
-import { AudioModule } from 'expo-audio';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import {
@@ -114,11 +113,10 @@ export function useConversation() {
     setVariantState(await loadEnglishVariant());
   }, []);
 
+  // Микрофон здесь не спрашиваем: диалог поверх заставки сбивал её, а данные
+  // ждали ответа. Разрешение просит App после заставки и запись перед стартом.
   useEffect(() => {
     (async () => {
-      const permission = await AudioModule.requestRecordingPermissionsAsync();
-      if (!permission.granted) setError(t.noMicrophone);
-
       await reload();
       setReady(true);
     })().catch((e: unknown) => setError(errorText(e)));

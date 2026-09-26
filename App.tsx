@@ -44,6 +44,7 @@ import { LANGUAGES } from './src/languages';
 import { CONTENT_MAX_WIDTH } from './src/layout';
 import { VOCABULARY_LANGUAGES } from './src/config';
 import { dueCards } from './src/review';
+import { ensureMicrophone } from './src/services/microphone';
 import { syncReminders } from './src/services/reminders';
 import { loadReviewCards } from './src/storage';
 import { ThemeProvider, useStyles, useTheme, type Theme } from './src/theme';
@@ -179,11 +180,18 @@ function Screen() {
     void SplashScreen.hideAsync();
   }, []);
 
+  // Разрешения — только после заставки и строго по очереди: сначала микрофон,
+  // потом уведомления. Диалог поверх ролика ставил приложение на паузу, а два
+  // одновременных запроса Android не любит — второй мог сразу вернуть отказ.
   // Расписание напоминаний живёт в системе — сверяем его с настройками при
   // каждом запуске: язык интерфейса или очередь могли смениться.
   useEffect(() => {
-    void syncReminders().catch(() => undefined);
-  }, []);
+    if (!splashDone) return;
+    void ensureMicrophone()
+      .catch(() => false)
+      .then(() => syncReminders())
+      .catch(() => undefined);
+  }, [splashDone]);
 
   useEffect(() => {
     if (conversation.messages.length === 0) return;

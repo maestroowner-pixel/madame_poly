@@ -25,6 +25,7 @@ import { t } from '../i18n';
 import { errorText } from '../errors';
 import { CONTENT_MAX_WIDTH } from '../layout';
 import { checkListeningAnswers, generateListening } from '../services/llm';
+import { requireMicrophone } from '../services/microphone';
 import { transcribe } from '../services/stt';
 import { synthesize } from '../services/tts';
 import {
@@ -206,6 +207,7 @@ export function ListeningScreen({ menu, language, level, topicId }: Props) {
       }
 
       hush();
+      await requireMicrophone();
       await setAudioModeAsync({ playsInSilentMode: true, allowsRecording: true });
       await recorder.prepareToRecordAsync();
       recorder.record();
