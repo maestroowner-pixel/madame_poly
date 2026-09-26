@@ -14,40 +14,90 @@ const RAY_COUNT = 8;
  * Значки нарисованы фигурами, а не глифами: шрифтовые символы выходят разными
  * по весу, а на iOS солнце ещё и подменяется цветным эмодзи.
  */
-export function SunIcon({ size: base, color }: Props) {
-  /** На планшете значки крупнее вместе со всем интерфейсом. */
-  const size = base * UI_SCALE;
-  const core = size * 0.42;
-  const rayLength = size * 0.2;
-  const rayWidth = Math.max(2, size * 0.085);
+/** Нарисованное солнце: ядро и лучи заданной толщины, необязательная тень. */
+function SunShape({
+  size,
+  color,
+  thickness = 1,
+  glow,
+}: {
+  size: number;
+  color: string;
+  /** Во сколько раз толще лучи и крупнее ядро — для ореола. */
+  thickness?: number;
+  glow?: { color: string; radius: number };
+}) {
+  const core = size * 0.42 * (1 + (thickness - 1) * 0.35);
+  const rayLength = size * 0.2 * (1 + (thickness - 1) * 0.3);
+  const rayWidth = Math.max(2, size * 0.085) * thickness;
+  const shadow = glow
+    ? { shadowColor: glow.color, shadowOpacity: 1, shadowRadius: glow.radius, shadowOffset: { width: 0, height: 0 } }
+    : null;
 
   return (
-    <View style={[styles.box, { width: size, height: size }]}>
+    <View style={[styles.box, { position: 'absolute', width: size, height: size }]}>
       {Array.from({ length: RAY_COUNT }, (_, index) => (
         <View
           key={index}
-          style={{
-            position: 'absolute',
-            width: rayWidth,
-            height: rayLength,
-            borderRadius: rayWidth / 2,
-            backgroundColor: color,
-            // Сначала поворот, потом сдвиг — луч уезжает вдоль уже повёрнутой оси.
-            transform: [
-              { rotate: `${(index * 360) / RAY_COUNT}deg` },
-              { translateY: -size * 0.39 },
-            ],
-          }}
+          style={[
+            {
+              position: 'absolute',
+              width: rayWidth,
+              height: rayLength,
+              borderRadius: rayWidth / 2,
+              backgroundColor: color,
+              // Сначала поворот, потом сдвиг — луч уезжает вдоль уже повёрнутой оси.
+              transform: [{ rotate: `${(index * 360) / RAY_COUNT}deg` }, { translateY: -size * 0.39 }],
+            },
+            shadow,
+          ]}
         />
       ))}
-      <View
+      <View style={[{ width: core, height: core, borderRadius: core / 2, backgroundColor: color }, shadow]} />
+    </View>
+  );
+}
+
+/** Жёлтое солнце кнопки светлой темы и его свечение. */
+const SUN_YELLOW = '#F5B81C';
+const SUN_GLOW = '#FFD84D';
+
+/**
+ * Солнце — кнопка светлой темы. Жёлтое и мерцает, как неоновая корона: под
+ * ним его же копия с лучами толще — ореол, яркость которого медленно
+ * разгорается и гаснет; на iOS ореол ещё и светится тенью в цвет. Цвет из
+ * props не берём: солнце всегда жёлтое.
+ */
+export function SunIcon({ size: base }: Props) {
+  /** На планшете значки крупнее вместе со всем интерфейсом. */
+  const size = base * UI_SCALE;
+  const pulse = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulse, { toValue: 1, duration: 1500, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
+        Animated.timing(pulse, { toValue: 0, duration: 1500, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
+      ]),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [pulse]);
+
+  return (
+    <View style={{ width: size, height: size }}>
+      <Animated.View
+        pointerEvents="none"
         style={{
-          width: core,
-          height: core,
-          borderRadius: core / 2,
-          backgroundColor: color,
+          position: 'absolute',
+          width: size,
+          height: size,
+          opacity: pulse.interpolate({ inputRange: [0, 1], outputRange: [0.2, 0.7] }),
         }}
-      />
+      >
+        <SunShape size={size} color={SUN_GLOW} thickness={1.8} glow={{ color: SUN_GLOW, radius: size * 0.14 }} />
+      </Animated.View>
+      <SunShape size={size} color={SUN_YELLOW} />
     </View>
   );
 }
