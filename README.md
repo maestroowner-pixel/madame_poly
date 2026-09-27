@@ -786,8 +786,9 @@ auth/network-request-failed. Человеку эти строки ничего �
 у остальных нажатие открывает тарифы.
 
 Цены задаются не в коде, а в магазинах: два продукта в App Store Connect и
-Google Play. В RevenueCat Pro привязан к праву `pro` (`PRO_ENTITLEMENT`), Max —
-к `max` и `pro` сразу (`MAX_ENTITLEMENT`), оба в текущем предложении. Пейвол
+Google Play. В RevenueCat Pro привязан к праву `madame_poly_pro` (`PRO_ENTITLEMENT`), Max — к
+`madame_poly_max` (`MAX_ENTITLEMENT`); сначала проверяется Max. Оба пакета — в
+текущем предложении `default`. Пейвол
 отличает Max по идентификатору продукта — в нём должно быть «max»
 (`MAX_PRODUCT_MARK`, например `poly_max_monthly`). Приложение получает от
 RevenueCat готовую строку с ценой в валюте магазина и показывает её как есть. В

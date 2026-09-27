@@ -1,6 +1,6 @@
 # Подписки: что завести в магазинах и RevenueCat
 
-Код готов: приложение различает тарифы по правам RevenueCat (`pro`, `max`),
+Код готов: приложение различает тарифы по правам RevenueCat (`madame_poly_pro`, `madame_poly_max`),
 пейвол узнаёт Max по «max» в идентификаторе продукта, сервер проверяет
 подписку в RevenueCat по Firebase uid (приложение вызывает `Purchases.logIn`
 с тем же uid, анонимным тоже).
@@ -58,8 +58,11 @@ Monitoring Viewer; ключ JSON выпущен и загружается в Rev
 2. iOS: ключ App Store Connect API (In-App Purchase key) — для проверки
    покупок. Android: сервисный аккаунт Google Cloud с доступом к Play Console.
 3. Products → импортировать оба продукта из обоих магазинов.
-4. Entitlements: **`pro`** — `Poly_Pro`; **`max`** — `Poly_Max`. Прикреплять
-   Max ещё и к `pro` не нужно: приложение и сервер сначала проверяют `max`.
+4. Entitlements (заведены 2026-09-26): **`madame_poly_pro`** — `Poly_Pro` и
+   `poly_pro:poly-pro`; **`madame_poly_max`** — `Poly_Max` и `poly_max:poly-max`.
+   Эти идентификаторы прописаны в `src/config.ts` и `functions/src/index.ts` —
+   переименовать право в RevenueCat нельзя, поэтому при новом праве меняется код.
+   Прикреплять Max ещё и к Pro не нужно: приложение и сервер сначала проверяют Max.
 5. Offerings → **default** → два пакета с **собственными** идентификаторами
    (Custom): `pro` → `Poly_Pro`, `max` → `Poly_Max`, каждый с продуктами обоих
    магазинов; `$rc_monthly` на оба нельзя — он в наборе один. Сделать `default`

@@ -101,11 +101,12 @@ export const REVENUECAT_ANDROID_KEY = process.env.EXPO_PUBLIC_REVENUECAT_ANDROID
 export type Tier = 'free' | 'pro' | 'max';
 
 /**
- * Права доступа в RevenueCat. Подписка Max привязана к обоим: так всё, что
- * проверяет просто «есть ли подписка», видит её и у Max.
+ * Права доступа в RevenueCat — ровно их идентификаторы из Product catalog →
+ * Entitlements (переименовать право там нельзя). Сначала проверяется Max, так
+ * что привязывать Max ещё и к праву Pro не нужно.
  */
-export const PRO_ENTITLEMENT = 'pro';
-export const MAX_ENTITLEMENT = 'max';
+export const PRO_ENTITLEMENT = 'madame_poly_pro';
+export const MAX_ENTITLEMENT = 'madame_poly_max';
 
 /**
  * Как пейвол отличает Max от Pro: по идентификатору продукта в магазине —

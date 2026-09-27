@@ -144,6 +144,11 @@ export async function restore(): Promise<boolean> {
  */
 export async function linkAccount(userId: string | null): Promise<void> {
   if (!PURCHASES_READY) return;
+  // Firebase отдаёт сохранённого пользователя сразу при запуске — бывает,
+  // раньше, чем подписка успела запустить SDK. Без configure logIn падает, а
+  // ошибка здесь молчит: покупка оставалась на анонимном $RCAnonymousID, и
+  // сервер, который ищет подписку по uid, её не видел.
+  startPurchases();
 
   try {
     if (userId) await Purchases.logIn(userId);
