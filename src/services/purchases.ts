@@ -126,8 +126,46 @@ export function packageTier(item: PurchasesPackage): Exclude<Tier, 'free'> {
 export async function buy(item: PurchasesPackage): Promise<boolean> {
   if (!PURCHASES_READY) return true;
 
-  const { customerInfo } = await Purchases.purchasePackage(item);
-  return tierOf(customerInfo) !== 'free';
+  try {
+    const { customerInfo } = await Purchases.purchasePackage(item);
+    if (tierOf(customerInfo) !== 'free') return true;
+  } catch (e: unknown) {
+    // «Уже куплено»: магазин помнит подписку, а RevenueCat — ещё нет (покупка
+    // прошла, но ответ не дошёл, или была на другом идентификаторе). Это не
+    // ошибка — сводим покупки с магазином ниже. Остальное — наверх.
+    if (!alreadyPurchased(e)) throw e;
+  }
+  return (await settledTier()) !== 'free';
+}
+
+function alreadyPurchased(e: unknown): boolean {
+  return (
+    typeof e === 'object' &&
+    e !== null &&
+    'code' in e &&
+    String(e.code) === Purchases.PURCHASES_ERROR_CODE.PRODUCT_ALREADY_PURCHASED_ERROR
+  );
+}
+
+/**
+ * Тариф после покупки, когда первый ответ его не показал. Песочница Apple
+ * подтверждает покупку с задержкой, поэтому спрашиваем магазин ещё пару раз:
+ * сводим покупки (sync) и перечитываем без кэша.
+ */
+async function settledTier(): Promise<Tier> {
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      const { customerInfo } = await Purchases.syncPurchasesForResult();
+      if (tierOf(customerInfo) !== 'free') return tierOf(customerInfo);
+      await Purchases.invalidateCustomerInfoCache();
+      const fresh = tierOf(await Purchases.getCustomerInfo());
+      if (fresh !== 'free') return fresh;
+    } catch {
+      // сеть или магазин — пробуем ещё
+    }
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+  }
+  return 'free';
 }
 
 /** Восстановление покупок — Apple требует эту кнопку на экране подписки. */
