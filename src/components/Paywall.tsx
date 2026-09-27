@@ -16,7 +16,7 @@ import type { Block } from '../hooks/useSubscription';
 import { t } from '../i18n';
 import { errorText } from '../errors';
 import { CONTENT_MAX_WIDTH } from '../layout';
-import { buy, loadPackages, packageTier, restore } from '../services/purchases';
+import { buy, loadPackages, manageSubscription, packageTier, restore } from '../services/purchases';
 import { useStyles, useTheme, type Theme } from '../theme';
 
 interface Props {
@@ -43,9 +43,14 @@ function periodLabel(item: PurchasesPackage): string | null {
   return null;
 }
 
+/** Название магазина — для кнопки управления и условий продления. */
+const STORE = Platform.OS === 'ios' ? 'App Store' : 'Google Play';
+
 export function Paywall({ visible, anchor, left, used, block, tier, onClose, onBought }: Props) {
   const { theme } = useTheme();
   const styles = useStyles(createStyles);
+  /** С подпиской экран — не «купите», а «ваш тариф»: лимиты бесплатного ни к чему. */
+  const subscribed = tier === 'pro' || tier === 'max';
 
   const [items, setItems] = useState<PurchasesPackage[] | null>(null);
   const [busy, setBusy] = useState(false);
@@ -107,11 +112,23 @@ export function Paywall({ visible, anchor, left, used, block, tier, onClose, onB
           </View>
 
           <ScrollView contentContainerStyle={styles.body}>
-            <Text style={styles.left}>
-              {block === 'budget' ? t.budgetOver : t.paywallLeft(left)}
-            </Text>
-            <Text style={styles.intro}>{t.paywallIntro}</Text>
-            <Text style={styles.pitch}>{t.paywallPitch}</Text>
+            {subscribed ? (
+              <>
+                <Text style={styles.yourPlan}>
+                  {t.paywallSubscribed(tier === 'max' ? 'Max' : 'Pro')}
+                </Text>
+                {block === 'budget' && <Text style={styles.left}>{t.budgetOver}</Text>}
+                <Text style={styles.pitch}>{t.paywallSubscribedIntro}</Text>
+              </>
+            ) : (
+              <>
+                <Text style={styles.left}>
+                  {block === 'budget' ? t.budgetOver : t.paywallLeft(left)}
+                </Text>
+                <Text style={styles.intro}>{t.paywallIntro}</Text>
+                <Text style={styles.pitch}>{t.paywallPitch}</Text>
+              </>
+            )}
             <Text style={styles.intro}>{t.paywallUsed(used)}</Text>
 
             {error && <Text style={styles.error}>{error}</Text>}
@@ -130,7 +147,7 @@ export function Paywall({ visible, anchor, left, used, block, tier, onClose, onB
                     key={item.product.identifier}
                     disabled={busy || current}
                     onPress={() => void run(() => buy(item))}
-                    style={[styles.plan, busy && styles.dimmed]}
+                    style={[styles.plan, current && styles.planOn, busy && styles.dimmed]}
                   >
                     <Text style={styles.planName}>{plan === 'max' ? 'Max' : 'Pro'}</Text>
                     <Text style={styles.planWhat}>{plan === 'max' ? t.planMax : t.planPro}</Text>
@@ -140,6 +157,13 @@ export function Paywall({ visible, anchor, left, used, block, tier, onClose, onB
                   </WideButton>
                 );
               })
+            )}
+
+            {/* Сменить тариф, отменить, дата продления — всё это в магазине. */}
+            {subscribed && (
+              <WideButton onPress={() => void manageSubscription()} style={styles.manage}>
+                <Text style={styles.manageLabel}>{t.manageSubscription(STORE)}</Text>
+              </WideButton>
             )}
 
             <Pressable
@@ -159,7 +183,7 @@ export function Paywall({ visible, anchor, left, used, block, tier, onClose, onB
               Apple требует на экране покупки условия автопродления и ссылки на
               политику и условия (App Review Guidelines 3.1.2) — без них отказ.
             */}
-            <Text style={styles.legal}>{t.paywallRenewNote(Platform.OS === 'ios' ? 'App Store' : 'Google Play')}</Text>
+            <Text style={styles.legal}>{t.paywallRenewNote(STORE)}</Text>
             <View style={styles.legalLinks}>
               <Pressable onPress={() => void Linking.openURL(TERMS_URL).catch(() => {})} hitSlop={8}>
                 <Text style={styles.legalLink}>{t.terms}</Text>
@@ -217,12 +241,26 @@ const createStyles = (theme: Theme) =>
       borderWidth: 1,
       borderColor: theme.ctaBorder,
     },
+    /** Текущий тариф — золотая рамка и подпись: видно, что он уже ваш. */
+    planOn: { borderWidth: 2, borderColor: '#F2C230' },
     dimmed: { opacity: 0.5 },
+    yourPlan: { color: '#E3A70F', fontSize: 16, fontWeight: '800' },
+    manage: {
+      height: 48,
+      borderRadius: 14,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: theme.surfaceAlt,
+      borderWidth: 1,
+      borderColor: theme.border,
+      marginTop: 4,
+    },
+    manageLabel: { color: theme.text, fontSize: 15, fontWeight: '600' },
     planName: { color: theme.ctaText, fontSize: 16, fontWeight: '700', letterSpacing: 1 },
     planWhat: { color: theme.ctaText, fontSize: 13, lineHeight: 18, textAlign: 'center', paddingHorizontal: 16, marginBottom: 6 },
     planPrice: { color: theme.ctaText, fontSize: 20, fontWeight: '700' },
     planPeriod: { color: theme.ctaText, fontSize: 12 },
-    planCurrent: { color: theme.ctaText, fontSize: 12, fontWeight: '700', marginTop: 4 },
+    planCurrent: { color: '#F2C230', fontSize: 13, fontWeight: '800', marginTop: 4, letterSpacing: 0.5 },
 
     quiet: { alignItems: 'center', paddingVertical: 8 },
     quietLabel: { color: theme.neon, fontSize: 13 },

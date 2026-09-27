@@ -1,4 +1,4 @@
-import { Platform } from 'react-native';
+import { Linking, Platform } from 'react-native';
 import Purchases, {
   LOG_LEVEL,
   type CustomerInfo,
@@ -93,6 +93,28 @@ export async function loadPackages(): Promise<PurchasesPackage[]> {
       seen.add(item.product.identifier);
       return true;
     });
+}
+
+/**
+ * Управление подпиской — в магазине, не у нас: сменить тариф, отменить,
+ * посмотреть дату продления. На iPhone RevenueCat открывает системный лист
+ * подписок Apple, на Android — страницу подписок Google Play. Если SDK не смог,
+ * открываем ту же страницу ссылкой.
+ */
+export async function manageSubscription(): Promise<void> {
+  try {
+    if (PURCHASES_READY) {
+      await Purchases.showManageSubscriptions();
+      return;
+    }
+  } catch {
+    // ниже — ссылка
+  }
+  const url =
+    Platform.OS === 'ios'
+      ? 'https://apps.apple.com/account/subscriptions'
+      : 'https://play.google.com/store/account/subscriptions?package=com.kukalab.polyglotta';
+  await Linking.openURL(url).catch(() => {});
 }
 
 /** Какой тариф даёт пакет: у Max в идентификаторе продукта есть «max». */

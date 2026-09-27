@@ -138,6 +138,11 @@ const en = {
   planPro: 'No daily limit, about 20–30 conversations a month',
   planMax: 'About 35–45 conversations a month, and Madame Poly speaks in one of four new, livelier voices of your choice',
   planCurrent: 'Your plan',
+  paywallSubscribed: (plan: string) =>
+    `Your plan: ${plan}`,
+  paywallSubscribedIntro: 'Thank you for subscribing! To switch plans, cancel or check the renewal date, open your subscription in the store.',
+  manageSubscription: (store: string) =>
+    `Manage subscription in ${store}`,
   paywallUsed: (share: number) => `${Math.round(share * 100)}% of this month\u2019s allowance used`,
   budgetOver: 'This month\u2019s allowance is used up — it resets on the 1st',
   paywallLeft: (left: number) =>
@@ -483,6 +488,9 @@ const uk: Strings = {
   planPro: 'Без денного обмеження, близько 20–30 бесід на місяць',
   planMax: 'Близько 35–45 бесід на місяць, і Мадам Полі говорить одним із чотирьох нових, живіших голосів — на ваш вибір',
   planCurrent: 'Ваш тариф',
+  paywallSubscribed: (plan) => `Ваш тариф: ${plan}`,
+  paywallSubscribedIntro: 'Дякуємо за підписку! Змінити тариф, скасувати чи подивитися дату продовження можна в магазині.',
+  manageSubscription: (store) => `Керувати підпискою в ${store}`,
   paywallUsed: (share: number) => `Використано ${Math.round(share * 100)} % місячного обсягу`,
   budgetOver: 'Місячний обсяг вичерпано — він оновиться першого числа',
   paywallLeft: (left: number) =>
@@ -814,6 +822,9 @@ const es: Strings = {
   planPro: 'Sin límite diario, unas 20–30 conversaciones al mes',
   planMax: 'Unas 35–45 conversaciones al mes, y Madame Poly habla con una de cuatro voces nuevas, más vivas, a tu elección',
   planCurrent: 'Tu plan',
+  paywallSubscribed: (plan) => `Tu plan: ${plan}`,
+  paywallSubscribedIntro: '¡Gracias por suscribirte! Para cambiar de plan, cancelar o ver la fecha de renovación, abre tu suscripción en la tienda.',
+  manageSubscription: (store) => `Gestionar la suscripción en ${store}`,
   paywallUsed: (share: number) => `${Math.round(share * 100)} % del cupo mensual usado`,
   budgetOver: 'El cupo de este mes se ha agotado — se renueva el día 1',
   paywallLeft: (left: number) =>
@@ -1148,6 +1159,9 @@ const ru: Strings = {
   planPro: 'Без дневного ограничения, около 20–30 бесед в месяц',
   planMax: 'Около 35–45 бесед в месяц, и Мадам Поли говорит одним из четырёх новых, более живых голосов — на ваш выбор',
   planCurrent: 'Ваш тариф',
+  paywallSubscribed: (plan) => `Ваш тариф: ${plan}`,
+  paywallSubscribedIntro: 'Спасибо за подписку! Сменить тариф, отменить или посмотреть дату продления можно в магазине.',
+  manageSubscription: (store) => `Управлять подпиской в ${store}`,
   paywallUsed: (share: number) => `Использовано ${Math.round(share * 100)} % месячного объёма`,
   budgetOver: 'Месячный объём исчерпан — обновится первого числа',
   paywallLeft: (left: number) =>
@@ -1480,6 +1494,9 @@ const de: Strings = {
   planPro: 'Kein Tageslimit, etwa 20–30 Gespräche im Monat',
   planMax: 'Etwa 35–45 Gespräche im Monat, und Madame Poly spricht mit einer von vier neuen, lebendigeren Stimmen deiner Wahl',
   planCurrent: 'Dein Tarif',
+  paywallSubscribed: (plan) => `Dein Tarif: ${plan}`,
+  paywallSubscribedIntro: 'Danke für dein Abo! Tarif wechseln, kündigen oder das Verlängerungsdatum sehen kannst du im Store.',
+  manageSubscription: (store) => `Abo in ${store} verwalten`,
   paywallUsed: (share: number) => `${Math.round(share * 100)} % des Monatskontingents verbraucht`,
   budgetOver: 'Das Kontingent für diesen Monat ist aufgebraucht — am 1. geht es weiter',
   paywallLeft: (left: number) =>
@@ -1809,6 +1826,9 @@ const fr: Strings = {
   planPro: 'Pas de limite quotidienne, environ 20 à 30 conversations par mois',
   planMax: 'Environ 35 à 45 conversations par mois, et Madame Poly parle avec l’une de quatre nouvelles voix, plus vivantes, à votre choix',
   planCurrent: 'Votre formule',
+  paywallSubscribed: (plan) => `Votre formule : ${plan}`,
+  paywallSubscribedIntro: 'Merci pour votre abonnement ! Pour changer de formule, résilier ou voir la date de renouvellement, ouvrez votre abonnement dans le store.',
+  manageSubscription: (store) => `Gérer l’abonnement dans ${store}`,
   paywallUsed: (share: number) => `${Math.round(share * 100)} % du forfait du mois utilisés`,
   budgetOver: 'Le forfait de ce mois est épuisé — il repart le 1er',
   paywallLeft: (left: number) =>
@@ -2138,6 +2158,9 @@ const pt: Strings = {
   planPro: 'Sem limite diário, cerca de 20–30 conversas por mês',
   planMax: 'Cerca de 35–45 conversas por mês, e Madame Poly fala com uma de quatro vozes novas, mais vivas, à sua escolha',
   planCurrent: 'Seu plano',
+  paywallSubscribed: (plan) => `Seu plano: ${plan}`,
+  paywallSubscribedIntro: 'Obrigado por assinar! Para trocar de plano, cancelar ou ver a data de renovação, abra sua assinatura na loja.',
+  manageSubscription: (store) => `Gerenciar assinatura na ${store}`,
   paywallUsed: (share: number) => `${Math.round(share * 100)}% da cota do mês usada`,
   budgetOver: 'A cota deste mês acabou — ela renova no dia 1º',
   paywallLeft: (left: number) =>
@@ -2465,6 +2488,9 @@ const zh: Strings = {
   planPro: '无每日限制，每月约 20–30 次对话',
   planMax: '每月约 35–45 次对话，波莉夫人还可以用四种更生动的新声音之一和你说话，由你挑选',
   planCurrent: '你的方案',
+  paywallSubscribed: (plan) => `你的方案：${plan}`,
+  paywallSubscribedIntro: '感谢订阅！如需更换方案、取消订阅或查看续订日期，请在应用商店中打开你的订阅。',
+  manageSubscription: (store) => `在 ${store} 中管理订阅`,
   paywallUsed: (share: number) => `本月额度已使用 ${Math.round(share * 100)}%`,
   budgetOver: '本月额度已用完——下月 1 日恢复',
   paywallLeft: (left: number) =>
@@ -2788,6 +2814,9 @@ const ja: Strings = {
   planPro: '1 日の制限なし、月に約 20〜30 回の会話',
   planMax: '月に約 35〜45 回の会話。マダム・ポリーの声を、より生き生きとした 4 つの新しい声から選べます',
   planCurrent: '現在のプラン',
+  paywallSubscribed: (plan) => `ご利用中のプラン：${plan}`,
+  paywallSubscribedIntro: 'ご登録ありがとうございます！プランの変更・解約・更新日の確認は、ストアのサブスクリプションから行えます。',
+  manageSubscription: (store) => `${store} でサブスクリプションを管理`,
   paywallUsed: (share: number) => `今月の利用枠を ${Math.round(share * 100)}% 使用`,
   budgetOver: '今月の利用枠を使い切りました — 1 日にリセットされます',
   paywallLeft: (left: number) =>
@@ -3111,6 +3140,9 @@ const ko: Strings = {
   planPro: '하루 제한 없음, 한 달에 약 20–30회 대화',
   planMax: '한 달에 약 35–45회 대화, 그리고 폴리 선생님이 더 생동감 있는 새 목소리 네 가지 중 원하는 목소리로 말해요',
   planCurrent: '현재 요금제',
+  paywallSubscribed: (plan) => `내 요금제: ${plan}`,
+  paywallSubscribedIntro: '구독해 주셔서 감사해요! 요금제 변경, 해지, 갱신일 확인은 스토어의 구독 관리에서 할 수 있어요.',
+  manageSubscription: (store) => `${store}에서 구독 관리`,
   paywallUsed: (share: number) => `이번 달 이용량의 ${Math.round(share * 100)}% 사용`,
   budgetOver: '이번 달 이용량을 다 썼어요 — 1일에 다시 채워져요',
   paywallLeft: (left: number) =>
