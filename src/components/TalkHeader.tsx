@@ -14,14 +14,28 @@ interface Props {
   portrait: ReactNode;
   canArchive: boolean;
   onArchive: () => void;
+  /** Сколько бесед в архиве — число на кнопке. */
+  archiveCount: number;
+  onOpenArchive: () => void;
 }
 
 /**
  * Шапка беседы: слева домик со списком разделов, портрет по центру, справа —
- * убрать разговор в архив и сменить тему. Боковые группы равной ширины, иначе
- * портрет уезжает вправо.
+ * архив и смена темы. Боковые группы равной ширины, иначе портрет уезжает
+ * вправо.
+ *
+ * Кнопка архива: нажатие убирает законченную беседу в архив, долгое нажатие
+ * открывает архив. Пока убирать нечего, кнопка погашена, и простое нажатие
+ * тоже открывает архив — если в нём что-то есть.
  */
-export function TalkHeader({ menu, portrait, canArchive, onArchive }: Props) {
+export function TalkHeader({
+  menu,
+  portrait,
+  canArchive,
+  onArchive,
+  archiveCount,
+  onOpenArchive,
+}: Props) {
   const { theme, scheme, toggle } = useTheme();
   const styles = useStyles(createStyles);
   const tablet = useTablet();
@@ -35,7 +49,14 @@ export function TalkHeader({ menu, portrait, canArchive, onArchive }: Props) {
       {portrait}
 
       <View style={[styles.side, styles.right]}>
-        <NeonButton onPress={onArchive} disabled={!canArchive} accessibilityLabel={t.toArchive}>
+        <NeonButton
+          onPress={canArchive ? onArchive : onOpenArchive}
+          onLongPress={archiveCount > 0 ? onOpenArchive : undefined}
+          disabled={!canArchive && archiveCount === 0}
+          dim={!canArchive}
+          badge={archiveCount}
+          accessibilityLabel={canArchive ? t.toArchive : t.archive}
+        >
           <ArchiveIcon size={22 * scale} color={theme.neon} />
         </NeonButton>
         <NeonButton onPress={toggle} accessibilityLabel={t.themeToggle}>

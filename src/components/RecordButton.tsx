@@ -1,4 +1,4 @@
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 
 import { t } from '../i18n';
 import { useStyles, useTheme, type Theme } from '../theme';
@@ -28,8 +28,9 @@ function formatDuration(millis: number): string {
 
 /**
  * Полоса во всю ширину, переключатель авторежима — внутри неё, у левого края.
- * Подсвечен — приложение само ловит паузу; погашен — конец фразы отмечаете вы,
- * и полоса превращается в «Готово». Ни отдельной строки, ни соседней кнопки
+ * Это обычный тумблер, как у уведомлений в настройках: по нему сразу видно,
+ * включён режим или нет. Включён — приложение само ловит паузу; выключен —
+ * конец фразы отмечаете вы, и полоса превращается в «Готово». Ни отдельной строки, ни соседней кнопки
  * под режим не выделяем: на маленьком экране место дороже.
  *
  * Беседа закрывается долгим нажатием в два шага: первое выводит из авторежима,
@@ -79,9 +80,10 @@ export function RecordButton({
           ? `${t.stop} · ${timer}`
           : t.stop;
 
-  // Пока идёт беседа полоса красная — значок режима перекрашивается вместе с ней.
+  // Пока идёт беседа полоса красная — подпись тумблера перекрашивается вместе с ней.
   const tint = listening ? theme.danger : theme.ctaText;
-  const tintBg = listening ? theme.surface : theme.ctaBg;
+  /** Выключенный тумблер — приглушённая дорожка, видная и на цветной полосе. */
+  const offTrack = listening ? theme.border : 'rgba(255,255,255,0.28)';
 
   return (
     <View style={styles.container}>
@@ -102,14 +104,20 @@ export function RecordButton({
           {label}
         </Text>
 
-        {/* Значок работает и во время беседы: из авторежима нужно уметь выйти
+        {/* Тумблер работает и во время беседы: из авторежима нужно уметь выйти
             посреди разговора, иначе микрофон открывается снова и снова. */}
-        <Pressable
-          onPress={onToggleMode}
-          style={[styles.auto, { borderColor: tint }, auto && { backgroundColor: tint }]}
-        >
-          <Text style={[styles.autoLabel, { color: auto ? tintBg : tint }]}>{t.auto}</Text>
-        </Pressable>
+        <View style={styles.auto}>
+          <Switch
+            value={auto}
+            onValueChange={onToggleMode}
+            trackColor={{ true: listening ? theme.danger : theme.ctaBorder, false: offTrack }}
+            ios_backgroundColor={offTrack}
+            thumbColor="#FFFFFF"
+            style={styles.autoSwitch}
+            accessibilityLabel={t.auto}
+          />
+          <Text style={[styles.autoLabel, { color: tint }]}>{t.auto}</Text>
+        </View>
       </Pressable>
 
       {sessionActive && (
@@ -123,19 +131,20 @@ const createStyles = (theme: Theme) =>
   StyleSheet.create({
     container: { paddingHorizontal: 16, paddingTop: 6, paddingBottom: 10, gap: 4 },
 
-    /** Значок режима лежит поверх полосы, чтобы подпись оставалась по центру. */
+    /** Тумблер лежит поверх полосы, чтобы подпись оставалась по центру. */
     auto: {
       position: 'absolute',
-      left: 7,
-      top: 7,
-      bottom: 7,
-      width: 50,
-      borderRadius: 10,
+      left: 8,
+      top: 0,
+      bottom: 0,
+      width: 52,
       alignItems: 'center',
       justifyContent: 'center',
-      borderWidth: 1.5,
+      gap: 1,
     },
-    autoLabel: { fontSize: 11, fontWeight: '800', letterSpacing: 0.5 },
+    /** Системный тумблер крупноват для полосы в 50 точек — уменьшаем. */
+    autoSwitch: { transform: [{ scale: 0.72 }], marginVertical: -5 },
+    autoLabel: { fontSize: 9, fontWeight: '800', letterSpacing: 0.5 },
 
     bar: {
       flexDirection: 'row',
@@ -144,7 +153,7 @@ const createStyles = (theme: Theme) =>
       gap: 8,
       height: 50,
       // Поля под значок режима и симметричные им справа — подпись не наезжает.
-      paddingHorizontal: 64,
+      paddingHorizontal: 68,
       borderRadius: 14,
       borderWidth: 2,
       backgroundColor: theme.ctaBg,
@@ -154,7 +163,7 @@ const createStyles = (theme: Theme) =>
     waves: {
       position: 'absolute',
       top: 0,
-      left: 64,
+      left: 68,
       right: 16,
       bottom: 0,
       justifyContent: 'center',

@@ -13,6 +13,7 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 import { AccountScreen } from './src/components/AccountScreen';
 import { ArchiveScreen } from './src/components/ArchiveScreen';
+import { Toast } from './src/components/Toast';
 import { ExamScreen } from './src/components/ExamScreen';
 import { GrammarScreen } from './src/components/GrammarScreen';
 import { HomeworkScreen } from './src/components/HomeworkScreen';
@@ -137,6 +138,12 @@ function Screen() {
    */
   const profileScreen = useZoomScreen();
   const archiveScreen = useZoomScreen();
+  const [toast, setToast] = useState<string | null>(null);
+  const hideToast = useCallback(() => setToast(null), []);
+  const archiveConversation = useCallback(async () => {
+    await conversation.finishConversation();
+    setToast(t.archivedToast);
+  }, [conversation]);
   const accountScreen = useZoomScreen();
   const homeworkScreen = useZoomScreen();
 
@@ -242,7 +249,9 @@ function Screen() {
             menu={menu}
             portrait={<TutorStrip status={conversation.status} topicId={conversation.topicId} />}
             canArchive={conversation.messages.length > 0 && !conversation.sessionActive}
-            onArchive={conversation.finishConversation}
+            onArchive={() => void archiveConversation()}
+            archiveCount={conversation.archive.length}
+            onOpenArchive={() => archiveScreen.show(null)}
           />
         )}
 
@@ -460,6 +469,7 @@ function Screen() {
             onClose={() => setMenuOpen(false)}
           />
         )}
+        <Toast message={toast} onHide={hideToast} />
       </SafeAreaView>
 
       <HomeworkScreen
