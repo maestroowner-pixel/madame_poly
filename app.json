@@ -13,7 +13,7 @@
       "infoPlist": {
         "CFBundleAllowMixedLocalizations": true
       },
-      "buildNumber": "10314"
+      "buildNumber": "10318"
     },
     "android": {
       "adaptiveIcon": {
@@ -27,7 +27,7 @@
       "permissions": [
         "CAMERA"
       ],
-      "versionCode": 10314
+      "versionCode": 10318
     },
     "web": {
       "favicon": "./assets/favicon.png"
