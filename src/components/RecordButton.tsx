@@ -4,7 +4,7 @@ import { t } from '../i18n';
 import { useStyles, useTheme, type Theme } from '../theme';
 import type { Status } from '../hooks/useConversation';
 import type { TurnMode } from '../types';
-import { WaveBars } from './WaveBars';
+import { WaveThread } from './WaveThread';
 
 interface Props {
   status: Status;
@@ -23,6 +23,41 @@ interface Props {
 
 /** Включённый АВТО — золото короны: сиреневое сливалось с полосой. */
 const AUTO_ON = '#F2C230';
+/** Нить осциллограммы: на тёмном фоне — яркое золото, на белом — потемнее. */
+const THREAD_GOLD = { dark: '#F2C230', light: '#C99A0E' };
+
+/** Сколько полос в плавном переходе: меньше — видны ступеньки. */
+const FADE_STEPS = 14;
+
+/**
+ * Плавный переход прозрачности сверху вниз — вместо градиента: библиотеки для
+ * него в сборке нет, а ради одной кнопки пересобирать нативную часть незачем.
+ */
+function Fade({
+  from,
+  to,
+  color,
+  style,
+}: {
+  from: number;
+  to: number;
+  color: string;
+  style: object;
+}) {
+  return (
+    <View pointerEvents="none" style={style}>
+      {Array.from({ length: FADE_STEPS }, (_, step) => (
+        <View
+          key={step}
+          style={{
+            flex: 1,
+            backgroundColor: `rgba(${color},${from + ((to - from) * step) / (FADE_STEPS - 1)})`,
+          }}
+        />
+      ))}
+    </View>
+  );
+}
 
 function formatDuration(millis: number): string {
   const seconds = Math.floor(millis / 1000);
@@ -52,7 +87,7 @@ export function RecordButton({
   onBeginTurn,
   onToggleMode,
 }: Props) {
-  const { theme } = useTheme();
+  const { theme, scheme } = useTheme();
   const styles = useStyles(createStyles);
 
   const auto = mode === 'auto';
@@ -90,15 +125,25 @@ export function RecordButton({
 
   return (
     <View style={styles.container}>
+      {/* Тень — на обёртке: у самой полосы overflow hidden ради блика. */}
+      <View style={[styles.lift, listening && styles.liftListening]}>
       <Pressable
         onPress={manualTurn ? onEndTurn : manualWait ? onBeginTurn : onToggleSession}
         onLongPress={longPress}
-        style={[styles.bar, listening && styles.barListening]}
+        style={({ pressed }) => [
+          styles.bar,
+          listening && styles.barListening,
+          pressed && styles.barPressed,
+        ]}
       >
-        {/* Осциллограмма живёт фоном под подписью: видно, что микрофон открыт. */}
+        {/* Объём: светлый блик сверху и тень внизу — полоса как выпуклая клавиша. */}
+        <Fade from={0.16} to={0} color="255,255,255" style={styles.shine} />
+        <Fade from={0} to={0.2} color="0,0,0" style={styles.shade} />
+
+        {/* Осциллограмма — золотой нитью под подписью: видно, что микрофон открыт. */}
         {listening && (
           <View style={styles.waves} pointerEvents="none">
-            <WaveBars level={inputLevel} active height={26} color={theme.danger} />
+            <WaveThread level={inputLevel} active height={34} color={THREAD_GOLD[scheme]} />
           </View>
         )}
 
@@ -122,6 +167,7 @@ export function RecordButton({
           <Text style={[styles.autoLabel, { color: tint }]}>{t.auto}</Text>
         </View>
       </Pressable>
+      </View>
 
       {sessionActive && (
         <Text style={styles.hint}>{auto ? t.longPressToManual : t.longPressToFinish}</Text>
@@ -149,7 +195,18 @@ const createStyles = (theme: Theme) =>
     autoSwitch: { transform: [{ scale: 0.72 }], marginVertical: -5 },
     autoLabel: { fontSize: 9, fontWeight: '800', letterSpacing: 0.5 },
 
+    /** Тень под клавишей: снизу и чуть размытая — полоса приподнята над фоном. */
+    lift: {
+      borderRadius: 14,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.35,
+      shadowRadius: 7,
+      elevation: 6,
+    },
+    liftListening: { shadowColor: theme.danger, shadowOpacity: 0.3 },
     bar: {
+      overflow: 'hidden',
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
@@ -163,6 +220,22 @@ const createStyles = (theme: Theme) =>
       borderColor: theme.ctaBorder,
     },
     barListening: { backgroundColor: theme.surface, borderColor: theme.danger },
+    /** Нажатие: клавиша проседает — сдвиг вниз и блик тускнеет. */
+    barPressed: { transform: [{ translateY: 1.5 }], opacity: 0.92 },
+    shine: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      height: '55%',
+    },
+    shade: {
+      position: 'absolute',
+      bottom: 0,
+      left: 0,
+      right: 0,
+      height: '45%',
+    },
     waves: {
       position: 'absolute',
       top: 0,
@@ -170,7 +243,7 @@ const createStyles = (theme: Theme) =>
       right: 16,
       bottom: 0,
       justifyContent: 'center',
-      opacity: 0.28,
+      opacity: 0.7,
     },
     label: { fontSize: 15, fontWeight: '700', fontVariant: ['tabular-nums'], color: theme.ctaText },
     labelListening: { color: theme.danger },
