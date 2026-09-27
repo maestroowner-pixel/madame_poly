@@ -158,7 +158,7 @@ const en = {
   ruleFailed: 'Could not load the rule — tap ? again',
   drilled: 'in task',
   emptyChatTitle: 'Your digital tutor',
-  emptyChat: 'I\'m Madame Poly. Press the button and speak — I\'ll answer aloud and show your mistakes under your lines. The AUTO switch on the left: on means I catch the pause, off means you mark the end yourself.',
+  emptyChat: 'I\'m Madame Poly. Press the button and speak — I\'ll answer aloud and show your mistakes under your lines. AUTO switch on the bar: slider to the right means I catch the pause; to the left, you mark the end of each phrase yourself.',
 
   // Заставка
   tagline: 'Your AI tutor',
@@ -503,7 +503,7 @@ const uk: Strings = {
   ruleFailed: 'Не вдалося завантажити правило — натисніть ? ще раз',
   drilled: 'у завданні',
   emptyChatTitle: 'Ваш цифровий наставник',
-  emptyChat: 'Я Мадам Полі. Натисніть кнопку і говоріть — я відповім голосом, а помилки покажу під вашими репліками. Перемикач «АВТО» ліворуч: увімкнено — паузу ловлю я, вимкнено — кінець фрази позначаєте ви.',
+  emptyChat: 'Я Мадам Полі. Натисніть кнопку і говоріть — я відповім голосом, а помилки покажу під вашими репліками. Перемикач «АВТО» на смузі: повзунок праворуч — паузу ловлю я, ліворуч — кінець фрази позначаєте ви.',
 
   tagline: 'Ваш AI-наставник',
   taglineMore: 'Аудіювання, письмо, слова, граматика: Мадам Полі складає диктант, добирає лексику, пише урок, розбирає помилки.',
@@ -834,7 +834,7 @@ const es: Strings = {
   ruleFailed: 'No se pudo cargar la regla: toca ? de nuevo',
   drilled: 'en la tarea',
   emptyChatTitle: 'Tu tutora digital',
-  emptyChat: 'Soy Madame Poly. Pulsa el botón y habla: te respondo en voz alta y te muestro los errores debajo de tus frases. El interruptor «AUTO» de la izquierda: activado, detecto yo la pausa; desactivado, marcas tú el final.',
+  emptyChat: 'Soy Madame Poly. Pulsa el botón y habla: te respondo en voz alta y te muestro los errores debajo de tus frases. Interruptor «AUTO» en la barra: con el control a la derecha, detecto yo la pausa; a la izquierda, marcas tú el final de cada frase.',
 
   tagline: 'Tu tutora con IA',
   taglineMore: 'Escucha, escritura, palabras, gramática: Madame Poly prepara el dictado, elige el vocabulario, escribe la lección y explica tus errores.',
@@ -1168,7 +1168,7 @@ const ru: Strings = {
   ruleFailed: 'Правило не загрузилось — нажми ? ещё раз',
   drilled: 'в задании',
   emptyChatTitle: 'Ваш цифровой наставник',
-  emptyChat: 'Я Мадам Поли. Нажмите на кнопку и говорите — я отвечу голосом, а ошибки покажу под вашими репликами. Переключатель «АВТО» слева: включён — паузу ловлю я, выключен — конец фразы отмечаете вы.',
+  emptyChat: 'Я Мадам Поли. Нажмите на кнопку и говорите — я отвечу голосом, а ошибки покажу под вашими репликами. Переключатель «АВТО» на полосе: ползунок вправо — паузу ловлю я, влево — конец фразы отмечаете вы.',
 
   tagline: 'Ваш AI-наставник',
   taglineMore: 'Аудирование, письмо, слова, грамматика: Мадам Поли составляет диктант, подбирает лексику, пишет урок, разбирает ошибки.',
@@ -1500,7 +1500,7 @@ const de: Strings = {
   ruleFailed: 'Die Regel ließ sich nicht laden — tippe noch einmal auf ?',
   drilled: 'in der Aufgabe',
   emptyChatTitle: 'Deine digitale Lehrerin',
-  emptyChat: 'Ich bin Madame Poly. Drück auf den Knopf und sprich — ich antworte laut und zeige deine Fehler unter deinen Sätzen. Der AUTO-Schalter links: an — ich erkenne die Pause; aus — du markierst das Satzende selbst.',
+  emptyChat: 'Ich bin Madame Poly. Drück auf den Knopf und sprich — ich antworte laut und zeige deine Fehler unter deinen Sätzen. AUTO-Schalter auf der Leiste: Regler rechts — ich erkenne die Pause; links — du markierst das Satzende selbst.',
 
   tagline: 'Deine KI-Lehrerin',
   taglineMore: 'Hören, Schreiben, Wörter, Grammatik: Madame Poly schreibt das Diktat, wählt den Wortschatz, bereitet die Lektion vor und erklärt deine Fehler.',
@@ -1829,7 +1829,7 @@ const fr: Strings = {
   ruleFailed: 'La règle ne s’est pas chargée — touchez ? à nouveau',
   drilled: 'dans le devoir',
   emptyChatTitle: 'Votre professeure numérique',
-  emptyChat: 'Je suis Madame Poly. Appuyez sur le bouton et parlez — je réponds à voix haute et je montre vos erreurs sous vos phrases. L’interrupteur AUTO à gauche : activé, je repère la pause ; désactivé, c’est vous qui marquez la fin de la phrase.',
+  emptyChat: 'Je suis Madame Poly. Appuyez sur le bouton et parlez — je réponds à voix haute et je montre vos erreurs sous vos phrases. Interrupteur AUTO sur la barre : curseur à droite, je repère la pause ; à gauche, c’est vous qui marquez la fin de la phrase.',
 
   tagline: 'Votre professeure IA',
   taglineMore: 'Écoute, écriture, mots, grammaire : Madame Poly écrit la dictée, choisit le vocabulaire, prépare la leçon et explique vos erreurs.',
@@ -2158,7 +2158,7 @@ const pt: Strings = {
   ruleFailed: 'A regra não carregou — toque em ? de novo',
   drilled: 'na tarefa',
   emptyChatTitle: 'Sua professora digital',
-  emptyChat: 'Eu sou Madame Poly. Aperte o botão e fale — eu respondo em voz alta e mostro seus erros embaixo das suas falas. A chave AUTO à esquerda: ligada, eu percebo a pausa; desligada, é você que marca o fim da frase.',
+  emptyChat: 'Eu sou Madame Poly. Aperte o botão e fale — eu respondo em voz alta e mostro seus erros embaixo das suas falas. Chave AUTO na barra: botão para a direita, eu percebo a pausa; para a esquerda, é você que marca o fim da frase.',
 
   tagline: 'Sua professora com IA',
   taglineMore: 'Compreensão oral, escrita, palavras, gramática: Madame Poly escreve o ditado, escolhe o vocabulário, prepara a aula e explica seus erros.',
@@ -2485,7 +2485,7 @@ const zh: Strings = {
   ruleFailed: '规则加载失败——请再点一次 ?',
   drilled: '已入作业',
   emptyChatTitle: '你的数字导师',
-  emptyChat: '我是波莉夫人。按下按钮说话——我会用语音回答，并把你的错误标在你的话下面。左边的 AUTO 开关：打开时由我捕捉停顿；关闭时由你自己标记一句话的结束。',
+  emptyChat: '我是波莉夫人。按下按钮说话——我会用语音回答，并把你的错误标在你的话下面。按钮条上的 AUTO 开关：滑块在右侧时由我捕捉停顿；在左侧时由你自己标记一句话的结束。',
 
   tagline: '你的 AI 导师',
   taglineMore: '听力、写作、词汇、语法：波莉夫人为你写听写、选词汇、备课，并讲解你的错误。',
@@ -2808,7 +2808,7 @@ const ja: Strings = {
   ruleFailed: 'ルールを読み込めませんでした — もう一度 ? をタップしてください',
   drilled: '課題済み',
   emptyChatTitle: 'あなたのデジタル講師',
-  emptyChat: 'マダム・ポリーです。ボタンを押して話してください — 声でお返事して、あなたの言葉の下に間違いを表示します。左の AUTO スイッチは、オンのときは私が間を聞き取り、オフのときはあなたが文の終わりを知らせます。',
+  emptyChat: 'マダム・ポリーです。ボタンを押して話してください — 声でお返事して、あなたの言葉の下に間違いを表示します。バーの AUTO スイッチは、つまみが右なら私が間を聞き取り、左ならあなたが文の終わりを知らせます。',
 
   tagline: 'あなたの AI 講師',
   taglineMore: 'リスニング、ライティング、単語、文法：マダム・ポリーがディクテーションを作り、語彙を選び、レッスンを準備し、間違いを説明します。',
@@ -3131,7 +3131,7 @@ const ko: Strings = {
   ruleFailed: '규칙을 불러오지 못했어요 — ?를 다시 탭하세요',
   drilled: '과제에 포함',
   emptyChatTitle: '나의 디지털 선생님',
-  emptyChat: '안녕하세요, 폴리 선생님이에요. 버튼을 누르고 말해 보세요 — 목소리로 답하고, 말한 문장 아래에 실수를 보여 드려요. 왼쪽 AUTO 스위치: 켜져 있으면 제가 말의 멈춤을 알아채고, 꺼져 있으면 문장이 끝났다고 직접 알려 주세요.',
+  emptyChat: '안녕하세요, 폴리 선생님이에요. 버튼을 누르고 말해 보세요 — 목소리로 답하고, 말한 문장 아래에 실수를 보여 드려요. 버튼 위 AUTO 스위치: 오른쪽으로 두면 제가 말의 멈춤을 알아채고, 왼쪽으로 두면 문장이 끝났다고 직접 알려 주세요.',
 
   tagline: '나의 AI 선생님',
   taglineMore: '듣기, 쓰기, 단어, 문법: 폴리 선생님이 받아쓰기를 쓰고, 어휘를 고르고, 수업을 준비하고, 실수를 설명해 줘요.',
