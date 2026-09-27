@@ -21,6 +21,9 @@ interface Props {
   onToggleMode: () => void;
 }
 
+/** Включённый АВТО — золото короны: сиреневое сливалось с полосой. */
+const AUTO_ON = '#F2C230';
+
 function formatDuration(millis: number): string {
   const seconds = Math.floor(millis / 1000);
   return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
@@ -110,7 +113,7 @@ export function RecordButton({
           <Switch
             value={auto}
             onValueChange={onToggleMode}
-            trackColor={{ true: listening ? theme.danger : theme.ctaBorder, false: offTrack }}
+            trackColor={{ true: AUTO_ON, false: offTrack }}
             ios_backgroundColor={offTrack}
             thumbColor="#FFFFFF"
             style={styles.autoSwitch}
