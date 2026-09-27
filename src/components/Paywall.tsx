@@ -7,6 +7,7 @@ import {
 } from 'react-native-safe-area-context';
 import type { PurchasesPackage } from 'react-native-purchases';
 
+import { WideButton } from './WideButton';
 import { CloseIcon } from './icons';
 import { ZoomModal } from './ZoomModal';
 import type { Anchor } from '../anchor';
@@ -125,7 +126,7 @@ export function Paywall({ visible, anchor, left, used, block, tier, onClose, onB
                 const plan = packageTier(item);
                 const current = plan === tier;
                 return (
-                  <Pressable
+                  <WideButton
                     key={item.product.identifier}
                     disabled={busy || current}
                     onPress={() => void run(() => buy(item))}
@@ -136,7 +137,7 @@ export function Paywall({ visible, anchor, left, used, block, tier, onClose, onB
                     <Text style={styles.planPrice}>{item.product.priceString}</Text>
                     {period && <Text style={styles.planPeriod}>{period}</Text>}
                     {current && <Text style={styles.planCurrent}>{t.planCurrent}</Text>}
-                  </Pressable>
+                  </WideButton>
                 );
               })
             )}

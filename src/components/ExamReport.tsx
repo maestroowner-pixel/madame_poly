@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { WideButton } from './WideButton';
 import { MessageBubble } from './MessageBubble';
 import { findExamTopic } from '../exam';
 import { formatDate } from '../format';
@@ -72,9 +73,9 @@ export function ExamReport({ menu, exam, session, profile }: Props) {
         {exam.error && <Text style={styles.error}>{exam.error}</Text>}
 
         {!report && !exam.reviewing && session.answerCount > 0 && (
-          <Pressable onPress={() => void exam.review()} style={styles.cta}>
+          <WideButton onPress={() => void exam.review()} style={styles.cta}>
             <Text style={styles.ctaLabel}>{t.examReviewAgain}</Text>
-          </Pressable>
+          </WideButton>
         )}
 
         {report && (
@@ -118,11 +119,11 @@ export function ExamReport({ menu, exam, session, profile }: Props) {
           </>
         )}
 
-        <Pressable onPress={() => setTranscriptOpen((open) => !open)} style={styles.secondary}>
+        <WideButton onPress={() => setTranscriptOpen((open) => !open)} style={styles.secondary}>
           <Text style={styles.secondaryLabel}>
             {t.examTranscript} {transcriptOpen ? '▴' : '▾'}
           </Text>
-        </Pressable>
+        </WideButton>
 
         {transcriptOpen &&
           session.turns.map((turn) => (

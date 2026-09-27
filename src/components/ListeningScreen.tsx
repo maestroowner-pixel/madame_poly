@@ -13,9 +13,11 @@ import {
   RecordingPresets,
   setAudioModeAsync,
   useAudioPlayer,
+  useAudioPlayerStatus,
   useAudioRecorder,
 } from 'expo-audio';
 
+import { WideButton } from './WideButton';
 import { ScreenTitle } from './ScreenMenu';
 import { useKeyboardInset } from '../hooks/useKeyboardInset';
 import { TopicPicker } from './TopicPicker';
@@ -76,6 +78,8 @@ export function ListeningScreen({ menu, language, level, topicId }: Props) {
   const keyboard = useKeyboardInset();
 
   const player = useAudioPlayer(null);
+  /** Диктант звучит — по кнопке бежит золотая нить. */
+  const playing = useAudioPlayerStatus(player).playing;
   const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
 
   const [listening, setListening] = useState<Listening | null>(null);
@@ -329,17 +333,22 @@ export function ListeningScreen({ menu, language, level, topicId }: Props) {
             {!listening ? (
               <>
                 <Text style={styles.empty}>{t.listeningEmpty}</Text>
-                <Pressable onPress={() => void build(topic)} disabled={busy} style={styles.cta}>
+                <WideButton onPress={() => void build(topic)} disabled={busy} style={styles.cta}>
                   {busy ? (
                     <ActivityIndicator color={theme.ctaText} size="small" />
                   ) : (
                     <Text style={styles.ctaLabel}>{t.listeningGenerate}</Text>
                   )}
-                </Pressable>
+                </WideButton>
               </>
             ) : (
               <>
-                <Pressable onPress={() => void play()} disabled={busy} style={styles.cta}>
+                <WideButton
+                  onPress={() => void play()}
+                  disabled={busy}
+                  speaking={playing}
+                  style={styles.cta}
+                >
                   {busy ? (
                     <ActivityIndicator color={theme.ctaText} size="small" />
                   ) : (
@@ -347,7 +356,7 @@ export function ListeningScreen({ menu, language, level, topicId }: Props) {
                       {audioUri ? t.listeningReplay : t.listeningPlay}
                     </Text>
                   )}
-                </Pressable>
+                </WideButton>
 
                 {listening.questions.map((question, index) => {
                   const verdict = verdicts?.[index];
@@ -444,24 +453,24 @@ export function ListeningScreen({ menu, language, level, topicId }: Props) {
                     </View>
                   </>
                 ) : (
-                  <Pressable onPress={() => void check()} disabled={checking} style={styles.cta}>
+                  <WideButton onPress={() => void check()} disabled={checking} style={styles.cta}>
                     {checking ? (
                       <ActivityIndicator color={theme.ctaText} size="small" />
                     ) : (
                       <Text style={styles.ctaLabel}>{t.listeningCheck}</Text>
                     )}
-                  </Pressable>
+                  </WideButton>
                 )}
 
                 {/* Пересобрать можно в любой момент — иначе выбранная тема
                     ждала бы, пока доделаешь текущий диктант. */}
-                <Pressable onPress={() => void build(topic)} disabled={busy} style={styles.secondary}>
+                <WideButton onPress={() => void build(topic)} disabled={busy} style={styles.secondary}>
                   {busy ? (
                     <ActivityIndicator color={theme.accent} size="small" />
                   ) : (
                     <Text style={styles.secondaryLabel}>{t.listeningNew}</Text>
                   )}
-                </Pressable>
+                </WideButton>
               </>
             )}
             </ScrollView>

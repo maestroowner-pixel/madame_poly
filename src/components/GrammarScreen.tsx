@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { WideButton } from './WideButton';
 import { ExerciseCard } from './HomeworkScreen';
 import { CheckIcon, ChevronIcon } from './icons';
 import { ScreenTitle } from './ScreenMenu';
@@ -163,13 +164,13 @@ export function GrammarScreen({ menu, language, level }: Props) {
           {!lesson ? (
             <>
               <Text style={styles.intro}>{t.grammarBuildHint}</Text>
-              <Pressable onPress={() => void build()} disabled={busy} style={styles.cta}>
+              <WideButton onPress={() => void build()} disabled={busy} style={styles.cta}>
                 {busy ? (
                   <ActivityIndicator color={theme.ctaText} size="small" />
                 ) : (
                   <Text style={styles.ctaLabel}>{t.grammarBuild}</Text>
                 )}
-              </Pressable>
+              </WideButton>
             </>
           ) : (
             <>
@@ -227,13 +228,13 @@ export function GrammarScreen({ menu, language, level }: Props) {
                 <ExerciseCard key={`${pass}:${index}`} exercise={exercise} index={index} />
               ))}
 
-              <Pressable onPress={() => void refresh()} disabled={busy} style={styles.secondary}>
+              <WideButton onPress={() => void refresh()} disabled={busy} style={styles.secondary}>
                 {busy ? (
                   <ActivityIndicator color={theme.neon} size="small" />
                 ) : (
                   <Text style={styles.secondaryLabel}>{t.grammarMoreExercises}</Text>
                 )}
-              </Pressable>
+              </WideButton>
               <Pressable
                 onPress={() => void toggleDone(unit)}
                 style={[styles.doneButton, done && styles.doneButtonOn]}

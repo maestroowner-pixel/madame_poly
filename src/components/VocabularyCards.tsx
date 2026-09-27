@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { WideButton } from './WideButton';
 import { FlipCard } from './FlipCard';
 import { t } from '../i18n';
 import { flatEntries, sides } from '../review';
@@ -70,9 +71,9 @@ export function VocabularyCards({ vocabulary, known, direction, speaking, onSpea
     return (
       <View style={styles.stack}>
         <Text style={styles.note}>{t.wordsDeckAllKnown}</Text>
-        <Pressable onPress={() => restart(true)} style={styles.secondary}>
+        <WideButton onPress={() => restart(true)} style={styles.secondary}>
           <Text style={styles.secondaryLabel}>{t.wordsDeckAll}</Text>
-        </Pressable>
+        </WideButton>
       </View>
     );
   }
@@ -81,12 +82,12 @@ export function VocabularyCards({ vocabulary, known, direction, speaking, onSpea
     return (
       <View style={styles.stack}>
         <Text style={styles.note}>{t.wordsDeckDone(counts.known, counts.later)}</Text>
-        <Pressable onPress={() => restart(false)} style={styles.secondary}>
+        <WideButton onPress={() => restart(false)} style={styles.secondary}>
           <Text style={styles.secondaryLabel}>{t.wordsDeckRestart}</Text>
-        </Pressable>
-        <Pressable onPress={() => restart(true)} style={styles.secondary}>
+        </WideButton>
+        <WideButton onPress={() => restart(true)} style={styles.secondary}>
           <Text style={styles.secondaryLabel}>{t.wordsDeckAll}</Text>
-        </Pressable>
+        </WideButton>
       </View>
     );
   }

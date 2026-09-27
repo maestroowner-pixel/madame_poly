@@ -5,6 +5,7 @@ import { useStyles, useTheme, type Theme } from '../theme';
 import type { Status } from '../hooks/useConversation';
 import type { TurnMode } from '../types';
 import { WaveThread } from './WaveThread';
+import { THREAD_GOLD, Volume, useSpeechWave } from './WideButton';
 
 interface Props {
   status: Status;
@@ -23,41 +24,6 @@ interface Props {
 
 /** Включённый АВТО — золото короны: сиреневое сливалось с полосой. */
 const AUTO_ON = '#F2C230';
-/** Нить осциллограммы: на тёмном фоне — яркое золото, на белом — потемнее. */
-const THREAD_GOLD = { dark: '#F2C230', light: '#C99A0E' };
-
-/** Сколько полос в плавном переходе: меньше — видны ступеньки. */
-const FADE_STEPS = 14;
-
-/**
- * Плавный переход прозрачности сверху вниз — вместо градиента: библиотеки для
- * него в сборке нет, а ради одной кнопки пересобирать нативную часть незачем.
- */
-function Fade({
-  from,
-  to,
-  color,
-  style,
-}: {
-  from: number;
-  to: number;
-  color: string;
-  style: object;
-}) {
-  return (
-    <View pointerEvents="none" style={style}>
-      {Array.from({ length: FADE_STEPS }, (_, step) => (
-        <View
-          key={step}
-          style={{
-            flex: 1,
-            backgroundColor: `rgba(${color},${from + ((to - from) * step) / (FADE_STEPS - 1)})`,
-          }}
-        />
-      ))}
-    </View>
-  );
-}
 
 function formatDuration(millis: number): string {
   const seconds = Math.floor(millis / 1000);
@@ -93,6 +59,9 @@ export function RecordButton({
   const auto = mode === 'auto';
   const listening = status === 'listening';
   const working = status === 'transcribing' || status === 'thinking' || status === 'speaking';
+  /** Мадам Поли отвечает вслух — нить бежит и тогда, в такт её речи. */
+  const speaking = status === 'speaking';
+  const speechLevel = useSpeechWave(speaking);
   const timer = formatDuration(durationMillis);
 
   // В ручном режиме полоса заканчивает реплику, а беседу закрывает долгий тап.
@@ -137,13 +106,17 @@ export function RecordButton({
         ]}
       >
         {/* Объём: светлый блик сверху и тень внизу — полоса как выпуклая клавиша. */}
-        <Fade from={0.16} to={0} color="255,255,255" style={styles.shine} />
-        <Fade from={0} to={0.2} color="0,0,0" style={styles.shade} />
+        <Volume />
 
         {/* Осциллограмма — золотой нитью под подписью: видно, что микрофон открыт. */}
-        {listening && (
+        {(listening || speaking) && (
           <View style={styles.waves} pointerEvents="none">
-            <WaveThread level={inputLevel} active height={34} color={THREAD_GOLD[scheme]} />
+            <WaveThread
+              level={listening ? inputLevel : speechLevel}
+              active
+              height={34}
+              color={THREAD_GOLD[scheme]}
+            />
           </View>
         )}
 
@@ -222,20 +195,6 @@ const createStyles = (theme: Theme) =>
     barListening: { backgroundColor: theme.surface, borderColor: theme.danger },
     /** Нажатие: клавиша проседает — сдвиг вниз и блик тускнеет. */
     barPressed: { transform: [{ translateY: 1.5 }], opacity: 0.92 },
-    shine: {
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      right: 0,
-      height: '55%',
-    },
-    shade: {
-      position: 'absolute',
-      bottom: 0,
-      left: 0,
-      right: 0,
-      height: '45%',
-    },
     waves: {
       position: 'absolute',
       top: 0,

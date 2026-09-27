@@ -5,6 +5,7 @@ import { t } from '../i18n';
 import { QUIZ_OPTIONS, buildQuiz, flatEntries, type QuizQuestion } from '../review';
 import { useStyles, type Theme } from '../theme';
 import type { CardDirection, Vocabulary, VocabularyEntry } from '../types';
+import { WideButton } from './WideButton';
 
 interface Props {
   vocabulary: Vocabulary;
@@ -43,9 +44,9 @@ export function VocabularyQuiz({ vocabulary, direction, onLater }: Props) {
     return (
       <View style={styles.stack}>
         <Text style={styles.note}>{t.wordsQuizIntro}</Text>
-        <Pressable onPress={start} style={styles.primary}>
+        <WideButton onPress={start} style={styles.primary}>
           <Text style={styles.primaryLabel}>{t.wordsQuizStart}</Text>
-        </Pressable>
+        </WideButton>
       </View>
     );
   }
@@ -69,7 +70,7 @@ export function VocabularyQuiz({ vocabulary, direction, onLater }: Props) {
           </View>
         )}
         {mistakes.length > 0 && !postponed && (
-          <Pressable
+          <WideButton
             onPress={() => {
               onLater(mistakes.map((item) => item.entry));
               setPostponed(true);
@@ -77,11 +78,11 @@ export function VocabularyQuiz({ vocabulary, direction, onLater }: Props) {
             style={styles.primary}
           >
             <Text style={styles.primaryLabel}>{t.wordsQuizReviewMistakes}</Text>
-          </Pressable>
+          </WideButton>
         )}
-        <Pressable onPress={start} style={styles.secondary}>
+        <WideButton onPress={start} style={styles.secondary}>
           <Text style={styles.secondaryLabel}>{t.wordsQuizAgain}</Text>
-        </Pressable>
+        </WideButton>
       </View>
     );
   }
@@ -117,7 +118,7 @@ export function VocabularyQuiz({ vocabulary, direction, onLater }: Props) {
         );
       })}
       {answered && (
-        <Pressable
+        <WideButton
           onPress={() => {
             setIndex(index + 1);
             setChosen(null);
@@ -125,7 +126,7 @@ export function VocabularyQuiz({ vocabulary, direction, onLater }: Props) {
           style={styles.primary}
         >
           <Text style={styles.primaryLabel}>{last ? t.wordsQuizFinish : t.wordsQuizNext}</Text>
-        </Pressable>
+        </WideButton>
       )}
     </View>
   );

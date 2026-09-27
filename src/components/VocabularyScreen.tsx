@@ -9,6 +9,7 @@ import {
   View,
 } from 'react-native';
 
+import { WideButton } from './WideButton';
 import { DirectionToggle } from './FlipCard';
 import { ChevronIcon, EyeIcon, ShareIcon } from './icons';
 import { ScreenTitle } from './ScreenMenu';
@@ -485,13 +486,13 @@ export function VocabularyScreen({ menu, language, level, topicId }: Props) {
         {tab === 'list' && !vocabulary ? (
           <>
             <Text style={styles.intro}>{t.wordsIntro}</Text>
-            <Pressable onPress={() => void build()} disabled={busy} style={styles.cta}>
+            <WideButton onPress={() => void build()} disabled={busy} style={styles.cta}>
               {busy ? (
                 <ActivityIndicator color={theme.ctaText} size="small" />
               ) : (
                 <Text style={styles.ctaLabel}>{t.wordsBuild}</Text>
               )}
-            </Pressable>
+            </WideButton>
           </>
         ) : tab === 'list' && vocabulary ? (
           <>
@@ -594,7 +595,7 @@ export function VocabularyScreen({ menu, language, level, topicId }: Props) {
               </View>
             )}
 
-            <Pressable
+            <WideButton
               onPress={() => setConfirmRebuild(true)}
               disabled={busy}
               style={styles.secondary}
@@ -604,7 +605,7 @@ export function VocabularyScreen({ menu, language, level, topicId }: Props) {
               ) : (
                 <Text style={styles.secondaryLabel}>{t.wordsRebuild}</Text>
               )}
-            </Pressable>
+            </WideButton>
           </>
         ) : null}
 

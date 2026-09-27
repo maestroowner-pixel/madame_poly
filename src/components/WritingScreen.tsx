@@ -10,6 +10,7 @@ import {
   View,
 } from 'react-native';
 
+import { WideButton } from './WideButton';
 import { ScreenTitle } from './ScreenMenu';
 import { useKeyboardInset } from '../hooks/useKeyboardInset';
 import { TopicPicker } from './TopicPicker';
@@ -234,21 +235,21 @@ export function WritingScreen({ menu, language, level, topicId }: Props) {
 
             <Text style={styles.words}>{t.writingWords(words, state.task?.words ?? 0)}</Text>
 
-            <Pressable onPress={() => void check()} disabled={checking} style={styles.cta}>
+            <WideButton onPress={() => void check()} disabled={checking} style={styles.cta}>
               {checking ? (
                 <ActivityIndicator color={theme.ctaText} size="small" />
               ) : (
                 <Text style={styles.ctaLabel}>{t.writingCheck}</Text>
               )}
-            </Pressable>
+            </WideButton>
 
-            <Pressable onPress={() => void setTask(topic)} disabled={busy} style={styles.secondary}>
+            <WideButton onPress={() => void setTask(topic)} disabled={busy} style={styles.secondary}>
               {busy ? (
                 <ActivityIndicator color={theme.neon} size="small" />
               ) : (
                 <Text style={styles.secondaryLabel}>{t.writingTaskNew}</Text>
               )}
-            </Pressable>
+            </WideButton>
           </View>
         ) : (
         <ScrollView
@@ -280,13 +281,13 @@ export function WritingScreen({ menu, language, level, topicId }: Props) {
           {!state.task ? (
             <>
               <Text style={styles.intro}>{t.writingIntro}</Text>
-              <Pressable onPress={() => void setTask(topic)} disabled={busy} style={styles.cta}>
+              <WideButton onPress={() => void setTask(topic)} disabled={busy} style={styles.cta}>
                 {busy ? (
                   <ActivityIndicator color={theme.ctaText} size="small" />
                 ) : (
                   <Text style={styles.ctaLabel}>{t.writingTaskFirst}</Text>
                 )}
-              </Pressable>
+              </WideButton>
             </>
           ) : (
             <>
@@ -321,7 +322,7 @@ export function WritingScreen({ menu, language, level, topicId }: Props) {
 
                   {state.review.corrections.length > 0 &&
                     (drilled === null ? (
-                      <Pressable
+                      <WideButton
                         onPress={() => void drill()}
                         disabled={drilling}
                         style={styles.cta}
@@ -331,26 +332,26 @@ export function WritingScreen({ menu, language, level, topicId }: Props) {
                         ) : (
                           <Text style={styles.ctaLabel}>{t.writingDrill}</Text>
                         )}
-                      </Pressable>
+                      </WideButton>
                     ) : (
                       <Text style={styles.done}>{t.writingDrillDone(drilled)}</Text>
                     ))}
 
-                  <Pressable onPress={rewrite} style={styles.secondary}>
+                  <WideButton onPress={rewrite} style={styles.secondary}>
                     <Text style={styles.secondaryLabel}>{t.writingAgain}</Text>
-                  </Pressable>
+                  </WideButton>
                 </>
               ) : (
                 <></>
               )}
 
-              <Pressable onPress={() => void setTask(topic)} disabled={busy} style={styles.secondary}>
+              <WideButton onPress={() => void setTask(topic)} disabled={busy} style={styles.secondary}>
                 {busy ? (
                   <ActivityIndicator color={theme.neon} size="small" />
                 ) : (
                   <Text style={styles.secondaryLabel}>{t.writingTaskNew}</Text>
                 )}
-              </Pressable>
+              </WideButton>
             </>
           )}
         </ScrollView>

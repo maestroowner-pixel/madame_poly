@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { WideButton } from './WideButton';
 import { FlipCard } from './FlipCard';
 import { createCardStyles } from './VocabularyCards';
 import { formatDate } from '../format';
@@ -76,9 +77,9 @@ export function VocabularyReview({ cards, direction, speaking, onSpeak, onAnswer
           <Text style={styles.note}>{t.wordsReviewNext(waiting, formatDate(upcoming))}</Text>
         )}
         {dueLeft > 0 && (
-          <Pressable onPress={startBatch} style={styles.secondary}>
+          <WideButton onPress={startBatch} style={styles.secondary}>
             <Text style={styles.secondaryLabel}>{t.wordsReviewMore}</Text>
-          </Pressable>
+          </WideButton>
         )}
         {cards.length >= REVIEW_PILE && <Text style={styles.warning}>{t.wordsReviewPile(cards.length)}</Text>}
       </View>

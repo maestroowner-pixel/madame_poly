@@ -14,6 +14,7 @@ import {
   initialWindowMetrics,
 } from 'react-native-safe-area-context';
 
+import { WideButton } from './WideButton';
 import { CloseIcon } from './icons';
 import { ZoomModal } from './ZoomModal';
 import type { Anchor } from '../anchor';
@@ -132,20 +133,20 @@ export function AccountScreen({
                   </Text>
                 </View>
 
-                <Pressable onPress={onSync} disabled={busy} style={styles.cta}>
+                <WideButton onPress={onSync} disabled={busy} style={styles.cta}>
                   {busy ? (
                     <ActivityIndicator color={theme.ctaText} size="small" />
                   ) : (
                     <Text style={styles.ctaLabel}>{t.accountSyncNow}</Text>
                   )}
-                </Pressable>
+                </WideButton>
 
-                <Pressable
+                <WideButton
                   onPress={() => void attempt(logout)}
                   style={styles.secondary}
                 >
                   <Text style={styles.secondaryLabel}>{t.accountLogout}</Text>
-                </Pressable>
+                </WideButton>
               </>
             ) : (
               <>
@@ -172,7 +173,7 @@ export function AccountScreen({
                   textContentType="password"
                 />
 
-                <Pressable
+                <WideButton
                   onPress={withCredentials(login)}
                   disabled={working}
                   style={styles.cta}
@@ -182,15 +183,15 @@ export function AccountScreen({
                   ) : (
                     <Text style={styles.ctaLabel}>{t.accountLogin}</Text>
                   )}
-                </Pressable>
+                </WideButton>
 
-                <Pressable
+                <WideButton
                   onPress={withCredentials(register)}
                   disabled={working}
                   style={styles.secondary}
                 >
                   <Text style={styles.secondaryLabel}>{t.accountRegister}</Text>
-                </Pressable>
+                </WideButton>
 
                 <Pressable
                   onPress={() => {
