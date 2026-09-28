@@ -75,7 +75,10 @@
               "pt",
               "zh-Hans",
               "ja",
-              "ko"
+              "ko",
+              "nl",
+              "pl",
+              "ro"
             ],
             "android": [
               "en",
@@ -87,7 +90,10 @@
               "pt",
               "zh",
               "ja",
-              "ko"
+              "ko",
+              "nl",
+              "pl",
+              "ro"
             ]
           }
         }
@@ -114,7 +120,10 @@
       "pt": "./locales/pt.json",
       "zh-Hans": "./locales/zh-Hans.json",
       "ja": "./locales/ja.json",
-      "ko": "./locales/ko.json"
+      "ko": "./locales/ko.json",
+      "nl": "./locales/nl.json",
+      "pl": "./locales/pl.json",
+      "ro": "./locales/ro.json"
     }
   }
 }

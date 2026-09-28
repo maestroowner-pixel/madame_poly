@@ -17,3 +17,26 @@ export function plural(count: number, one: string, few: string, many: string): s
   if (units >= 2 && units <= 4) return few;
   return many;
 }
+
+/**
+ * Польское склонение по числу: 1 błąd, 2 błędy, 5 błędów — но в отличие от
+ * украинского 21 — снова «błędów»: форма «one» только у самой единицы.
+ */
+export function pluralPl(count: number, one: string, few: string, many: string): string {
+  if (count === 1) return one;
+  const tens = count % 100;
+  const units = count % 10;
+  if (units >= 2 && units <= 4 && !(tens >= 12 && tens <= 14)) return few;
+  return many;
+}
+
+/**
+ * Румынское склонение по числу: 1 greșeală, 2–19 greșeli, с 20 — через «de»:
+ * 20 de greșeli, 101 greșeli. «many» передаётся уже с «de».
+ */
+export function pluralRo(count: number, one: string, few: string, many: string): string {
+  if (count === 1) return one;
+  const tens = count % 100;
+  if (count === 0 || (tens >= 1 && tens <= 19)) return few;
+  return many;
+}

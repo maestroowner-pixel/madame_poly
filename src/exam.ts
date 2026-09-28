@@ -160,13 +160,13 @@ const LABELS: Record<LanguageCode, Record<ExamTopicId, string>> = {
 
 /** Названия на языке интерфейса — под названием темы в списке. */
 const GLOSSES: Record<ExamTopicId, Record<UiLocale, string>> = {
-  work: { en: 'Work and careers', uk: 'Робота та кар’єра', es: 'Trabajo y carrera', ru: 'Работа и карьера', de: 'Arbeit und Beruf', fr: 'Le travail et la carrière' , pt: 'O trabalho e a carreira' , zh: '工作与职业', ja: '仕事とキャリア', ko: '일과 직업' },
-  environment: { en: 'The environment', uk: 'Довкілля', es: 'Medio ambiente', ru: 'Экология', de: 'Umwelt', fr: 'L\'environnement' , pt: 'O meio ambiente' , zh: '环境', ja: '環境', ko: '환경' },
-  technology: { en: 'Technology', uk: 'Технології', es: 'Tecnología', ru: 'Технологии', de: 'Technik und Digitalisierung', fr: 'Les nouvelles technologies' , pt: 'A tecnologia' , zh: '科技', ja: 'テクノロジー', ko: '기술' },
-  education: { en: 'Education', uk: 'Освіта', es: 'Educación', ru: 'Образование', de: 'Bildung', fr: 'L\'éducation' , pt: 'A educação' , zh: '教育', ja: '教育', ko: '교육' },
-  health: { en: 'Health and lifestyle', uk: 'Здоров’я та спосіб життя', es: 'Salud y estilo de vida', ru: 'Здоровье и образ жизни', de: 'Gesundheit und Lebensstil', fr: 'La santé et le mode de vie' , pt: 'A saúde e o estilo de vida' , zh: '健康与生活方式', ja: '健康とライフスタイル', ko: '건강과 생활 방식' },
-  travel: { en: 'Travel and tourism', uk: 'Подорожі та туризм', es: 'Viajes y turismo', ru: 'Путешествия и туризм', de: 'Reisen und Tourismus', fr: 'Les voyages et le tourisme' , pt: 'As viagens e o turismo' , zh: '旅行与旅游', ja: '旅行と観光', ko: '여행과 관광' },
-  culture: { en: 'Culture and the arts', uk: 'Культура та мистецтво', es: 'Cultura y artes', ru: 'Культура и искусство', de: 'Kultur und Kunst', fr: 'La culture et les arts' , pt: 'A cultura e as artes' , zh: '文化与艺术', ja: '文化と芸術', ko: '문화와 예술' },
+  work: { en: 'Work and careers', uk: 'Робота та кар’єра', es: 'Trabajo y carrera', ru: 'Работа и карьера', de: 'Arbeit und Beruf', fr: 'Le travail et la carrière' , pt: 'O trabalho e a carreira' , zh: '工作与职业', ja: '仕事とキャリア', ko: '일과 직업' , nl: 'Werk en carrière', pl: 'Praca i kariera', ro: 'Munca și cariera' },
+  environment: { en: 'The environment', uk: 'Довкілля', es: 'Medio ambiente', ru: 'Экология', de: 'Umwelt', fr: 'L\'environnement' , pt: 'O meio ambiente' , zh: '环境', ja: '環境', ko: '환경' , nl: 'Het milieu', pl: 'Środowisko', ro: 'Mediul înconjurător' },
+  technology: { en: 'Technology', uk: 'Технології', es: 'Tecnología', ru: 'Технологии', de: 'Technik und Digitalisierung', fr: 'Les nouvelles technologies' , pt: 'A tecnologia' , zh: '科技', ja: 'テクノロジー', ko: '기술' , nl: 'Technologie', pl: 'Technologia', ro: 'Tehnologia' },
+  education: { en: 'Education', uk: 'Освіта', es: 'Educación', ru: 'Образование', de: 'Bildung', fr: 'L\'éducation' , pt: 'A educação' , zh: '教育', ja: '教育', ko: '교육' , nl: 'Onderwijs', pl: 'Edukacja', ro: 'Educația' },
+  health: { en: 'Health and lifestyle', uk: 'Здоров’я та спосіб життя', es: 'Salud y estilo de vida', ru: 'Здоровье и образ жизни', de: 'Gesundheit und Lebensstil', fr: 'La santé et le mode de vie' , pt: 'A saúde e o estilo de vida' , zh: '健康与生活方式', ja: '健康とライフスタイル', ko: '건강과 생활 방식' , nl: 'Gezondheid en leefstijl', pl: 'Zdrowie i styl życia', ro: 'Sănătatea și stilul de viață' },
+  travel: { en: 'Travel and tourism', uk: 'Подорожі та туризм', es: 'Viajes y turismo', ru: 'Путешествия и туризм', de: 'Reisen und Tourismus', fr: 'Les voyages et le tourisme' , pt: 'As viagens e o turismo' , zh: '旅行与旅游', ja: '旅行と観光', ko: '여행과 관광' , nl: 'Reizen en toerisme', pl: 'Podróże i turystyka', ro: 'Călătoriile și turismul' },
+  culture: { en: 'Culture and the arts', uk: 'Культура та мистецтво', es: 'Cultura y artes', ru: 'Культура и искусство', de: 'Kultur und Kunst', fr: 'La culture et les arts' , pt: 'A cultura e as artes' , zh: '文化与艺术', ja: '文化と芸術', ko: '문화와 예술' , nl: 'Cultuur en kunst', pl: 'Kultura i sztuka', ro: 'Cultura și arta' },
 };
 
 export function examTopics(language: LanguageCode): ExamTopic[] {
