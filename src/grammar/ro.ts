@@ -1,11 +1,14 @@
 import { module, type Syllabus } from './types';
 
 /**
- * Румынский — черновик, составленный Claude по памяти о том, как обычно
- * строятся курсы румынского как иностранного (Institutul Limbii Române) и что
- * проверяет экзамен на сертификат. С официальными перечнями не сверен:
- * заменить программой ILR или учебником (Limba română pentru străini), когда
- * они будут.
+ * Румынский — черновик Claude по памяти о курсах румынского как иностранного
+ * (Institutul Limbii Române), дополненный по официальной программе Министерства
+ * образования «Programa de Limba română — curs de inițiere pentru străinii
+ * adulți» (приказ 3310/2020, уровни A1–B1). Программа коммуникативная, каталога
+ * грамматики в ней нет; из неё взяты речевые действия по уровням («a se
+ * prezenta», «a da un ordin», «a exprima opinii»…) — они стали модулями
+ * «Comunicare» с грамматикой, которая за ними стоит, — и повелительное
+ * наклонение перенесено на A: «a da un ordin» там уже на A1.
  */
 export const ROMANIAN: Syllabus = {
   A: [
@@ -34,6 +37,7 @@ export const ROMANIAN: Syllabus = {
       ['Perfectul compus', 'am lucrat, ai văzut, a fost'],
       ['Participiul', '-at, -ut, -it, -s: lucrat, văzut, dormit, scris'],
       ['Viitorul', 'o să + conjunctiv; voi / am să; o să plec'],
+      ['Imperativul', 'vino, stai jos, deschide cartea; lucrați; nu lucra — instrucțiuni și rugăminți'],
     ]),
     module('A', 'Propoziția', [
       ['Întrebări', 'cine, ce, unde, când, cum, de ce, cât, care'],
@@ -41,6 +45,15 @@ export const ROMANIAN: Syllabus = {
       ['Prepozițiile de bază', 'în, la, pe, cu, de, din, pentru, fără'],
       ['Numeralul', 'unu, doi, douăzeci de: douăzeci de lei'],
       ['Ora și data', 'la ora cinci, e trei și jumătate; pe unu mai'],
+    ]),
+    module('A', 'Comunicare în situații uzuale', [
+      ['A se prezenta și a saluta', 'Mă numesc…, Sunt din…, Încântat de cunoștință; bună ziua / bună seara; tu sau dumneavoastră'],
+      ['A cere și a oferi informații', 'Unde este…? Cât costă…? Aveți…? La ce oră…? — întrebări politicoase'],
+      ['A cere scuze și a mulțumi', 'Scuzați-mă, Îmi pare rău, Mulțumesc frumos, Cu plăcere, Nu-i nimic'],
+      ['A exprima preferințe', 'Îmi place / nu-mi place, prefer, aș vrea, mi-ar plăcea'],
+      ['Cantități, măsuri și prețuri', 'un kilogram de, o sticlă de, jumătate de pâine; Cât costă? E prea scump.'],
+      ['A face o invitație', 'Vrei să…? Hai să…! Ce faci sâmbătă?'],
+      ['A descrie persoane, locuri și lucruri', 'Cum este? E înalt, are ochii căprui; casa are trei camere'],
     ]),
   ],
   B: [
@@ -55,7 +68,6 @@ export const ROMANIAN: Syllabus = {
       ['Imperfectul', 'lucram, eram, aveam'],
       ['Mai-mult-ca-perfectul', 'lucrasem, fusesem'],
       ['Condiționalul prezent', 'aș vrea, ai putea; Dacă aș avea timp, aș veni.'],
-      ['Imperativul', 'lucrează, lucrați; nu lucra'],
       ['Conjunctivul trecut', 'să fi lucrat'],
     ]),
     module('B', 'Fraza', [
@@ -63,6 +75,14 @@ export const ROMANIAN: Syllabus = {
       ['Subordonatele', 'că, să, dacă, deși, pentru că, înainte să, după ce'],
       ['Vorbirea indirectă', 'A spus că vine. M-a întrebat dacă…'],
       ['Diateza pasivă și reflexivă', 'Casa a fost construită. Se vorbește română.'],
+    ]),
+    module('B', 'Comunicare: B1', [
+      ['A exprima o opinie', 'cred că, mi se pare că, după părerea mea, sunt de acord / nu sunt de acord'],
+      ['A propune și a sugera', 'Ce-ar fi să…? Hai să…, v-aș propune să…, ar fi bine să…'],
+      ['A accepta și a refuza o invitație', 'Cu mare plăcere! Din păcate nu pot, pentru că…'],
+      ['A relata întâmplări', 'mai întâi, apoi, după aceea, în final; perfectul compus și imperfectul în povestire'],
+      ['A da instrucțiuni și a exprima condiții', 'trebuie să, e nevoie să; dacă…, atunci…'],
+      ['Texte funcționale', 'CV-ul (Europass), scrisoarea de intenție, formularul, e-mailul formal'],
     ]),
   ],
   C: [
