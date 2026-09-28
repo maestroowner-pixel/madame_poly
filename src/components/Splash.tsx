@@ -6,7 +6,11 @@ import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { SPLASH_HOLD_MS } from '../config';
 import { t } from '../i18n';
+import { nextSplashIndex } from '../storage';
 import { useStyles } from '../theme';
+
+/** Ролики чередуются от запуска к запуску; оба по 6 секунд, под SPLASH_HOLD_MS. */
+const CLIPS = [require('../../assets/splash.mp4'), require('../../assets/splash-2.mp4')];
 
 interface Props {
   onDone: () => void;
@@ -16,12 +20,12 @@ interface Props {
  * Заставка на запуске: короткий ролик со своей дорожкой. Отдельного гонга
  * больше нет — иначе звучали бы оба. Держим по таймеру, а не по событию конца
  * ролика: на Android оно приходит раньше, чем файл успевает открыться, и
- * заставка мигала. Тап снимает её сразу.
+ * заставка мигала. Тап снимает её сразу. Роликов два, чередуются.
  */
 export function Splash({ onDone }: Props) {
   const styles = useStyles(createStyles);
 
-  const player = useVideoPlayer(require('../../assets/splash.mp4'), (video) => {
+  const player = useVideoPlayer(null, (video) => {
     video.loop = false;
   });
   const opacity = useRef(new Animated.Value(1)).current;
@@ -40,8 +44,11 @@ export function Splash({ onDone }: Props) {
 
   useEffect(() => {
     // Ролик должен звучать и при выключенном звонке — это не уведомление.
-    void setAudioModeAsync({ playsInSilentMode: true, allowsRecording: false }).then(() => {
-      player.play();
+    void Promise.all([
+      setAudioModeAsync({ playsInSilentMode: true, allowsRecording: false }),
+      nextSplashIndex(CLIPS.length).then((index) => player.replaceAsync(CLIPS[index])),
+    ]).then(() => {
+      if (!dismissed.current) player.play();
     });
 
     // Держим по таймеру, а не по событию «звук доиграл»: на Android оно

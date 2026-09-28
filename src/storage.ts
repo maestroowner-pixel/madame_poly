@@ -709,3 +709,15 @@ export async function setGrammarDone(
   await saveGrammarProgress(language, next);
   return next;
 }
+
+/**
+ * Какую заставку показать на этом запуске: ролики чередуются. Счётчик свой
+ * у каждого устройства — в облако не уходит, поэтому пишем мимо write().
+ */
+export async function nextSplashIndex(count: number): Promise<number> {
+  const key = 'polyglotta:splashIndex';
+  const last = Number(await AsyncStorage.getItem(key).catch(() => null));
+  const index = Number.isInteger(last) && last >= 0 ? (last + 1) % count : 0;
+  await AsyncStorage.setItem(key, String(index)).catch(() => undefined);
+  return index;
+}
