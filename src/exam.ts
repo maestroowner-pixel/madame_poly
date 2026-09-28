@@ -290,11 +290,11 @@ const EXAM_FORMATS: Record<ExamLevel, Record<LanguageCode, ExamFormat>> = {
       name: 'Staatsexamen NT2 (programma I)',
       parts: {
         interview:
-          'Short introduction: simple questions about the candidate\'s everyday life connected to the topic — work or studies, family, free time.',
+          'Deel 1 (short practical tasks, about 20 seconds each): set the candidate short everyday situations connected to the topic and let them do the language action directly — make a polite request or give an instruction (calling a school, asking a colleague), choose between two options and say why ("Ik kies voor…, omdat…"). Reward getting straight to the point; one or two sentences are enough.',
         longTurn:
-          'Monologue: in the real Staatsexamen the candidate answers recorded situations and gives an opinion with reasons. Give a simple question on the topic and ask the candidate to talk about it on their own for about a minute — their own experience, what they like and dislike, and why. Afterwards ask one simple question about it.',
+          'Deel 2 (longer answers, 15 seconds to think and 30 seconds to speak): in the real exam some tasks use two or three pictures; there are none here, so describe a short sequence of events or a situation in words. Ask the candidate to give advice or persuade someone, or to explain what happens step by step, and expect at least two reasons joined with connectors like "daarom", "dus", "want".',
         discussion:
-          'Situation: a short everyday role play connected to the topic — you are a neighbour, a colleague or someone at a service desk, and the candidate has to ask for something, explain a problem or agree on a plan.',
+          'Deel 2, opinion tasks: give a rule or decision connected to the topic (at work, at school, in the neighbourhood) and ask whether they agree and why, again expecting two reasons. Then ask one or two short follow-up questions. Do not correct anything along the way.',
       },
     },
     pl: {
@@ -413,11 +413,11 @@ const EXAM_FORMATS: Record<ExamLevel, Record<LanguageCode, ExamFormat>> = {
       name: 'Staatsexamen NT2 (programma II)',
       parts: {
         interview:
-          'Short introduction: a few questions about the candidate\'s own experience with the topic, expecting fuller answers.',
+          'Deel 1 (four short tasks, about 20 seconds, no preparation): professional or study situations connected to the topic — describe a workplace situation and give a clear instruction, or react with a short opinion, request or proposal ("Mijn voorstel is om…"). Expect a recognisable role and a direct opening.',
         longTurn:
-          'Monologue: in the real Staatsexamen the candidate explains a situation and argues a position. Give a concrete question on the topic and ask for a structured answer of one to two minutes — the situation, advantages and disadvantages and their own position with arguments. Afterwards ask one follow-up question.',
+          'Deel 3 (presentation, 2 minutes): in the real exam the candidate presents a graph. There is no picture here, so describe a simple graph or table in words — what is measured, how it changed over a few years. Ask the candidate to report the trend, name the problem it shows and propose a solution, in a clear structure ("Uit de grafiek blijkt dat…", "eerst, daarna, ten slotte"). Afterwards ask one follow-up question.',
         discussion:
-          'Discussion: put a debatable question about the topic and discuss it. Take a different view now and then so the candidate has to react, nuance and defend their position.',
+          'Deel 2 (longer tasks, 30 seconds each): advice or persuasion in a professional role with at least two arguments ("Ik zou u adviseren om…, want…"), then opinions on broader social, work or study questions connected to the topic. Expect a formal register where the role calls for it, take a different view now and then and ask them to justify their position.',
       },
     },
     pl: {
