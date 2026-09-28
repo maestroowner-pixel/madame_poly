@@ -113,6 +113,31 @@ export function SettingsScreen({
   onOpenPaywall,
 }: Props) {
   const styles = useStyles(createStyles);
+
+  /** Карусель языков: где стоит каждая плитка — чтобы подвинуть выбранную к середине. */
+  const carouselRef = useRef<ScrollView>(null);
+  const tileFrames = useRef<Partial<Record<LanguageCode, { x: number; width: number }>>>({});
+  const [carouselWidth, setCarouselWidth] = useState(0);
+  const [framesReady, setFramesReady] = useState(0);
+  const [contentWidth, setContentWidth] = useState(0);
+  /** Первый раз ставим на место без анимации, дальше — плавно. */
+  const placed = useRef(false);
+
+  useEffect(() => {
+    const frame = tileFrames.current[language];
+    if (!frame || carouselWidth === 0 || contentWidth === 0) return;
+    const x = Math.min(
+      Math.max(0, frame.x - (carouselWidth - frame.width) / 2),
+      Math.max(0, contentWidth - carouselWidth),
+    );
+    // Прокрутку — после кадра: до него iOS ещё не знает размер содержимого и
+    // обрезает смещение.
+    const handle = requestAnimationFrame(() => {
+      carouselRef.current?.scrollTo({ x, animated: placed.current });
+      placed.current = true;
+    });
+    return () => cancelAnimationFrame(handle);
+  }, [language, carouselWidth, contentWidth, framesReady]);
   const { theme, scheme, toggle, fontScale, setFontScale } = useTheme();
   /** Подвал свёрнут в ручку внизу экрана и раскрывается вверх. */
   const [aboutOpen, setAboutOpen] = useState(false);
@@ -200,7 +225,20 @@ export function SettingsScreen({
       </View>
 
       <ScrollView contentContainerStyle={styles.panel}>
-      <View style={styles.languages}>
+      {/*
+        Языки — каруселью в одну строку: сеткой одиннадцать плиток заняли бы
+        треть экрана. Выбранный язык прокручивается к середине.
+      */}
+      <ScrollView
+        ref={carouselRef}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        decelerationRate="fast"
+        style={styles.carousel}
+        contentContainerStyle={styles.languages}
+        onLayout={(event) => setCarouselWidth(event.nativeEvent.layout.width)}
+        onContentSizeChange={(width) => setContentWidth(width)}
+      >
         {LANGUAGE_CODES.map((code) => {
           const active = code === language;
           return (
@@ -208,6 +246,11 @@ export function SettingsScreen({
               key={code}
               disabled={disabled}
               onPress={() => onSelectLanguage(code)}
+              onLayout={(event) => {
+                const { x, width } = event.nativeEvent.layout;
+                tileFrames.current[code] = { x, width };
+                if (active) setFramesReady((tick) => tick + 1);
+              }}
               style={[styles.tile, active && styles.tileActive, disabled && styles.dimmed]}
             >
               <Text style={styles.flag}>{LANGUAGES[code].flag}</Text>
@@ -217,7 +260,7 @@ export function SettingsScreen({
             </Pressable>
           );
         })}
-      </View>
+      </ScrollView>
 
       {/*
         Уровень — сразу под языком: две вещи, которые задают всё остальное.
@@ -505,15 +548,9 @@ const createStyles = (theme: Theme) =>
       paddingBottom: 24,
     },
     row: { flexDirection: 'row', justifyContent: 'center', gap: 10 },
-    /** Восемь языков — сеткой по четыре в ряд: в одну строку плитки прежнего размера не влезают. */
-    languages: {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      justifyContent: 'center',
-      gap: 10,
-      alignSelf: 'center',
-      width: 78 * 4 + 10 * 3,
-    },
+    /** Карусель — во всю ширину, за поля панели: плитки уезжают за край экрана, а не обрываются. */
+    carousel: { marginHorizontal: -16, flexGrow: 0 },
+    languages: { flexDirection: 'row', gap: 10, paddingHorizontal: 16 },
 
     drawer: {
       width: '100%',
