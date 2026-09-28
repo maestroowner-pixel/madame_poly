@@ -3,8 +3,9 @@ import { module, type Syllabus } from './types';
 /**
  * Нидерландский — по двум книгам J. A. Oosterhoff (Routledge Grammar
  * Workbooks), присланным пользователем: ступень A — «Basic Dutch» (2-е изд.,
- * 2024), B — «Intermediate Dutch». Ступень C — черновик Claude по памяти о
- * Staatsexamen NT2; заменить, когда будет источник.
+ * 2024), B — «Intermediate Dutch». Ступень C — темы для продвинутых из
+ * справочника «Dutch Grammar» (B. Berendsen, dutchgrammar.com), которых нет в
+ * двух книгах, плюс стиль и регистр.
  */
 export const DUTCH: Syllabus = {
   // Ступень A — по оглавлению «Basic Dutch: A Grammar and Workbook»
@@ -98,19 +99,58 @@ export const DUTCH: Syllabus = {
       ['Woordvolgorde', 'hoofdzin en bijzin, inversie, tijd-wijze-plaats, de werkwoordelijke eindgroep'],
     ]),
   ],
+  // Ступень C — по оглавлению справочника «Dutch Grammar» (B. Berendsen,
+  // dutchgrammar.com): темы, которых нет в «Basic» и «Intermediate Dutch», —
+  // сложные времена, местоимения и порядок слов для продвинутых.
   C: [
-    module('C', 'De complexe zin', [
-      ['De werkwoordelijke eindgroep', 'Ik heb hem zien komen. …dat ik het had kunnen weten.'],
-      ['Participium- en infinitiefconstructies', 'Thuisgekomen belde ik haar. Na gegeten te hebben…'],
-      ['Tangconstructies en lange zinnen', 'de zin opbouwen in formeel schrijven'],
+    module('C', 'Werkwoorden voor gevorderden', [
+      ['De voltooid toekomende tijd', 'zal hebben + voltooid deelwoord, zal zijn gegaan: Morgen zal ik het hebben gedaan.'],
+      ['De voltooid verleden toekomende tijd', 'zou hebben / zijn + deelwoord: spijt en het irreële verleden — Ik zou het hebben gedaan als…'],
+      ['De aanvoegende wijs', 'Leve de koning! Men neme…, het zij zo, God zegene je: vaste uitdrukkingen en formele stijl'],
+      ['Het werkwoord als zelfstandig naamwoord', 'het lezen, het roken is verboden, aan het koken'],
+      ['De vervangende infinitief', 'Ik heb het niet kunnen doen. Hij is komen kijken. — infinitief in plaats van voltooid deelwoord'],
+      ['Te na durven, hoeven, hebben en komen', 'Je hoeft niet te komen. Ik heb niets te doen. Hij komt ons te helpen.'],
+      ['Aan het in de voltooide tijd', 'Ik ben de hele dag aan het werken geweest.'],
+      ['Werkwoorden gevormd uit zelfstandige naamwoorden', 'stofzuigen, zonnebaden, glimlachen: ik stofzuig, ik heb gestofzuigd'],
+    ]),
+    module('C', 'Scheidbaar of onscheidbaar', [
+      ['Voorvoegsels met twee betekenissen', "door-, over-, om-, onder-, voor-: dóórlopen / doorlópen, óverkomen / overkómen; klemtoon en deelwoord"],
+      ['Werkwoorden met mis- en vol-', 'misverstaan, mislukken, volhouden, voltooien: scheidbaar of niet'],
+    ]),
+    module('C', 'Woordvorming', [
+      ['Samenstellingen en tussenklanken', 'stadhuis, boekenkast, zonnebril, kinderwagen, schaapskooi: -s-, -e-, -en-, -er- of niets'],
+    ]),
+    module('C', 'Voornaamwoorden voor gevorderden', [
+      ['Het is en het zijn, dit is en dit zijn', 'Het zijn mijn kinderen. Dit zijn de regels.'],
+      ['Hen of hun, en voornaamwoorden in de spreektaal', 'hen na een voorzetsel, hun als meewerkend voorwerp; ze, ’m, d’r, Jan z’n fiets'],
+      ['Datgene en diegene', 'Diegene die het weet, mag het zeggen. Datgene wat je zoekt…'],
+      ["Zo'n, zulke, dergelijk, dusdanig en zodanig", "zo'n huis, zulke huizen, een dergelijk probleem; dusdanig en zodanig in formele stijl"],
+      ['Dezelfde en hetzelfde', 'dezelfde man, hetzelfde huis; hetzelfde als'],
+      ['Wiens en wier', 'de man wiens auto…, de vrouw wier zoon…: formeel naast van wie'],
+      ['Al, alle, allen en allemaal', 'al het geld, alle mensen, wij allemaal, allen in formele stijl'],
+      ['Beide, allebei en men', 'beide kinderen, ze komen allebei; men zegt dat…'],
+      ['Onbepaalde hoeveelheden', 'een paar, enkele, verscheidene, weinig, veel, te veel, genoeg'],
+      ['Uitroepen', 'Wat een mooi huis! Wat is het koud! Hoe durf je!'],
+    ]),
+    module('C', 'Woordvolgorde voor gevorderden', [
+      ['Het middenveld', 'er / hier / daar vooraan, dan tijd, wijze, plaats; het lijdend voorwerp en onbeklemtoonde voornaamwoorden'],
+      ['Meewerkend voorwerp en voorzetselvoorwerp', 'Ik geef hem het boek / Ik geef het boek aan hem; de plaats van de voorzetselgroep'],
+      ['Koppelwerkwoorden en het naamwoordelijk deel', 'zijn, worden, blijven, lijken, blijken, schijnen'],
+      ['Na het eindveld', 'Ik heb lang gewacht op jou. — wat achter de werkwoorden mag staan'],
+      ['Verkorte bijzinnen', 'Eenmaal thuis belde hij. Gezien de omstandigheden… Zodra klaar, …'],
+      ['Hoe vrij is de Nederlandse zin?', 'wat voorop mag voor nadruk, zinsdelen voor en na de kern, topicalisatie'],
+    ]),
+    module('C', 'Er voor gevorderden', [
+      ['Er of het als onderwerp', 'Er is iemand aan de deur. Het is Jan.'],
+      ['Het extra er aan het begin van de zin', 'Er werd gebeld. Er wordt gezegd dat… Er zijn veel mensen die…'],
     ]),
     module('C', 'Stijl en register', [
+      ['De werkwoordelijke eindgroep', 'Ik heb hem zien komen. …dat ik het had kunnen weten.'],
+      ['Participium- en infinitiefconstructies', 'Thuisgekomen belde ik haar. Na gegeten te hebben…'],
       ['Formeel en informeel', 'u en jij; ambtelijke taal en spreektaal'],
       ['Nominalisering', 'het besluit nemen, de verhoging van de huur'],
       ['Uitdrukkingen en vaste combinaties', 'een beslissing nemen, aandacht besteden aan'],
       ['Argumenteren en nuanceren', 'weliswaar, desondanks, enerzijds … anderzijds'],
-    ]),
-    module('C', 'Belgisch en Nederlands Nederlands', [
       ['Verschillen tussen Nederland en Vlaanderen', 'woordenschat, gij / ge, verkleinwoorden'],
     ]),
   ],
