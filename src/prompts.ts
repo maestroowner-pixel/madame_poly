@@ -502,6 +502,9 @@ const NOUN_FORM: Record<LanguageCode, string> = {
   pt: 'nouns with their definite article (o, a, os, as)',
   br: 'nouns with their definite article (o, a, os, as)',
   uk: 'nouns in the nominative singular without any article (Ukrainian has none) and without gender marks',
+  nl: 'nouns with their definite article (de or het) and, where it is irregular or useful, the plural after a comma, like "het huis, de huizen"',
+  pl: 'nouns in the nominative singular without any article (Polish has none) and without gender marks',
+  ro: 'nouns in the indefinite form with the indefinite article (un, o) and the plural after a comma, which shows the gender, like "un spital, spitale"',
 };
 
 export function pronunciationName(language: LanguageCode, variant?: EnglishVariant): string {
@@ -534,7 +537,7 @@ export function buildVocabularyPrompt(
       ? '- A phrasal verb "term" is the verb without "to", with "sth" / "sb" showing where the object goes: "put sth off" when the object can go between verb and particle, "look after sb" when it cannot, "look forward to sth" for three-part verbs, no placeholder for intransitive ones like "break down". If the verb has several meanings, give only the one the topic needs and translate that one.'
       : '',
     `- "term" is in ${englishName}; "translation" is in ${EXPLANATION_LANGUAGE}, short and natural, not a dictionary list of every meaning. Where two forms are interchangeable, give both in one entry separated by " / ", like "el oído / la oreja".`,
-    `- "transcription" is the pronunciation of the whole term in IPA between slashes, ${pronunciationName(language, variant)}, with stress marks, like /kaˈβeθa/ or /ˈhedeɪk/. For a phrase transcribe the whole phrase, connected speech, no pauses marked.`,
+    `- "transcription" is the pronunciation of the whole term in IPA between slashes, ${pronunciationName(language, variant)}, with stress marks, like /kaˈβeθa/ or /ˈhedeɪk/. For a phrase transcribe the whole phrase, connected speech, no pauses marked. Use IPA symbols only, never letters of the language's own alphabet: Romanian ț is /t͡s/, ș is /ʃ/, ce and ci are /t͡ʃe/ and /t͡ʃi/; Polish sz is /ʂ/, cz is /t͡ʂ/.`,
     `- "title" of a section is in ${englishName}; "gloss" is the same in ${EXPLANATION_LANGUAGE}. The sheet "title" is the topic named in ${englishName}.`,
     '- No entry appears twice across sections. Every term must be correct, natural, spelled as in a dictionary and in use today — a learner will memorise it as is.',
     `- "dialogue": one conversation of ten to fourteen lines in ${englishName} between two people in a typical situation of the topic, turns alternating, each line a full utterance without speaker labels. It reuses words and phrases from the sections${phrasal ? ', including several phrasal verbs' : ''}.`,

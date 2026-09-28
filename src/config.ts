@@ -171,7 +171,19 @@ export type MaxVoice = (typeof MAX_VOICES)[number];
  * перед тем, как попасть сюда. Форма существительного по языку — NOUN_FORM в
  * промптах.
  */
-export const VOCABULARY_LANGUAGES: LanguageCode[] = ['en', 'es', 'de', 'fr', 'it', 'pt', 'br', 'uk'];
+export const VOCABULARY_LANGUAGES: LanguageCode[] = [
+  'en',
+  'es',
+  'de',
+  'fr',
+  'it',
+  'pt',
+  'br',
+  'uk',
+  'nl',
+  'pl',
+  'ro',
+];
 
 /** Автоматически проигрывать ответ ИИ после получения. */
 export const AUTOPLAY_TTS = true;

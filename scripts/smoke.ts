@@ -43,6 +43,9 @@ const SAMPLES: Record<LanguageCode, string> = {
   pt: 'Ontem eu fui na loja e comprei dois pão para o meu pequeno-almoço.',
   br: 'Ontem eu ir na loja e comprei dois pão pra meu café da manhã.',
   uk: 'Вчора я пішов в магазин і купив два хліба на мій сніданок.',
+  nl: 'Gisteren ik ga naar de winkel en ik kopen twee brood voor mijn ontbijt.',
+  pl: 'Wczoraj ja idę do sklep i kupiłem dwa chleba na mój śniadanie.',
+  ro: 'Ieri eu merg la magazin și am cumpărat două pâine pentru micul meu dejun.',
 };
 
 /** Анонимный вход через REST: SDK Firebase тянет за собой AsyncStorage. */

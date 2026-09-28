@@ -129,6 +129,33 @@ const LABELS: Record<LanguageCode, Record<ExamTopicId, string>> = {
     travel: 'As viagens e o turismo',
     culture: 'A cultura e as artes',
   },
+  nl: {
+    work: 'Werk en carrière',
+    environment: 'Het milieu',
+    technology: 'Technologie',
+    education: 'Onderwijs',
+    health: 'Gezondheid en leefstijl',
+    travel: 'Reizen en toerisme',
+    culture: 'Cultuur en kunst',
+  },
+  pl: {
+    work: 'Praca i kariera',
+    environment: 'Środowisko',
+    technology: 'Technologia',
+    education: 'Edukacja',
+    health: 'Zdrowie i styl życia',
+    travel: 'Podróże i turystyka',
+    culture: 'Kultura i sztuka',
+  },
+  ro: {
+    work: 'Munca și cariera',
+    environment: 'Mediul înconjurător',
+    technology: 'Tehnologia',
+    education: 'Educația',
+    health: 'Sănătatea și stilul de viață',
+    travel: 'Călătoriile și turismul',
+    culture: 'Cultura și arta',
+  },
 };
 
 /** Названия на языке интерфейса — под названием темы в списке. */
@@ -259,6 +286,39 @@ const EXAM_FORMATS: Record<ExamLevel, Record<LanguageCode, ExamFormat>> = {
           'Conversation on the elemento provocador: discuss the topic further with follow-up questions, ask for their opinion and reasons, and take a different view now and then.',
       },
     },
+    nl: {
+      name: 'Staatsexamen NT2 (programma I)',
+      parts: {
+        interview:
+          'Short introduction: simple questions about the candidate\'s everyday life connected to the topic — work or studies, family, free time.',
+        longTurn:
+          'Monologue: in the real Staatsexamen the candidate answers recorded situations and gives an opinion with reasons. Give a simple question on the topic and ask the candidate to talk about it on their own for about a minute — their own experience, what they like and dislike, and why. Afterwards ask one simple question about it.',
+        discussion:
+          'Situation: a short everyday role play connected to the topic — you are a neighbour, a colleague or someone at a service desk, and the candidate has to ask for something, explain a problem or agree on a plan.',
+      },
+    },
+    pl: {
+      name: 'Egzamin certyfikatowy z języka polskiego (B1)',
+      parts: {
+        interview:
+          'Rozmowa wstępna: simple questions about the candidate\'s life, work or studies and interests connected to the topic.',
+        longTurn:
+          'Monolog: in the real exam the task starts from a short text or a picture. There are none here, so describe an everyday situation related to the topic in two or three simple sentences and ask the candidate to talk about it on their own for about a minute and a half — their own experience and opinion. Afterwards ask one simple question about it.',
+        discussion:
+          'Dialog w sytuacji: a short everyday role play connected to the topic — you are a shop assistant, an official or a neighbour, and the candidate has to ask for something, complain politely or arrange something.',
+      },
+    },
+    ro: {
+      name: 'Certificat de competență lingvistică — limba română (B1)',
+      parts: {
+        interview:
+          'Introductory conversation: simple questions about the candidate\'s everyday life connected to the topic — family, work or studies, free time.',
+        longTurn:
+          'Monologue: give the candidate a simple question on the topic and ask them to speak on their own for about a minute and a half — their own experience, what they like and dislike, how it is where they live. Afterwards ask one simple question about it.',
+        discussion:
+          'Dialogue in a situation: a short everyday role play connected to the topic — you are a neighbour, a colleague or a clerk, and the candidate has to ask for something, agree on a plan or sort out a small problem.',
+      },
+    },
   },
   B2: {
     en: {
@@ -347,6 +407,39 @@ const EXAM_FORMATS: Record<ExamLevel, Record<LanguageCode, ExamFormat>> = {
           "Elemento provocador: in the real exam the candidate comments on an image or a short text. There are none here, so describe a situation or give a short statement related to the topic in two or three sentences, and ask the candidate to comment on it on their own for about two minutes — what it shows, what they think, how it is in their own country. Afterwards ask one question about it.",
         discussion:
           'Conversation on the elemento provocador: discuss the topic further with follow-up questions, ask for their opinion and reasons, and take a different view now and then.',
+      },
+    },
+    nl: {
+      name: 'Staatsexamen NT2 (programma II)',
+      parts: {
+        interview:
+          'Short introduction: a few questions about the candidate\'s own experience with the topic, expecting fuller answers.',
+        longTurn:
+          'Monologue: in the real Staatsexamen the candidate explains a situation and argues a position. Give a concrete question on the topic and ask for a structured answer of one to two minutes — the situation, advantages and disadvantages and their own position with arguments. Afterwards ask one follow-up question.',
+        discussion:
+          'Discussion: put a debatable question about the topic and discuss it. Take a different view now and then so the candidate has to react, nuance and defend their position.',
+      },
+    },
+    pl: {
+      name: 'Egzamin certyfikatowy z języka polskiego (B2)',
+      parts: {
+        interview:
+          'Rozmowa wstępna: a few questions about the candidate and their own connection to the topic.',
+        longTurn:
+          'Monolog: give a short statement on the topic in one or two sentences, in the spirit of the short text the real exam starts from, and ask the candidate to present the issue and argue their view with examples for about two minutes.',
+        discussion:
+          'Dyskusja: debate the candidate\'s view. Take the opposite side at times and ask them to justify, nuance and defend their position.',
+      },
+    },
+    ro: {
+      name: 'Certificat de competență lingvistică — limba română (B2)',
+      parts: {
+        interview:
+          'Introductory conversation: a few questions about the candidate\'s own experience with the topic.',
+        longTurn:
+          'Monologue: give a concrete question on the topic and ask for a structured answer of about two minutes — the situation, advantages and disadvantages and their own opinion with arguments. Afterwards ask one follow-up question.',
+        discussion:
+          'Discussion: put a debatable question about the topic and discuss it. Take a different view now and then so they have to argue and move towards a conclusion.',
       },
     },
   },

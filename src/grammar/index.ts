@@ -7,6 +7,9 @@ import { ITALIAN } from './it';
 import { PORTUGUESE } from './pt';
 import { BRAZILIAN } from './br';
 import { UKRAINIAN } from './uk';
+import { DUTCH } from './nl';
+import { POLISH } from './pl';
+import { ROMANIAN } from './ro';
 import { bandOf, type GrammarModule, type GrammarUnit, type Syllabus } from './types';
 
 export { bandOf, type Band, type GrammarModule, type GrammarUnit } from './types';
@@ -24,6 +27,9 @@ const SYLLABI: Record<LanguageCode, Syllabus | GrammarModule[]> = {
   pt: PORTUGUESE,
   br: BRAZILIAN,
   uk: UKRAINIAN,
+  nl: DUTCH,
+  pl: POLISH,
+  ro: ROMANIAN,
 };
 
 /** Один курс без ступеней — экран показывает его целиком при любом уровне. */
