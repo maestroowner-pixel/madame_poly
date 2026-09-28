@@ -1,0 +1,7 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "baseUrl": "..",
+    "paths": { "expo-localization": ["scripts/stubs/expo-localization.ts"] }
+  }
+}

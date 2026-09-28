@@ -487,6 +487,23 @@ const VOCABULARY_GUIDANCE: Record<Level, string> = {
  * у врача целиком и предложения-примеры.
  */
 /** Какое произношение писать в транскрипции: словари дают RP, американцу — GA. */
+/**
+ * Как давать существительное в листе слов. Артикль несёт род — без него
+ * немецкое или французское слово заучивается наполовину. В английском он ничего
+ * не добавляет, а в украинском артиклей нет. Помечать там род в скобках
+ * пробовали: модель ошибалась («нежить (ж.)»), а неверная помета хуже никакой.
+ */
+const NOUN_FORM: Record<LanguageCode, string> = {
+  en: 'nouns without an article',
+  de: 'nouns with their definite article (der, die, das) and, where it is irregular or useful, the plural after a comma, like "der Arzt, die Ärzte"',
+  fr: 'nouns with their definite article; before a vowel, where l\' hides the gender, use un / une instead, like "un hôpital"',
+  es: 'nouns with their definite article',
+  it: 'nouns with their definite article; before a vowel, where l\' hides the gender, use un / una instead',
+  pt: 'nouns with their definite article (o, a, os, as)',
+  br: 'nouns with their definite article (o, a, os, as)',
+  uk: 'nouns in the nominative singular without any article (Ukrainian has none) and without gender marks',
+};
+
 export function pronunciationName(language: LanguageCode, variant?: EnglishVariant): string {
   if (language !== 'en') return `standard ${LANGUAGES[language].englishName}`;
   return variant === 'american' ? 'General American' : 'British Received Pronunciation';
@@ -512,7 +529,7 @@ export function buildVocabularyPrompt(
     `- Level ${level}: ${VOCABULARY_GUIDANCE[level]}`,
     phrasal
       ? `- Sections come in three kinds. "words": single words and short collocations — nouns without an article, verbs in the infinitive, adjectives in the base form; no phrasal verbs here. "phrasal": phrasal verbs — ${phrasal}. "phrases": complete sentences and questions a person would actually say in a situation of the topic — describing, asking, answering, advising, dealing with an emergency. Put the "words" sections first, then "phrasal", then "phrases"; have at least two "words" and two "phrases" sections.`
-      : `- Sections come in two kinds. "words": single words and short collocations — ${language === 'en' ? 'nouns without an article' : 'nouns with their article'}, verbs in the infinitive, adjectives in the base form. "phrases": complete sentences and questions a person would actually say in a situation of the topic — describing, asking, answering, advising, dealing with an emergency. Put the "words" sections first, then the "phrases" sections; have at least two of each. Do not use the "phrasal" kind.`,
+      : `- Sections come in two kinds. "words": single words and short collocations — ${NOUN_FORM[language]}, verbs in the infinitive, adjectives in the base form. "phrases": complete sentences and questions a person would actually say in a situation of the topic — describing, asking, answering, advising, dealing with an emergency. Put the "words" sections first, then the "phrases" sections; have at least two of each. Do not use the "phrasal" kind.`,
     phrasal
       ? '- A phrasal verb "term" is the verb without "to", with "sth" / "sb" showing where the object goes: "put sth off" when the object can go between verb and particle, "look after sb" when it cannot, "look forward to sth" for three-part verbs, no placeholder for intransitive ones like "break down". If the verb has several meanings, give only the one the topic needs and translate that one.'
       : '',

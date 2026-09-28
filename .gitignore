@@ -49,3 +49,4 @@ functions/lib/
 *.secret.local
 .firebase/
 firebase-debug.log
+scripts/out/

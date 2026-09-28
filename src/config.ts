@@ -166,10 +166,12 @@ export const MAX_VOICES = ['nova', 'coral', 'sage', 'marin'] as const;
 export type MaxVoice = (typeof MAX_VOICES)[number];
 
 /**
- * Языки, для которых открыт раздел «Слова». Списки генерируются под любой язык,
- * но проверены пока на двух — остальные подключаются добавлением кода сюда.
+ * Языки, для которых открыт раздел «Слова». Списки составляет модель под любой
+ * язык; каждый проверен пробным листом (`npm run vocab-check -- de B1 health`)
+ * перед тем, как попасть сюда. Форма существительного по языку — NOUN_FORM в
+ * промптах.
  */
-export const VOCABULARY_LANGUAGES: LanguageCode[] = ['en', 'es'];
+export const VOCABULARY_LANGUAGES: LanguageCode[] = ['en', 'es', 'de', 'fr', 'it', 'pt', 'br', 'uk'];
 
 /** Автоматически проигрывать ответ ИИ после получения. */
 export const AUTOPLAY_TTS = true;

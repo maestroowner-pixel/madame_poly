@@ -38,7 +38,8 @@
     "android": "expo run:android",
     "web": "expo start --web",
     "smoke": "tsx scripts/smoke.ts",
-    "postinstall": "patch-package"
+    "postinstall": "patch-package",
+    "vocab-check": "tsx --tsconfig scripts/tsconfig.json scripts/vocab-check.ts"
   },
   "private": true
 }
