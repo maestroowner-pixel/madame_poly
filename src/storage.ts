@@ -194,7 +194,7 @@ export async function saveEnglishVariant(variant: EnglishVariant): Promise<void>
   await write(KEY_VARIANT, variant);
 }
 
-export const EMPTY_PROFILE: Profile = { name: '', avatarId: null, photoUri: null };
+export const EMPTY_PROFILE: Profile = { name: '', avatarId: null, photoUri: null, age: null };
 
 export async function loadProfile(): Promise<Profile> {
   const raw = await AsyncStorage.getItem(KEY_PROFILE);

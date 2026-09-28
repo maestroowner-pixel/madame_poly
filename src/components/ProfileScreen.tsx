@@ -50,6 +50,7 @@ export function ProfileScreen({
   const [name, setName] = useState(profile.name);
   const [avatarId, setAvatarId] = useState<string | null>(profile.avatarId);
   const [photoUri, setPhotoUri] = useState<string | null>(profile.photoUri);
+  const [age, setAge] = useState(profile.age ? String(profile.age) : '');
   const [pickError, setPickError] = useState<string | null>(null);
 
   // Открыли заново — показываем сохранённое, а не брошенную правку.
@@ -58,12 +59,20 @@ export function ProfileScreen({
       setName(profile.name);
       setAvatarId(profile.avatarId);
       setPhotoUri(profile.photoUri);
+      setAge(profile.age ? String(profile.age) : '');
       setPickError(null);
     }
   }, [visible, profile]);
 
   const save = () => {
-    onSave({ name: name.trim(), avatarId, photoUri });
+    // Возраст — по желанию; всё, что не похоже на возраст, считаем «не указан».
+    const years = Number.parseInt(age, 10);
+    onSave({
+      name: name.trim(),
+      avatarId,
+      photoUri,
+      age: Number.isFinite(years) && years >= 3 && years <= 110 ? years : null,
+    });
     onClose();
   };
 
@@ -164,6 +173,20 @@ export function ProfileScreen({
               <Text style={styles.hint}>
                 {t.nameHint}
               </Text>
+
+              <Text style={styles.label}>{t.age}</Text>
+              <TextInput
+                value={age}
+                onChangeText={(value) => setAge(value.replace(/\D/g, '').slice(0, 3))}
+                placeholder={t.agePlaceholder}
+                placeholderTextColor={theme.textMuted}
+                keyboardType="number-pad"
+                maxLength={3}
+                style={styles.input}
+                returnKeyType="done"
+                onSubmitEditing={save}
+              />
+              <Text style={styles.hint}>{t.ageHint}</Text>
 
               {AVATAR_GROUPS.map(({ group, title }) => (
                 <View key={group} style={styles.group}>

@@ -239,11 +239,13 @@ export async function respond(params: {
   level: Level;
   topic?: Topic | null;
   name?: string;
+  /** Возраст из профиля — под него Мадам Поли подстраивает манеру. */
+  age?: number | null;
   variant?: EnglishVariant;
   /** Последняя реплика бесплатной беседы: пора прощаться. */
   wrapUp?: boolean;
 }): Promise<TurnResult> {
-  const { history, userText, language, level, topic, name, variant, wrapUp } = params;
+  const { history, userText, language, level, topic, name, age, variant, wrapUp } = params;
 
 
   const context: Anthropic.MessageParam[] = windowed(history).map((message) => ({
@@ -283,7 +285,7 @@ export async function respond(params: {
         system: [
           {
             type: 'text',
-            text: buildSystemPrompt(language, level, topic, name, variant),
+            text: buildSystemPrompt(language, level, topic, name, variant, age),
             cache_control: { type: 'ephemeral' },
           },
         ],
@@ -525,16 +527,18 @@ export async function openConversation(params: {
   level: Level;
   topic: Topic;
   name?: string;
+  age?: number | null;
   variant?: EnglishVariant;
 }): Promise<string> {
-  const { language, level, topic, name, variant } = params;
+  const { language, level, topic, name, age, variant } = params;
 
   const instruction =
     topic.kind === 'roleplay'
       ? '(Not spoken by the learner. The role play starts now — they have just walked in or called. ' +
         'Open in role with a short greeting and your first question.)'
       : '(Not spoken by the learner. They have just opened the app and chosen the subject ' +
-        `"${topic.label}". Greet them in one short sentence and ask your first question about it.)`;
+        `"${topic.label}". Greet them warmly, ask in a few words how they are and whether they are in the mood ` +
+        'to practise today, then lead into the subject with your first question — two or three short sentences in all.)';
 
   const turn = await respond({
     history: [],
@@ -543,6 +547,7 @@ export async function openConversation(params: {
     level,
     topic,
     name,
+    age,
     variant,
   });
 

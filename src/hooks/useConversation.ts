@@ -260,6 +260,7 @@ export function useConversation() {
         level: currentLevels[currentLanguage],
         topic: findTopic(currentLanguage, topicRef.current),
         name: profileRef.current.name || undefined,
+        age: profileRef.current.age,
         variant: variantRef.current,
         wrapUp,
       });
@@ -322,6 +323,7 @@ export function useConversation() {
         level: levelMap[languageRef.current],
         topic,
         name: profileRef.current.name || undefined,
+        age: profileRef.current.age,
         variant: variantRef.current,
       });
       return addReply(reply, false);

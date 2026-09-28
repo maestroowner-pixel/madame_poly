@@ -39,7 +39,8 @@
     "web": "expo start --web",
     "smoke": "tsx scripts/smoke.ts",
     "postinstall": "patch-package",
-    "vocab-check": "tsx --tsconfig scripts/tsconfig.json scripts/vocab-check.ts"
+    "vocab-check": "tsx --tsconfig scripts/tsconfig.json scripts/vocab-check.ts",
+    "persona-check": "tsx --tsconfig scripts/tsconfig.json scripts/persona-check.ts"
   },
   "private": true
 }
