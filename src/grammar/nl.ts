@@ -1,51 +1,60 @@
 import { module, type Syllabus } from './types';
 
 /**
- * Нидерландский. Ступень B — по оглавлению «Intermediate Dutch: A Grammar and
- * Workbook» (J. A. Oosterhoff, Routledge), присланному пользователем. Ступени
- * A и C — черновик Claude по памяти о курсах NT2 и Staatsexamen NT2; заменить,
- * когда будут источники (для A — «Basic Dutch» той же серии).
+ * Нидерландский — по двум книгам J. A. Oosterhoff (Routledge Grammar
+ * Workbooks), присланным пользователем: ступень A — «Basic Dutch» (2-е изд.,
+ * 2024), B — «Intermediate Dutch». Ступень C — черновик Claude по памяти о
+ * Staatsexamen NT2; заменить, когда будет источник.
  */
 export const DUTCH: Syllabus = {
+  // Ступень A — по оглавлению «Basic Dutch: A Grammar and Workbook»
+  // (J. A. Oosterhoff, Routledge, 2-е изд., 2024): 31 юнит в том же порядке,
+  // названия по-нидерландски, сгруппированы в модули.
   A: [
-    module('A', 'Het zelfstandig naamwoord en het lidwoord', [
-      ['De en het', 'de-woorden en het-woorden; verkleinwoorden zijn het: het huisje'],
-      ['Het meervoud', '-en en -s: boeken, tafels; onregelmatig: kind / kinderen'],
-      ['Het onbepaald lidwoord', 'een; geen'],
-      ['Het verkleinwoord', '-je, -tje, -pje, -etje: huisje, stoeltje, boompje'],
+    module('A', 'Eerste stappen', [
+      ['De spelling', 'open en gesloten lettergrepen; lange en korte klinkers: kaas / kazen, bot / botten; f / v en s / z'],
+      ['Persoonlijke voornaamwoorden als onderwerp', 'ik, jij / je, u, hij, zij / ze, het, wij / we, jullie, zij / ze; beklemtoonde en onbeklemtoonde vormen'],
+      ['Het presens', 'stam + t: ik werk, jij werkt, werk jij?; spelling van de stam'],
+      ['Lidwoorden en zelfstandige naamwoorden', 'de, het en een; geen'],
+      ['Persoonlijke voornaamwoorden als voorwerp', 'me / mij, je / jou, u, hem, haar, het, ons, jullie, ze / hen / hun'],
     ]),
-    module('A', 'Het werkwoord: presens', [
-      ['Zijn en hebben', 'ik ben, jij bent; ik heb, hij heeft'],
-      ['Het presens van regelmatige werkwoorden', 'ik werk, jij werkt, wij werken; werk jij?'],
-      ['Spelling in het presens', 'lopen / ik loop; zitten / ik zit; v/f en z/s'],
-      ['Modale werkwoorden', 'kunnen, willen, moeten, mogen + infinitief'],
-      ['Gaan + infinitief', 'de toekomst: Ik ga morgen koken.'],
-      ['Scheidbare werkwoorden', 'opbellen: Ik bel je morgen op.'],
+    module('A', 'Getallen, meervoud en vragen', [
+      ['Getallen en maten', 'hoofdtelwoorden en rangtelwoorden; een kilo, twee liter, een pond'],
+      ['Het meervoud', '-en en -s; spellingregels; onregelmatige meervouden'],
+      ['Vragen en vraagwoorden', 'ja/nee-vragen; wie, wat, waar, wanneer, hoe, waarom, welk(e), hoeveel'],
+      ['Bezittelijke voornaamwoorden', 'mijn, jouw, zijn, haar, ons / onze, hun; die van mij'],
+      ['Modale hulpwerkwoorden', 'kunnen, moeten, willen, mogen, zullen; de infinitief achteraan'],
     ]),
     module('A', 'De zin', [
-      ['De woordvolgorde in de hoofdzin', 'het werkwoord op plaats twee: Morgen ga ik naar huis.'],
-      ['Inversie', 'Vandaag werk ik niet. Waar woon jij?'],
-      ['Vraagwoorden', 'wie, wat, waar, wanneer, hoe, waarom, welk(e), hoeveel'],
-      ['De ontkenning', 'niet en geen: Ik werk niet. Ik heb geen auto.'],
-      ['Er is / er zijn', 'Er is een park. Er zijn geen winkels.'],
+      ['De basiswoordvolgorde', 'het werkwoord op plaats twee, inversie, tijd-wijze-plaats'],
+      ['De tijd', 'Hoe laat is het? half vier, kwart over drie; dagen, maanden, de datum'],
+      ['De ontkenning I', 'niet en geen'],
+      ['Aanwijzende voornaamwoorden', 'deze, die, dit, dat; dat is / dat zijn'],
     ]),
-    module('A', 'Voornaamwoorden en bijvoeglijke naamwoorden', [
-      ['Persoonlijke voornaamwoorden', 'ik / me / mij, jij / je, u, hij / hem, zij / haar'],
-      ['Bezittelijke voornaamwoorden', 'mijn, jouw, uw, zijn, haar, ons / onze, hun'],
-      ['Aanwijzende voornaamwoorden', 'deze, die, dit, dat'],
-      ['Het bijvoeglijk naamwoord', 'de mooie stad, een mooi huis: de -e'],
-      ['De trappen van vergelijking', 'groter dan, even groot als, de grootste; goed / beter / best'],
+    module('A', 'Bijvoeglijk naamwoord en bijwoord', [
+      ['De buiging van het bijvoeglijk naamwoord', 'een mooi huis, het mooie huis, de mooie stad: wanneer -e'],
+      ['De trappen van vergelijking', 'groter dan, even groot als, het grootst; goed / beter / best, veel / meer / meest'],
+      ['Bijwoorden', 'graag, vaak, al, nog, pas, eens; bijwoorden van tijd en plaats'],
     ]),
-    module('A', 'Het verleden', [
-      ['Het perfectum met hebben en zijn', 'Ik heb gewerkt. Ik ben gegaan.'],
-      ['Het voltooid deelwoord', 'ge-…-t / -d: gewerkt, gewoond; ’t kofschip'],
-      ['Onregelmatige deelwoorden', 'gegeten, gedronken, geschreven, gebleven'],
-      ['Het imperfectum van zijn en hebben', 'ik was, ik had'],
+    module('A', 'Werkwoorden', [
+      ['Scheidbare en onscheidbare werkwoorden', 'opbellen / ik bel op, begrijpen; de plaats van het partikel'],
+      ['De gebiedende wijs', 'Kom! Komt u binnen. Laten we gaan.'],
+      ['Het perfectum', "hebben of zijn + voltooid deelwoord; ge-…-t / -d, ’t kofschip"],
+      ['Het imperfectum', 'zwakke werkwoorden (werkte, woonde) en sterke werkwoorden (ging, zag)'],
+      ['Wederkerende werkwoorden', 'zich vergissen, zich wassen; me, je, zich, ons'],
     ]),
-    module('A', 'Voorzetsels en tijd', [
-      ['Voorzetsels van plaats', 'in, op, bij, naast, onder, tussen, achter'],
-      ['Voorzetsels van tijd', 'om vijf uur, op maandag, in mei, over een week'],
-      ['De klok en de datum', 'half vier, kwart over drie; de eerste mei'],
+    module('A', 'Woorden en woordgroepen', [
+      ['Het verkleinwoord', '-je, -tje, -pje, -etje, -kje; verkleinwoorden zijn het-woorden'],
+      ['Het bijwoord er', 'er als plaats, bij een hoeveelheid, er is / er zijn'],
+      ['Voorzetsels', 'plaats, tijd en beweging; vaste combinaties'],
+      ['Infinitiefconstructies', 'te + infinitief, om … te; zonder te na modale werkwoorden'],
+    ]),
+    module('A', 'De samengestelde zin', [
+      ['Woordvolgorde in de bijzin', 'omdat, dat, als, toen: het werkwoord achteraan'],
+      ['Betrekkelijke bijzinnen', 'die, dat, waar + voorzetsel'],
+      ['De indirecte rede', 'Hij zegt dat… Ze vraagt of…'],
+      ['De ontkenning II', 'nooit, nergens, niemand, niets; geen … meer, nog niet'],
+      ['Leestekens', 'punt, komma, vraagteken; apostrof, trema en koppelteken'],
     ]),
   ],
   // Ступень B — по оглавлению «Intermediate Dutch: A Grammar and Workbook»
