@@ -542,6 +542,7 @@ const NOUN_FORM: Record<LanguageCode, string> = {
   uk: 'nouns in the nominative singular without any article (Ukrainian has none) and without gender marks',
   nl: 'nouns with their definite article (de or het) and, where it is irregular or useful, the plural after a comma, like "het huis, de huizen"',
   pl: 'nouns in the nominative singular without any article (Polish has none) and without gender marks',
+  cs: 'nouns in the nominative singular without any article (Czech has none) and without gender marks',
   ro: 'nouns in the indefinite form with the indefinite article (un, o) and the plural after a comma, which shows the gender, like "un spital, spitale"',
 };
 

@@ -45,6 +45,7 @@ const SAMPLES: Record<LanguageCode, string> = {
   uk: 'Вчора я пішов в магазин і купив два хліба на мій сніданок.',
   nl: 'Gisteren ik ga naar de winkel en ik kopen twee brood voor mijn ontbijt.',
   pl: 'Wczoraj ja idę do sklep i kupiłem dwa chleba na mój śniadanie.',
+  cs: 'Včera já jdu do obchod a koupil jsem dva chleba na můj snídaně.',
   ro: 'Ieri eu merg la magazin și am cumpărat două pâine pentru micul meu dejun.',
 };
 

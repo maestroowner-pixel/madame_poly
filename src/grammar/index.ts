@@ -10,6 +10,7 @@ import { UKRAINIAN } from './uk';
 import { DUTCH } from './nl';
 import { POLISH } from './pl';
 import { ROMANIAN } from './ro';
+import { CZECH } from './cs';
 import { bandOf, type GrammarModule, type GrammarUnit, type Syllabus } from './types';
 
 export { bandOf, type Band, type GrammarModule, type GrammarUnit } from './types';
@@ -30,6 +31,7 @@ const SYLLABI: Record<LanguageCode, Syllabus | GrammarModule[]> = {
   nl: DUTCH,
   pl: POLISH,
   ro: ROMANIAN,
+  cs: CZECH,
 };
 
 /** Один курс без ступеней — экран показывает его целиком при любом уровне. */

@@ -156,6 +156,15 @@ const LABELS: Record<LanguageCode, Record<ExamTopicId, string>> = {
     travel: 'Călătoriile și turismul',
     culture: 'Cultura și arta',
   },
+  cs: {
+    work: 'Práce a kariéra',
+    environment: 'Životní prostředí',
+    technology: 'Technologie',
+    education: 'Vzdělávání',
+    health: 'Zdraví a životní styl',
+    travel: 'Cestování a turistika',
+    culture: 'Kultura a umění',
+  },
 };
 
 /** Названия на языке интерфейса — под названием темы в списке. */
@@ -319,6 +328,17 @@ const EXAM_FORMATS: Record<ExamLevel, Record<LanguageCode, ExamFormat>> = {
           'Dialogue in a situation: a short everyday role play connected to the topic — you are a neighbour, a colleague or a clerk, and the candidate has to ask for something, agree on a plan or sort out a small problem.',
       },
     },
+    cs: {
+      name: 'CCE-B1 (Certifikovaná zkouška z češtiny)',
+      parts: {
+        interview:
+          'Úvodní rozhovor: simple questions about the candidate\'s life, work or studies and free time connected to the topic.',
+        longTurn:
+          'Monolog: in the real exam the candidate talks about a picture or a topic. There is no picture here, so describe an everyday situation related to the topic in two or three simple sentences and ask the candidate to talk about it on their own for about a minute and a half — what they see in it, their own experience, their opinion. Afterwards ask one simple question about it.',
+        discussion:
+          'Dialog v situaci: a short everyday role play connected to the topic — you are a shop assistant, an official, a neighbour or a colleague, and the candidate has to ask for something, complain politely or arrange something.',
+      },
+    },
   },
   B2: {
     en: {
@@ -440,6 +460,17 @@ const EXAM_FORMATS: Record<ExamLevel, Record<LanguageCode, ExamFormat>> = {
           'Monologue: give a concrete question on the topic and ask for a structured answer of about two minutes — the situation, advantages and disadvantages and their own opinion with arguments. Afterwards ask one follow-up question.',
         discussion:
           'Discussion: put a debatable question about the topic and discuss it. Take a different view now and then so they have to argue and move towards a conclusion.',
+      },
+    },
+    cs: {
+      name: 'CCE-B2 (Certifikovaná zkouška z češtiny)',
+      parts: {
+        interview:
+          'Úvodní rozhovor: a few questions about the candidate and their own experience with the topic, expecting fuller answers.',
+        longTurn:
+          'Monolog: give a short statement or a debatable question on the topic and ask the candidate to present the issue and argue their view with examples for about two minutes. Afterwards ask one follow-up question.',
+        discussion:
+          'Diskuse: debate the candidate\'s view. Take a different side at times and ask them to justify, nuance and defend their position.',
       },
     },
   },

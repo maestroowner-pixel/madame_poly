@@ -183,6 +183,7 @@ export const VOCABULARY_LANGUAGES: LanguageCode[] = [
   'nl',
   'pl',
   'ro',
+  'cs',
 ];
 
 /** Автоматически проигрывать ответ ИИ после получения. */

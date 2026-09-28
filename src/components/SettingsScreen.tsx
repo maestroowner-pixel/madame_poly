@@ -46,6 +46,7 @@ const VOICE_SAMPLES: Record<LanguageCode, string> = {
   nl: 'Hoi, ik ben Poly! Zullen we even kletsen?',
   pl: 'Cześć, jestem Poly! Porozmawiamy chwilę?',
   ro: 'Bună, sunt Poly! Stăm puțin de vorbă?',
+  cs: 'Ahoj, já jsem Poly! Popovídáme si chvilku?',
 };
 
 interface Props {

@@ -33,6 +33,7 @@ export const LANGUAGES: Record<LanguageCode, LanguageMeta> = {
   nl: { label: 'Nederlands', englishName: 'Dutch', whisper: 'nl', flag: '🇳🇱' },
   pl: { label: 'Polski', englishName: 'Polish', whisper: 'pl', flag: '🇵🇱' },
   ro: { label: 'Română', englishName: 'Romanian', whisper: 'ro', flag: '🇷🇴' },
+  cs: { label: 'Čeština', englishName: 'Czech', whisper: 'cs', flag: '🇨🇿' },
 };
 
 export const LANGUAGE_CODES = Object.keys(LANGUAGES) as LanguageCode[];
