@@ -67,14 +67,29 @@ export const ROLEPLAY_SCENES: Record<string, string> = {
     'They may have a referral for a blood or urine test, want to book a test themselves, or have come to collect and understand their results.',
     'Ask for the referral and their details, check whether they have fasted, explain how the test is done and when and how the results will be ready, and explain simply what the main values in a result mean — while making clear that the doctor will interpret them.',
   ].join(' '),
+  jobinterview: [
+    'You are an interviewer at a company — friendly but professional — and the learner has applied for a job with you.',
+    'Ask them to introduce themselves, then about their experience, skills and languages, why they want this job, when they could start and, if it comes up naturally, their salary expectations. Answer their questions about the job, the hours and the team.',
+    'Keep it one question at a time, react to their answers as a real interviewer would and, at the end, say what the next step is and when they will hear from you.',
+  ].join(' '),
+  schoolenrol: [
+    'You are the secretary at a school and the learner is a parent, new in the country, who has come to enrol their child.',
+    'Ask about the child — name, age, the school and year they came from, languages they speak — and explain which documents you need, such as a birth certificate, a vaccination record and proof of address.',
+    'Explain the practical side: which class the child goes into, extra language support if they need it, the timetable, lunch, after-school care, what to bring on the first day. Answer the parent\'s questions patiently.',
+  ].join(' '),
+  immigration: [
+    'You are an official at the immigration office of the country where the language of this conversation is mainly spoken: for English the United Kingdom (UK Visas and Immigration), German — Germany (Ausländerbehörde), French — France (préfecture), Spanish — Spain (Oficina de Extranjería), Italian — Italy (Questura), European Portuguese — Portugal (AIMA), Brazilian Portuguese — Brazil (Polícia Federal), Ukrainian — Ukraine (Державна міграційна служба), Dutch — the Netherlands (IND), Polish — Poland (urząd wojewódzki), Romanian — Romania (Inspectoratul General pentru Imigrări).',
+    'The learner has come about their residence permit: applying for the first time, renewing it, changing their status, registering their address, or a letter they did not understand.',
+    'Ask for the details and documents you need, explain the steps, appointments, fingerprints and photos and roughly how long it takes, calmly and clearly at the learner\'s level. Do not state exact fees, rules or deadlines as fact — say they should check the official website.',
+  ].join(' '),
 };
 
 /**
  * Шаблоны разговора на случай, когда своей темы нет. По тридцать четыре на
  * язык: тридцать три общих (с 2026-09-28 — и промышленность, IT, ИИ, экология)
- * и одна своя для каждого языка, плюс десять ролевых сцен — банк, аптека,
+ * и одна своя для каждого языка, плюс тринадцать ролевых сцен — банк, аптека,
  * врач, ремонт, офис, налоговая, стоматолог, семейный врач, педиатр,
- * лаборатория.
+ * лаборатория, собеседование, запись ребёнка в школу, миграционная служба.
  *
  * Тема уходит в system prompt, а первую реплику партнёр придумывает сам под
  * уровень — готовые фразы пришлось бы писать отдельно для A1 и для C1.
@@ -125,6 +140,9 @@ export const TOPICS: Record<LanguageCode, Topic[]> = {
     { id: 'familydoctor', label: 'At the family doctor', kind: 'roleplay' },
     { id: 'pediatrician', label: 'At the paediatrician', kind: 'roleplay' },
     { id: 'lab', label: 'At the medical laboratory', kind: 'roleplay' },
+    { id: 'jobinterview', label: 'A job interview', kind: 'roleplay' },
+    { id: 'schoolenrol', label: 'Enrolling a child at school', kind: 'roleplay' },
+    { id: 'immigration', label: 'At the immigration office', kind: 'roleplay' },
   ],
 
   de: [
@@ -172,6 +190,9 @@ export const TOPICS: Record<LanguageCode, Topic[]> = {
     { id: 'familydoctor', label: 'Beim Hausarzt', kind: 'roleplay' },
     { id: 'pediatrician', label: 'Beim Kinderarzt', kind: 'roleplay' },
     { id: 'lab', label: 'Im medizinischen Labor', kind: 'roleplay' },
+    { id: 'jobinterview', label: 'Im Vorstellungsgespräch', kind: 'roleplay' },
+    { id: 'schoolenrol', label: 'Das Kind in der Schule anmelden', kind: 'roleplay' },
+    { id: 'immigration', label: 'Bei der Ausländerbehörde', kind: 'roleplay' },
   ],
 
   fr: [
@@ -219,6 +240,9 @@ export const TOPICS: Record<LanguageCode, Topic[]> = {
     { id: 'familydoctor', label: 'Chez le médecin traitant', kind: 'roleplay' },
     { id: 'pediatrician', label: 'Chez le pédiatre', kind: 'roleplay' },
     { id: 'lab', label: "Au laboratoire d'analyses", kind: 'roleplay' },
+    { id: 'jobinterview', label: "L'entretien d'embauche", kind: 'roleplay' },
+    { id: 'schoolenrol', label: "L'inscription d'un enfant à l'école", kind: 'roleplay' },
+    { id: 'immigration', label: 'À la préfecture', kind: 'roleplay' },
   ],
 
   es: [
@@ -266,6 +290,9 @@ export const TOPICS: Record<LanguageCode, Topic[]> = {
     { id: 'familydoctor', label: 'En el médico de cabecera', kind: 'roleplay' },
     { id: 'pediatrician', label: 'En el pediatra', kind: 'roleplay' },
     { id: 'lab', label: 'En el laboratorio de análisis', kind: 'roleplay' },
+    { id: 'jobinterview', label: 'La entrevista de trabajo', kind: 'roleplay' },
+    { id: 'schoolenrol', label: 'Matricular a un hijo en el colegio', kind: 'roleplay' },
+    { id: 'immigration', label: 'En la Oficina de Extranjería', kind: 'roleplay' },
   ],
   it: [
     { id: 'routine', label: 'La giornata tipo' },
@@ -312,6 +339,9 @@ export const TOPICS: Record<LanguageCode, Topic[]> = {
     { id: 'familydoctor', label: 'Dal medico di famiglia', kind: 'roleplay' },
     { id: 'pediatrician', label: 'Dal pediatra', kind: 'roleplay' },
     { id: 'lab', label: 'Al laboratorio analisi', kind: 'roleplay' },
+    { id: 'jobinterview', label: 'Il colloquio di lavoro', kind: 'roleplay' },
+    { id: 'schoolenrol', label: "L'iscrizione di un figlio a scuola", kind: 'roleplay' },
+    { id: 'immigration', label: 'In Questura', kind: 'roleplay' },
   ],
   pt: [
     { id: 'routine', label: 'O dia a dia' },
@@ -358,6 +388,9 @@ export const TOPICS: Record<LanguageCode, Topic[]> = {
     { id: 'familydoctor', label: 'No médico de família', kind: 'roleplay' },
     { id: 'pediatrician', label: 'No pediatra', kind: 'roleplay' },
     { id: 'lab', label: 'No laboratório de análises', kind: 'roleplay' },
+    { id: 'jobinterview', label: 'A entrevista de emprego', kind: 'roleplay' },
+    { id: 'schoolenrol', label: 'Inscrever um filho na escola', kind: 'roleplay' },
+    { id: 'immigration', label: 'Na AIMA', kind: 'roleplay' },
   ],
   uk: [
     { id: 'routine', label: 'Мій день' },
@@ -404,6 +437,9 @@ export const TOPICS: Record<LanguageCode, Topic[]> = {
     { id: 'familydoctor', label: 'У сімейного лікаря', kind: 'roleplay' },
     { id: 'pediatrician', label: 'У педіатра', kind: 'roleplay' },
     { id: 'lab', label: 'У лабораторії аналізів', kind: 'roleplay' },
+    { id: 'jobinterview', label: 'Співбесіда на роботу', kind: 'roleplay' },
+    { id: 'schoolenrol', label: 'Запис дитини до школи', kind: 'roleplay' },
+    { id: 'immigration', label: 'У міграційній службі', kind: 'roleplay' },
   ],
   br: [
     { id: 'routine', label: 'O dia a dia' },
@@ -450,6 +486,9 @@ export const TOPICS: Record<LanguageCode, Topic[]> = {
     { id: 'familydoctor', label: 'No clínico geral', kind: 'roleplay' },
     { id: 'pediatrician', label: 'No pediatra', kind: 'roleplay' },
     { id: 'lab', label: 'No laboratório de exames', kind: 'roleplay' },
+    { id: 'jobinterview', label: 'A entrevista de emprego', kind: 'roleplay' },
+    { id: 'schoolenrol', label: 'Matricular o filho na escola', kind: 'roleplay' },
+    { id: 'immigration', label: 'Na Polícia Federal', kind: 'roleplay' },
   ],
   nl: [
     { id: 'routine', label: 'Dagelijkse routine' },
@@ -496,6 +535,9 @@ export const TOPICS: Record<LanguageCode, Topic[]> = {
     { id: 'familydoctor', label: 'Bij de huisarts', kind: 'roleplay' },
     { id: 'pediatrician', label: 'Bij de kinderarts', kind: 'roleplay' },
     { id: 'lab', label: 'Bij het laboratorium', kind: 'roleplay' },
+    { id: 'jobinterview', label: 'Het sollicitatiegesprek', kind: 'roleplay' },
+    { id: 'schoolenrol', label: 'Een kind inschrijven op school', kind: 'roleplay' },
+    { id: 'immigration', label: 'Bij de IND', kind: 'roleplay' },
   ],
   pl: [
     { id: 'routine', label: 'Plan dnia' },
@@ -542,6 +584,9 @@ export const TOPICS: Record<LanguageCode, Topic[]> = {
     { id: 'familydoctor', label: 'U lekarza rodzinnego', kind: 'roleplay' },
     { id: 'pediatrician', label: 'U pediatry', kind: 'roleplay' },
     { id: 'lab', label: 'W laboratorium analiz', kind: 'roleplay' },
+    { id: 'jobinterview', label: 'Rozmowa o pracę', kind: 'roleplay' },
+    { id: 'schoolenrol', label: 'Zapisanie dziecka do szkoły', kind: 'roleplay' },
+    { id: 'immigration', label: 'W urzędzie wojewódzkim', kind: 'roleplay' },
   ],
   ro: [
     { id: 'routine', label: 'Rutina zilnică' },
@@ -588,6 +633,9 @@ export const TOPICS: Record<LanguageCode, Topic[]> = {
     { id: 'familydoctor', label: 'La medicul de familie', kind: 'roleplay' },
     { id: 'pediatrician', label: 'La pediatru', kind: 'roleplay' },
     { id: 'lab', label: 'La laboratorul de analize', kind: 'roleplay' },
+    { id: 'jobinterview', label: 'Interviul de angajare', kind: 'roleplay' },
+    { id: 'schoolenrol', label: 'Înscrierea copilului la școală', kind: 'roleplay' },
+    { id: 'immigration', label: 'La Inspectoratul pentru Imigrări', kind: 'roleplay' },
   ],
 };
 
@@ -647,6 +695,9 @@ const GLOSSES: Record<string, Record<UiLocale, string>> = {
   familydoctor: { en: 'At the family doctor', uk: 'У сімейного лікаря', es: 'En el médico de cabecera', ru: 'У семейного врача', de: 'Beim Hausarzt', fr: 'Chez le médecin traitant', pt: 'No clínico geral', zh: '看家庭医生', ja: 'かかりつけ医で', ko: '가정의학과에서' , nl: 'Bij de huisarts', pl: 'U lekarza rodzinnego', ro: 'La medicul de familie' },
   pediatrician: { en: 'At the paediatrician', uk: 'У педіатра', es: 'En el pediatra', ru: 'У педиатра', de: 'Beim Kinderarzt', fr: 'Chez le pédiatre', pt: 'No pediatra', zh: '看儿科医生', ja: '小児科で', ko: '소아과에서' , nl: 'Bij de kinderarts', pl: 'U pediatry', ro: 'La pediatru' },
   lab: { en: 'At the medical lab', uk: 'У лабораторії аналізів', es: 'En el laboratorio de análisis', ru: 'В лаборатории анализов', de: 'Im Labor', fr: 'Au laboratoire d\'analyses', pt: 'No laboratório de exames', zh: '在化验室', ja: '検査センターで', ko: '검사실에서' , nl: 'Bij het laboratorium', pl: 'W laboratorium analiz', ro: 'La laboratorul de analize' },
+  jobinterview: { en: 'Job interview', uk: 'Співбесіда на роботу', es: 'Entrevista de trabajo', ru: 'Собеседование на работу', de: 'Vorstellungsgespräch', fr: 'Entretien d\'embauche', pt: 'Entrevista de emprego', zh: '求职面试', ja: '就職面接', ko: '취업 면접', nl: 'Sollicitatiegesprek', pl: 'Rozmowa o pracę', ro: 'Interviul de angajare' },
+  schoolenrol: { en: 'Enrolling a child at school', uk: 'Запис дитини до школи', es: 'Matricular a un hijo en el colegio', ru: 'Запись ребёнка в школу', de: 'Kind in der Schule anmelden', fr: 'Inscrire un enfant à l\'école', pt: 'Matricular o filho na escola', zh: '为孩子办理入学', ja: '子どもの入学手続き', ko: '아이 학교 입학', nl: 'Kind inschrijven op school', pl: 'Zapisanie dziecka do szkoły', ro: 'Înscrierea copilului la școală' },
+  immigration: { en: 'At the immigration office', uk: 'У міграційній службі', es: 'En la oficina de extranjería', ru: 'В миграционной службе', de: 'Bei der Ausländerbehörde', fr: 'Au service des étrangers', pt: 'No serviço de imigração', zh: '在移民局', ja: '入国管理局で', ko: '출입국 사무소에서', nl: 'Bij de immigratiedienst', pl: 'W urzędzie ds. cudzoziemców', ro: 'La biroul de imigrări' },
 
   'local-en': { en: 'British and American English', uk: 'Британська та американська', es: 'Inglés británico y americano', ru: 'Британский и американский', de: 'Britisches und amerikanisches Englisch', fr: 'L\'anglais britannique et américain' , pt: 'O inglês britânico e o americano' , zh: '英式英语与美式英语', ja: 'イギリス英語とアメリカ英語', ko: '영국 영어와 미국 영어' , nl: 'Brits en Amerikaans Engels', pl: 'Brytyjski i amerykański angielski', ro: 'Engleza britanică și americană' },
   'local-de': { en: 'Christmas markets and Oktoberfest', uk: 'Різдвяні ярмарки та Октоберфест', es: 'Mercados navideños y Oktoberfest', ru: 'Ярмарки и Октоберфест', de: 'Weihnachtsmärkte und Oktoberfest', fr: 'Les marchés de Noël et l’Oktoberfest' , pt: 'Mercados de Natal e Oktoberfest' , zh: '圣诞市场与啤酒节', ja: 'クリスマスマーケットとオクトーバーフェスト', ko: '크리스마스 마켓과 옥토버페스트' , nl: 'Kerstmarkten en Oktoberfest', pl: 'Jarmarki bożonarodzeniowe i Oktoberfest', ro: 'Târgurile de Crăciun și Oktoberfest' },
