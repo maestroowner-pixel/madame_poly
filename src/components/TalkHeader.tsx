@@ -84,8 +84,12 @@ const createStyles = (theme: Theme) =>
       maxWidth: CONTENT_MAX_WIDTH,
       alignSelf: 'center',
     },
-    /** Портрет на планшете шире колонки ленты — шапке нужна вся ширина. */
-    headerTablet: { maxWidth: undefined },
+    /**
+     * Портрет на планшете шире колонки ленты — шапке нужна вся ширина. Именно
+     * '100%', а не undefined: в браузере undefined в массиве стилей не снимает
+     * прежний предел, и кнопки жались к колонке посреди пустого окна.
+     */
+    headerTablet: { maxWidth: '100%' },
     side: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 },
     right: { justifyContent: 'flex-end' },
   });

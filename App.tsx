@@ -4,10 +4,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
   View,
+  useWindowDimensions,
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
@@ -42,7 +44,7 @@ import { useConversation } from './src/hooks/useConversation';
 import { useZoomScreen } from './src/hooks/useZoomScreen';
 import { locale, t } from './src/i18n';
 import { LANGUAGES } from './src/languages';
-import { CONTENT_MAX_WIDTH } from './src/layout';
+import { BUTTON_SCALE, CONTENT_MAX_WIDTH, IS_TABLET, UI_SCALE } from './src/layout';
 import { FREE_TURNS_PER_TALK, UNLIMITED_TALKS, VOCABULARY_LANGUAGES } from './src/config';
 import { dueCards } from './src/review';
 import { ensureMicrophone } from './src/services/microphone';
@@ -160,6 +162,21 @@ function Screen() {
       }}
     />
   );
+
+  /**
+   * В широком окне браузера шапка беседы растянута на всё окно, и домик стоит
+   * в левом углу. Чтобы он не прыгал в колонку при переходе в другой раздел,
+   * там он тоже в углу — поверх, а в шапке раздела вместо него пустое место
+   * того же размера: заголовок остаётся по центру.
+   */
+  const { width: windowWidth } = useWindowDimensions();
+  const buttonSize = 42 * BUTTON_SCALE;
+  const cornerMenu =
+    Platform.OS === 'web' &&
+    IS_TABLET &&
+    section !== 'talk' &&
+    windowWidth >= CONTENT_MAX_WIDTH * UI_SCALE + 2 * (buttonSize + 32 * UI_SCALE);
+  const sectionMenu = cornerMenu ? <View style={{ width: buttonSize, height: buttonSize }} /> : menu;
 
   const correctionCount = conversation.messages.reduce(
     (total, message) => total + (message.corrections?.length ?? 0),
@@ -350,7 +367,7 @@ function Screen() {
 
           {section === 'listen' && (
             <ListeningScreen
-              menu={menu}
+              menu={sectionMenu}
               language={conversation.language}
               level={conversation.level}
               topicId={conversation.topicId}
@@ -359,7 +376,7 @@ function Screen() {
 
           {section === 'write' && (
             <WritingScreen
-              menu={menu}
+              menu={sectionMenu}
               language={conversation.language}
               level={conversation.level}
               topicId={conversation.topicId}
@@ -368,7 +385,7 @@ function Screen() {
 
           {section === 'words' && (
             <VocabularyScreen
-              menu={menu}
+              menu={sectionMenu}
               language={conversation.language}
               level={conversation.level}
               topicId={conversation.topicId}
@@ -376,12 +393,12 @@ function Screen() {
           )}
 
           {section === 'grammar' && (
-            <GrammarScreen menu={menu} language={conversation.language} level={conversation.level} />
+            <GrammarScreen menu={sectionMenu} language={conversation.language} level={conversation.level} />
           )}
 
           {section === 'exam' && (
             <ExamScreen
-              menu={menu}
+              menu={sectionMenu}
               language={conversation.language}
               level={conversation.level}
               profile={conversation.profile}
@@ -398,11 +415,11 @@ function Screen() {
             />
           )}
 
-          {section === 'book' && <NotebookScreen menu={menu} />}
+          {section === 'book' && <NotebookScreen menu={sectionMenu} />}
 
           {section === 'settings' && (
             <SettingsScreen
-              menu={menu}
+              menu={sectionMenu}
               language={conversation.language}
               level={conversation.level}
               disabled={conversation.sessionActive}
@@ -522,6 +539,10 @@ function Screen() {
         onClose={() => setPaywallOpen(false)}
         onBought={() => void subscription.refresh()}
       />
+
+      {cornerMenu && (
+        <View style={{ position: 'absolute', top: 8 * UI_SCALE, left: 16 * UI_SCALE, zIndex: 5 }}>{menu}</View>
+      )}
 
       {!splashDone && <Splash onDone={() => setSplashDone(true)} />}
     </SafeAreaProvider>
