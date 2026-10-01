@@ -132,7 +132,15 @@ const SLIDE_MS = 220;
  * В браузере экран компьютера считается планшетом, и меню выходило крупным на
  * фоне окна — там оно на 30 % меньше.
  */
-const MENU_SCALE = (IS_TABLET ? (1 + BUTTON_SCALE / UI_SCALE) / 2 : 1) * (Platform.OS === 'web' ? 0.7 : 1);
+const WEB = Platform.OS === 'web';
+const MENU_SCALE = (IS_TABLET ? (1 + BUTTON_SCALE / UI_SCALE) / 2 : 1) * (WEB ? 0.7 : 1);
+
+/**
+ * В браузере колонка приложения стоит посередине окна, и панель от левого края
+ * висела далеко от домика. Там меню раскрывается прямо под домиком: выровнено
+ * по его левому краю, скруглено со всех сторон и опускается, а не выезжает.
+ */
+const HALF_BUTTON = 21 * BUTTON_SCALE;
 
 export function ScreenMenu({ current, hidden = [], badges = {}, anchor, onSelect, onClose }: MenuProps) {
   const { theme } = useTheme();
@@ -179,11 +187,19 @@ export function ScreenMenu({ current, hidden = [], badges = {}, anchor, onSelect
       <Animated.View
         style={[
           styles.card,
-          anchor ? { top: anchor.y + 21 * BUTTON_SCALE + 7 } : null,
-          { transform: [{ translateX: shown.interpolate({ inputRange: [0, 1], outputRange: [-screenWidth, 0] }) }] },
+          anchor ? { top: anchor.y + HALF_BUTTON + 7 } : null,
+          WEB
+            ? {
+                left: anchor ? Math.max(0, anchor.x - HALF_BUTTON) : 0,
+                // Тень карточки повторяет скругление стекла, иначе углы торчат.
+                borderRadius: 16,
+                opacity: shown,
+                transform: [{ translateY: shown.interpolate({ inputRange: [0, 1], outputRange: [-8, 0] }) }],
+              }
+            : { transform: [{ translateX: shown.interpolate({ inputRange: [0, 1], outputRange: [-screenWidth, 0] }) }] },
         ]}
       >
-        <GlassPanel style={styles.glass}>
+        <GlassPanel style={[styles.glass, WEB && styles.glassWeb]}>
         {(Object.keys(SCREEN_ICONS) as Screen[])
           .filter((screen) => !hidden.includes(screen))
           .map((screen) => {
@@ -240,6 +256,7 @@ const createStyles = (theme: Theme) =>
       borderBottomRightRadius: 16,
       overflow: 'hidden',
     },
+    glassWeb: { paddingLeft: 6, borderRadius: 16 },
     row: {
       flexDirection: 'row',
       alignItems: 'center',
