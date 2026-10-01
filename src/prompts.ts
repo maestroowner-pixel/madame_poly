@@ -611,7 +611,43 @@ interface DrillSpec {
   entries: string;
 }
 
-const DRILLS: Record<string, DrillSpec> = {
+/**
+ * Условные предложения: ступени общие для всех языков, формы — свои у
+ * каждого. Без строки о формах модель подставляла английскую схему «типов».
+ */
+const CONDITIONAL_FORMS: Record<LanguageCode, string> = {
+  en: 'zero and first conditional (if + present, present / will), second (if + past simple, would), third (if + past perfect, would have + past participle), mixed conditionals, unless, as long as, provided that, inversion (had I known, were I to, should you need), wish / if only',
+  es: 'si + presente, presente / futuro / imperativo; si + imperfecto de subjuntivo, condicional; si + pluscuamperfecto de subjuntivo, condicional compuesto (or pluscuamperfecto de subjuntivo); mixed; never a present subjunctive or a conditional right after si; en caso de que, a no ser que, siempre que + subjuntivo; de + infinitivo (de haberlo sabido)',
+  de: 'wenn / falls + Indikativ for real conditions; Konjunktiv II for unreal ones: würde + Infinitiv, wäre, hätte, könnte, müsste, and the past: hätte / wäre + Partizip II; the verb at the end of the wenn-clause; omitted wenn with the verb first (Hätte ich Zeit, …); sonst; ich wünschte',
+  fr: 'si + présent, présent / futur / impératif; si + imparfait, conditionnel présent; si + plus-que-parfait, conditionnel passé; mixed; never the conditional or the future right after si; même si, au cas où + conditionnel, à condition que + subjonctif',
+  it: 'se + presente / futuro, presente / futuro / imperativo; se + congiuntivo imperfetto, condizionale presente; se + congiuntivo trapassato, condizionale passato; mixed; never the conditional right after se; the colloquial imperfetto in both clauses (se lo sapevo, venivo) as informal; a patto che, nel caso in cui + congiuntivo',
+  pt: 'European Portuguese: se + futuro do conjuntivo, presente / futuro / imperativo (se tiver tempo, vou); se + pretérito imperfeito do conjuntivo, condicional (se tivesse, iria / ia); se + mais-que-perfeito composto do conjuntivo, condicional composto (se tivesse sabido, teria ido); caso + presente do conjuntivo',
+  br: 'Brazilian Portuguese: se + futuro do subjuntivo, presente / futuro / imperativo (se eu tiver tempo, vou); se + pretérito imperfeito do subjuntivo, futuro do pretérito (se eu tivesse, iria / ia); se + mais-que-perfeito composto do subjuntivo, futuro do pretérito composto (se eu tivesse sabido, teria ido); caso + presente do subjuntivo',
+  uk: 'якщо / коли + дійсний спосіб (теперішній, майбутній) for real conditions; умовний спосіб з якби + минулий час + би for unreal ones (якби я знав, я б прийшов), the same for past unreal; the position of би / б; аби, щоб for purpose against condition',
+  nl: 'als / indien + presens, presens / futurum for real conditions; als + verleden tijd, zou + infinitief for unreal present; als + had / was + voltooid deelwoord, zou + hebben / zijn + voltooid deelwoord (or had / was …) for unreal past; word order in both clauses; tenzij, mits, stel dat',
+  pl: 'jeśli / jeżeli / gdy + tryb oznajmujący for real conditions; gdyby / jeśliby + forma przeszła + by with personal endings (gdybym miał, kupiłbym) for unreal ones; the past unreal with byłby + participle in formal style; the endings -bym, -byś, -by, -byśmy; chyba że',
+  ro: 'dacă + indicativ (prezent, viitor) for real conditions; dacă + condițional-optativ prezent, condițional-optativ prezent (dacă aș avea, aș cumpăra) for unreal present; condițional-optativ perfect (dacă aș fi știut, aș fi venit) for unreal past; in case: în caz că; the conjunctiv after să where a condition is implied',
+  cs: 'jestli / jestliže / když + oznamovací způsob for real conditions; kdyby + l-participle with the personal endings (kdybych měl, koupil bych) for unreal present; kdyby + byl + l-participle (kdybych byl věděl, byl bych přišel) for unreal past, and its spoken simplification; the clitic bych / bys / by in second position; pokud',
+};
+
+const conditionalsSpec = (language: LanguageCode): DrillSpec => ({
+  subject: `conditional sentences in ${LANGUAGES[language].englishName}: ${CONDITIONAL_FORMS[language]}`,
+  levels: {
+    A1: 'Only real conditions in the present with the most common verbs (if it rains, I stay at home).',
+    A2: 'Real conditions in the present and future, and the commonest polite unreal form (I would like / if I were you).',
+    B1: 'Real conditions in the present and future; unreal conditions in the present (imagined, advice, wishes) with the main verb forms of this language.',
+    B2: 'Everything of B1 plus unreal conditions in the past, the contrast between real and unreal for the same idea, conjunctions other than "if" (in case, unless, provided that) as this language has them.',
+    C1: 'Everything of B2 plus mixed conditionals (past condition, present result and the reverse), inversion or conjunction-less forms where the language has them, formal and written variants.',
+    C2: 'Everything of C1 plus literary, archaic and colloquial variants, the finest contrasts of meaning between forms, and set expressions built on conditions.',
+  },
+  gap: 'The gap replaces one verb form (with its auxiliary or particle, like "would have gone", "hätte gemacht", "aș fi venit", "kupiłbym") in either clause. Right after the gap put the infinitive in brackets as a hint, like "If I ___ (know), I would tell you."',
+  options: 'the same verb in other forms that a learner confuses here: another tense, the indicative against the subjunctive or conditional, the form with or without the auxiliary or particle',
+  entries: 'a pattern with its forms and a tiny example, like "if + past simple → would + infinitive: if I had time, I would go"; "translation" explains when it is used, briefly',
+});
+
+const DRILLS: Record<string, DrillSpec | ((language: LanguageCode) => DrillSpec)> = {
+  'dr-conditionals': conditionalsSpec,
+
   'dr-subjuntivo': {
     subject: 'the Spanish subjunctive (subjuntivo) against the indicative',
     levels: {
@@ -674,7 +710,8 @@ export function buildVocabularyPrompt(
 ): string {
   const verb = topic?.kind === 'phrasal' ? phrasalVerbOf(topic.id) : null;
   if (language === 'en' && verb) return buildPhrasalVocabularyPrompt(verb, level, variant);
-  const drill = topic?.kind === 'drill' ? DRILLS[topic.id] : undefined;
+  const found = topic?.kind === 'drill' ? DRILLS[topic.id] : undefined;
+  const drill = typeof found === 'function' ? found(language) : found;
   if (topic && drill) return buildDrillVocabularyPrompt(language, drill, level, topic.label);
 
   const { englishName } = LANGUAGES[language];

@@ -738,11 +738,45 @@ export function phrasalVerbOf(id: string | null): string | null {
  * лист сигналов и правил и упражнения на пропуск, как у фразовых глаголов.
  * Объём и тонкость — по уровню, это решает промпт.
  */
+/** Условные предложения — трудное место во всех языках приложения; название на языке. */
+const CONDITIONALS_LABEL: Record<LanguageCode, string> = {
+  en: 'Conditional sentences',
+  es: 'Las oraciones condicionales',
+  de: 'Konditionalsätze',
+  fr: 'Les phrases conditionnelles',
+  it: 'Il periodo ipotetico',
+  pt: 'As orações condicionais',
+  br: 'As orações condicionais',
+  uk: 'Умовні речення',
+  nl: 'Voorwaardelijke zinnen',
+  pl: 'Zdania warunkowe',
+  ro: 'Propozițiile condiționale',
+  cs: 'Podmínkové věty',
+};
+
+const conditionals = (language: LanguageCode): Topic => ({
+  id: 'dr-conditionals',
+  label: CONDITIONALS_LABEL[language],
+  kind: 'drill',
+});
+
 export const DRILL_TOPICS: Partial<Record<LanguageCode, Topic[]>> = {
+  en: [conditionals('en')],
   es: [
     { id: 'dr-subjuntivo', label: 'El subjuntivo', kind: 'drill' },
     { id: 'dr-pronombres', label: 'Le, lo, la: los pronombres', kind: 'drill' },
+    conditionals('es'),
   ],
+  de: [conditionals('de')],
+  fr: [conditionals('fr')],
+  it: [conditionals('it')],
+  pt: [conditionals('pt')],
+  br: [conditionals('br')],
+  uk: [conditionals('uk')],
+  nl: [conditionals('nl')],
+  pl: [conditionals('pl')],
+  ro: [conditionals('ro')],
+  cs: [conditionals('cs')],
 };
 
 /** Темы с упражнениями на пропуск — фразовые глаголы и тренажёры. */
@@ -824,6 +858,7 @@ const GLOSSES: Record<string, Record<UiLocale, string>> = {
   schoolenrol: { en: 'Enrolling a child at school', uk: 'Запис дитини до школи', es: 'Matricular a un hijo en el colegio', ru: 'Запись ребёнка в школу', de: 'Kind in der Schule anmelden', fr: 'Inscrire un enfant à l\'école', pt: 'Matricular o filho na escola', zh: '为孩子办理入学', ja: '子どもの入学手続き', ko: '아이 학교 입학', nl: 'Kind inschrijven op school', pl: 'Zapisanie dziecka do szkoły', ro: 'Înscrierea copilului la școală' },
   immigration: { en: 'At the immigration office', uk: 'У міграційній службі', es: 'En la oficina de extranjería', ru: 'В миграционной службе', de: 'Bei der Ausländerbehörde', fr: 'Au service des étrangers', pt: 'No serviço de imigração', zh: '在移民局', ja: '入国管理局で', ko: '출입국 사무소에서', nl: 'Bij de immigratiedienst', pl: 'W urzędzie ds. cudzoziemców', ro: 'La biroul de imigrări' },
 
+  'dr-conditionals': { en: 'Conditional sentences', uk: 'Умовні речення', es: 'Oraciones condicionales', ru: 'Условные предложения', de: 'Konditionalsätze', fr: 'Les phrases conditionnelles', pt: 'Orações condicionais', zh: '条件句', ja: '条件文', ko: '조건문', nl: 'Voorwaardelijke zinnen', pl: 'Zdania warunkowe', ro: 'Propozițiile condiționale' },
   'dr-subjuntivo': { en: 'The Spanish subjunctive', uk: 'Субхунтив (умовний спосіб)', es: 'El subjuntivo', ru: 'Субхунтив (сослагательное наклонение)', de: 'Der Subjuntivo', fr: 'Le subjonctif espagnol', pt: 'O subjuntivo espanhol', zh: '西班牙语虚拟式', ja: 'スペイン語の接続法', ko: '스페인어 접속법', nl: 'De Spaanse subjuntivo', pl: 'Tryb subjuntivo', ro: 'Subjonctivul spaniol' },
   'dr-pronombres': { en: 'Object pronouns: le, lo, la', uk: 'Займенники додатка: le, lo, la', es: 'Pronombres de objeto: le, lo, la', ru: 'Местоимения-дополнения: le, lo, la', de: 'Objektpronomen: le, lo, la', fr: 'Pronoms compléments : le, lo, la', pt: 'Pronomes de objeto: le, lo, la', zh: '宾语代词：le、lo、la', ja: '目的格代名詞：le・lo・la', ko: '목적격 대명사: le, lo, la', nl: 'Objectvoornaamwoorden: le, lo, la', pl: 'Zaimki dopełnienia: le, lo, la', ro: 'Pronumele complement: le, lo, la' },
 
