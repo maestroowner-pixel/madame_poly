@@ -1,3 +1,4 @@
+import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { Linking, Platform } from 'react-native';
 import Purchases, {
   LOG_LEVEL,
@@ -28,7 +29,14 @@ const API_KEY = Platform.select({
  * есть». А тариф — бесплатный: иначе сборка без ключей не знала бы дневного
  * лимита. Снять лимиты для проверки — `UNLIMITED_TALKS`.
  */
-export const PURCHASES_READY = Boolean(API_KEY) && Platform.OS !== 'web';
+/**
+ * В Expo Go магазина нет: RevenueCat с настоящим ключом бросает на configure
+ * («native store is not available»), и приложение падало при запуске. Там
+ * покупки выключены — тариф аккаунта всё равно скажет сервер (accountTier).
+ */
+const EXPO_GO = Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
+
+export const PURCHASES_READY = Boolean(API_KEY) && Platform.OS !== 'web' && !EXPO_GO;
 
 let started = false;
 
@@ -37,8 +45,13 @@ export function startPurchases(): void {
   if (!PURCHASES_READY || started) return;
   started = true;
 
-  if (__DEV__) Purchases.setLogLevel(LOG_LEVEL.WARN);
-  Purchases.configure({ apiKey: API_KEY });
+  // Ошибка SDK не должна ронять приложение: без покупок оно работает целиком.
+  try {
+    if (__DEV__) Purchases.setLogLevel(LOG_LEVEL.WARN);
+    Purchases.configure({ apiKey: API_KEY });
+  } catch (e) {
+    console.warn('RevenueCat configure failed', e);
+  }
 }
 
 function tierOf(info: CustomerInfo): Tier {
