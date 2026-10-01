@@ -641,7 +641,7 @@ const conditionalsSpec = (language: LanguageCode): DrillSpec => ({
     C2: 'Everything of C1 plus literary, archaic and colloquial variants, the finest contrasts of meaning between forms, and set expressions built on conditions.',
   },
   gap: 'The gap replaces one verb form (with its auxiliary or particle, like "would have gone", "hätte gemacht", "aș fi venit", "kupiłbym") in either clause. Right after the gap put the infinitive in brackets as a hint, like "If I ___ (know), I would tell you."',
-  options: 'the same verb in other forms that a learner confuses here: another tense, the indicative against the subjunctive or conditional, the form with or without the auxiliary or particle',
+  options: 'the same verb in other forms that a learner confuses here: another tense, the indicative against the subjunctive or conditional, the form with or without the auxiliary or particle. When the answer is only an auxiliary (würde, would, zou), the main verb must still stand in the sentence, and the hint names the auxiliary\'s own infinitive (werden, will), never a verb that is missing from the sentence',
   entries: 'a pattern with its forms and a tiny example, like "if + past simple → would + infinitive: if I had time, I would go"; "translation" explains when it is used, briefly',
 });
 

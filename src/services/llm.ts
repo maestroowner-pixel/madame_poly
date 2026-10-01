@@ -881,9 +881,10 @@ export async function generateVocabulary(params: {
       model: CLAUDE_MODEL,
       max_tokens: 16384,
       system: buildVocabularyPrompt(language, level, topic, variant),
-      // Тренажёр грамматики хранится и заучивается вслух: без рассуждения модель
-      // путала переходность глаголов (los llamo → «les llamo») и уровни.
-      thinking: topic?.kind === 'drill' ? { type: 'adaptive' } : { type: 'disabled' },
+      // Рассуждение здесь пробовали: оно съедало потолок ответа (16384), и лист
+      // обрывался. Точность тренажёров держит сам промпт — таблица падежей
+      // глаголов, проверка каждого варианта.
+      thinking: { type: 'disabled' },
       messages: [{ role: 'user', content: 'Compile the sheet.' }],
       output_config: { format: zodOutputFormat(phrasal ? PhrasalVocabularySchema : VocabularySchema) },
     }),
