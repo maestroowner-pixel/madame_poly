@@ -1,4 +1,4 @@
-import { Dimensions, useWindowDimensions } from 'react-native';
+import { Dimensions, Platform, useWindowDimensions } from 'react-native';
 
 /**
  * Потолок ширины контента на телефоне. На планшете лента во весь экран даёт
@@ -53,7 +53,15 @@ function detect(): DeviceClass {
 export const DEVICE_CLASS: DeviceClass = detect();
 export const IS_TABLET = DEVICE_CLASS !== 'phone';
 export const UI_SCALE = SCALES[DEVICE_CLASS].ui;
-export const BUTTON_SCALE = SCALES[DEVICE_CLASS].button;
+/**
+ * В браузере экран компьютера попадает в «планшет», и кнопки шапки выходили
+ * крупными на фоне окна — там они на 30 % меньше. В браузере телефона
+ * размер обычный: он и так телефонный. Меню считает свой размер от
+ * планшетного масштаба (BASE_BUTTON_SCALE), его это не задевает.
+ */
+export const BASE_BUTTON_SCALE = SCALES[DEVICE_CLASS].button;
+export const BUTTON_SCALE =
+  BASE_BUTTON_SCALE * (Platform.OS === 'web' && DEVICE_CLASS !== 'phone' ? 0.7 : 1);
 export const PORTRAIT_SCALE = SCALES[DEVICE_CLASS].portrait;
 
 /**

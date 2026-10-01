@@ -5,7 +5,7 @@ import { BookIcon, ChatIcon, EarIcon, ExamIcon, GrammarIcon, HomeIcon, PenIcon, 
 import { GlassPanel } from './GlassPanel';
 import { NeonButton } from './NeonButton';
 import { measureAnchor, type Anchor } from '../anchor';
-import { BUTTON_ICON_SCALE, BUTTON_SCALE, IS_TABLET, UI_SCALE } from '../layout';
+import { BASE_BUTTON_SCALE, BUTTON_ICON_SCALE, BUTTON_SCALE, IS_TABLET, UI_SCALE } from '../layout';
 import { t } from '../i18n';
 import { scaleStyles, useStyles, useTheme, type Theme } from '../theme';
 
@@ -133,7 +133,7 @@ const SLIDE_MS = 220;
  * фоне окна — там оно на 30 % меньше.
  */
 const WEB = Platform.OS === 'web';
-const MENU_SCALE = (IS_TABLET ? (1 + BUTTON_SCALE / UI_SCALE) / 2 : 1) * (WEB ? 0.7 : 1);
+const MENU_SCALE = (IS_TABLET ? (1 + BASE_BUTTON_SCALE / UI_SCALE) / 2 : 1) * (WEB ? 0.7 : 1);
 
 /**
  * В браузере колонка приложения стоит посередине окна, и панель от левого края
