@@ -312,7 +312,7 @@ const createStyles = (theme: Theme) =>
       maxWidth: CONTENT_MAX_WIDTH,
       alignSelf: 'center',
     },
-    level: { color: theme.neon, fontSize: 12, fontWeight: '700', marginLeft: 'auto' },
+    level: { color: theme.neon, fontSize: 18, fontWeight: '700', marginLeft: 'auto' },
     body: {
       width: '100%',
       maxWidth: CONTENT_MAX_WIDTH,

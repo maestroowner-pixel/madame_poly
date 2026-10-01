@@ -522,7 +522,7 @@ const createStyles = (theme: Theme) =>
     },
     title: { color: theme.text, fontSize: 18, fontWeight: '700', flexShrink: 1 },
     actions: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-    level: { color: theme.neon, fontSize: 12, fontWeight: '700' },
+    level: { color: theme.neon, fontSize: 18, fontWeight: '700' },
     iconButton: { width: 30, height: 30, alignItems: 'center', justifyContent: 'center' },
 
     body: {
