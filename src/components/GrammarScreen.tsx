@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { LevelSwitch } from './LevelSwitch';
 import { WideButton } from './WideButton';
 import { ExerciseCard } from './HomeworkScreen';
 import { CheckIcon, ChevronIcon } from './icons';
 import { ScreenTitle } from './ScreenMenu';
 import { errorText } from '../errors';
-import { bandOf, findUnit, isSingleCourse, syllabus, type GrammarUnit } from '../grammar';
+import { bandOf, findUnit, isSingleCourse, syllabus, type Band, type GrammarUnit } from '../grammar';
 import { t } from '../i18n';
 import { CONTENT_MAX_WIDTH } from '../layout';
 import { generateGrammarLesson, regenerateGrammarExercises } from '../services/llm';
@@ -25,6 +26,8 @@ interface Props {
   menu: ReactNode;
   language: LanguageCode;
   level: Level;
+  /** Сменить уровень — из шапки, по кругу ступеней и с подтверждением. */
+  onSelectLevel: (level: Level) => void;
 }
 
 /** Номер юнита в ступени — сквозной, как в оглавлении учебника. */
@@ -41,7 +44,10 @@ function numbering(modules: ReturnType<typeof syllabus>): Map<string, number> {
  * таблицу форм, типичные ошибки и десять упражнений. Урок хранится; упражнения
  * можно пересоставить, а юнит — отметить пройденным.
  */
-export function GrammarScreen({ menu, language, level }: Props) {
+/** Ступени по кругу: в грамматике уровни сведены по две. */
+const BANDS: readonly Band[] = ['A', 'B', 'C'];
+
+export function GrammarScreen({ menu, language, level, onSelectLevel }: Props) {
   const { theme } = useTheme();
   const styles = useStyles(createStyles);
 
@@ -138,7 +144,11 @@ export function GrammarScreen({ menu, language, level }: Props) {
         <View style={styles.header}>
           {menu}
           <ScreenTitle screen="grammar" />
-          <Text style={styles.level}>{bandLabel}</Text>
+          {isSingleCourse(language) ? (
+            <Text style={styles.level}>{bandLabel}</Text>
+          ) : (
+            <LevelSwitch value={band} steps={BANDS} label={t.grammarBand} onChange={(next) => onSelectLevel(`${next}1` as Level)} />
+          )}
         </View>
 
         <ScrollView contentContainerStyle={styles.body}>
@@ -256,7 +266,11 @@ export function GrammarScreen({ menu, language, level }: Props) {
       <View style={styles.header}>
         {menu}
         <ScreenTitle screen="grammar" />
-        <Text style={styles.level}>{bandLabel}</Text>
+        {isSingleCourse(language) ? (
+          <Text style={styles.level}>{bandLabel}</Text>
+        ) : (
+          <LevelSwitch value={band} steps={BANDS} label={t.grammarBand} onChange={(next) => onSelectLevel(`${next}1` as Level)} />
+        )}
       </View>
 
       <ScrollView contentContainerStyle={styles.body}>

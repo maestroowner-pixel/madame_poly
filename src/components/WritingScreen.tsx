@@ -10,6 +10,7 @@ import {
   View,
 } from 'react-native';
 
+import { LevelSwitch } from './LevelSwitch';
 import { WideButton } from './WideButton';
 import { ScreenTitle } from './ScreenMenu';
 import { useKeyboardInset } from '../hooks/useKeyboardInset';
@@ -30,12 +31,15 @@ import { useStyles, useTheme, type Theme } from '../theme';
 import { isSingleCourse } from '../grammar';
 import { findTopic } from '../topics';
 import type { LanguageCode, Level } from '../types';
+import { LEVELS } from '../types';
 
 interface Props {
   /** Домик со списком разделов. */
   menu: ReactNode;
   language: LanguageCode;
   level: Level;
+  /** Сменить уровень — из шапки, по кругу и с подтверждением. */
+  onSelectLevel: (level: Level) => void;
   topicId: string | null;
 }
 
@@ -48,7 +52,7 @@ function countWords(text: string): number {
  * уровень и тему, написанное разбирается так же, как речь, но строже — текст
  * перед глазами целиком, поэтому в разбор попадают и знаки, и связность.
  */
-export function WritingScreen({ menu, language, level, topicId }: Props) {
+export function WritingScreen({ menu, language, level, onSelectLevel, topicId }: Props) {
   const { theme } = useTheme();
   const styles = useStyles(createStyles);
 
@@ -184,7 +188,7 @@ export function WritingScreen({ menu, language, level, topicId }: Props) {
         {menu}
         <ScreenTitle screen="write" />
         {/* У сквозного курса (украинский, бразильский) уровня нет — не показываем. */}
-        {!isSingleCourse(language) && <Text style={styles.level}>{level}</Text>}
+        {!isSingleCourse(language) && <LevelSwitch value={level} steps={LEVELS} onChange={onSelectLevel} />}
       </View>
 
       <View style={[styles.flex, { paddingBottom: keyboard }]}>

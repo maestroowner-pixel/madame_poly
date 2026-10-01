@@ -370,6 +370,7 @@ function Screen() {
               menu={sectionMenu}
               language={conversation.language}
               level={conversation.level}
+              onSelectLevel={(next) => void conversation.setLevel(next)}
               topicId={conversation.topicId}
             />
           )}
@@ -379,6 +380,7 @@ function Screen() {
               menu={sectionMenu}
               language={conversation.language}
               level={conversation.level}
+              onSelectLevel={(next) => void conversation.setLevel(next)}
               topicId={conversation.topicId}
             />
           )}
@@ -388,12 +390,18 @@ function Screen() {
               menu={sectionMenu}
               language={conversation.language}
               level={conversation.level}
+              onSelectLevel={(next) => void conversation.setLevel(next)}
               topicId={conversation.topicId}
             />
           )}
 
           {section === 'grammar' && (
-            <GrammarScreen menu={sectionMenu} language={conversation.language} level={conversation.level} />
+            <GrammarScreen
+              menu={sectionMenu}
+              language={conversation.language}
+              level={conversation.level}
+              onSelectLevel={(next) => void conversation.setLevel(next)}
+            />
           )}
 
           {section === 'exam' && (

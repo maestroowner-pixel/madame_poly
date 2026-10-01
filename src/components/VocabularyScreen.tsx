@@ -9,6 +9,7 @@ import {
   View,
 } from 'react-native';
 
+import { LevelSwitch } from './LevelSwitch';
 import { WideButton } from './WideButton';
 import { DirectionToggle } from './FlipCard';
 import { PhrasalGaps } from './PhrasalGaps';
@@ -56,12 +57,15 @@ import type {
   VocabularyEntry,
   VocabularyIndexEntry,
 } from '../types';
+import { LEVELS } from '../types';
 
 interface Props {
   /** Домик со списком разделов. */
   menu: ReactNode;
   language: LanguageCode;
   level: Level;
+  /** Сменить уровень — из шапки, по кругу и с подтверждением. */
+  onSelectLevel: (level: Level) => void;
   topicId: string | null;
 }
 
@@ -79,7 +83,7 @@ type Tab = 'list' | 'cards' | 'review' | 'quiz' | 'gaps' | 'speak';
  * же растут карточки и тест; отложенные слова копятся в очереди повторения по
  * языку и возвращаются по расписанию — сначала часто, потом всё реже.
  */
-export function VocabularyScreen({ menu, language, level, topicId }: Props) {
+export function VocabularyScreen({ menu, language, level, onSelectLevel, topicId }: Props) {
   const { theme } = useTheme();
   const styles = useStyles(createStyles);
   const player = useAudioPlayer(null);
@@ -374,7 +378,9 @@ export function VocabularyScreen({ menu, language, level, topicId }: Props) {
         {menu}
         <ScreenTitle screen="words" />
         {/* У сквозного курса (украинский, бразильский) уровня нет — не показываем. */}
-        {!isSingleCourse(language) && <Text style={styles.level}>{vocabulary?.level ?? level}</Text>}
+        {!isSingleCourse(language) && (
+          <LevelSwitch value={vocabulary?.level ?? level} steps={LEVELS} onChange={onSelectLevel} />
+        )}
       </View>
 
       <ScrollView contentContainerStyle={styles.body}>

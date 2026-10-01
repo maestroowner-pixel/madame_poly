@@ -17,6 +17,7 @@ import {
   useAudioRecorder,
 } from 'expo-audio';
 
+import { LevelSwitch } from './LevelSwitch';
 import { WideButton } from './WideButton';
 import { ScreenTitle } from './ScreenMenu';
 import { useKeyboardInset } from '../hooks/useKeyboardInset';
@@ -47,6 +48,7 @@ import type {
   ListeningStats,
   ListeningVerdict,
 } from '../types';
+import { LEVELS } from '../types';
 
 /** Смена темы бросает начатый диктант — её и подтверждают. */
 type Pending = { kind: 'topic'; id: string | null };
@@ -56,6 +58,8 @@ interface Props {
   menu: ReactNode;
   language: LanguageCode;
   level: Level;
+  /** Сменить уровень — из шапки, по кругу и с подтверждением. */
+  onSelectLevel: (level: Level) => void;
   /** Тема беседы — с неё начинается выбор темы диктанта. */
   topicId: string | null;
 }
@@ -71,7 +75,7 @@ interface Props {
  * тремя способами — выбором, текстом и голосом. Сам текст до проверки скрыт,
  * иначе вопросы решаются чтением, а не на слух.
  */
-export function ListeningScreen({ menu, language, level, topicId }: Props) {
+export function ListeningScreen({ menu, language, level, onSelectLevel, topicId }: Props) {
   const { theme } = useTheme();
   const styles = useStyles(createStyles);
   /** Клавиатуру отмеряем сами: во весь экран Android окно не сжимает. */
@@ -296,7 +300,7 @@ export function ListeningScreen({ menu, language, level, topicId }: Props) {
             {menu}
             <ScreenTitle screen="listen" title={listening?.title} />
             {/* У сквозного курса (украинский, бразильский) уровня нет — не показываем. */}
-            {!isSingleCourse(language) && <Text style={styles.level}>{level}</Text>}
+            {!isSingleCourse(language) && <LevelSwitch value={level} steps={LEVELS} onChange={onSelectLevel} />}
           </View>
 
           {/* Письменные ответы — те же поля, что и в аккаунте: без этого тап по
