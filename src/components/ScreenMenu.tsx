@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef } from 'react';
-import { Animated, Easing, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Animated, Easing, Platform, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 
 import { BookIcon, ChatIcon, EarIcon, ExamIcon, GrammarIcon, HomeIcon, PenIcon, WordsIcon } from './icons';
 import { GlassPanel } from './GlassPanel';
@@ -128,7 +128,11 @@ const SLIDE_MS = 220;
  * кнопкой шапки, из-под которой оно выпадает: мелкий список под большим
  * домиком выглядел чужим.
  */
-const MENU_SCALE = IS_TABLET ? (1 + BUTTON_SCALE / UI_SCALE) / 2 : 1;
+/**
+ * В браузере экран компьютера считается планшетом, и меню выходило крупным на
+ * фоне окна — там оно на 30 % меньше.
+ */
+const MENU_SCALE = (IS_TABLET ? (1 + BUTTON_SCALE / UI_SCALE) / 2 : 1) * (Platform.OS === 'web' ? 0.7 : 1);
 
 export function ScreenMenu({ current, hidden = [], badges = {}, anchor, onSelect, onClose }: MenuProps) {
   const { theme } = useTheme();
