@@ -15,7 +15,7 @@ import {
 } from 'react-native-safe-area-context';
 
 import { WideButton } from './WideButton';
-import { CloseIcon } from './icons';
+import { CloseIcon, EyeIcon } from './icons';
 import { ZoomModal } from './ZoomModal';
 import type { Anchor } from '../anchor';
 import { formatDate } from '../format';
@@ -58,6 +58,7 @@ export function AccountScreen({
 
   const [mail, setMail] = useState('');
   const [password, setPassword] = useState('');
+  const [passwordShown, setPasswordShown] = useState(false);
   const [working, setWorking] = useState(false);
   const [note, setNote] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -161,17 +162,29 @@ export function AccountScreen({
                   keyboardType="email-address"
                   textContentType="emailAddress"
                 />
-                <TextInput
-                  value={password}
-                  onChangeText={setPassword}
-                  placeholder={t.accountPassword}
-                  placeholderTextColor={theme.textMuted}
-                  style={styles.input}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  secureTextEntry
-                  textContentType="password"
-                />
+                {/* Глазик показывает пароль: длинный пароль вслепую легко набрать с опечаткой. */}
+                <View>
+                  <TextInput
+                    value={password}
+                    onChangeText={setPassword}
+                    placeholder={t.accountPassword}
+                    placeholderTextColor={theme.textMuted}
+                    style={[styles.input, styles.passwordInput]}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    secureTextEntry={!passwordShown}
+                    textContentType="password"
+                  />
+                  <Pressable
+                    onPress={() => setPasswordShown((shown) => !shown)}
+                    hitSlop={8}
+                    accessibilityRole="button"
+                    accessibilityLabel={passwordShown ? t.hidePassword : t.showPassword}
+                    style={styles.eye}
+                  >
+                    <EyeIcon size={20} color={theme.textMuted} closed={passwordShown} cutout={theme.surface} />
+                  </Pressable>
+                </View>
 
                 <WideButton
                   onPress={withCredentials(login)}
@@ -269,6 +282,17 @@ const createStyles = (theme: Theme) =>
       backgroundColor: theme.surface,
       borderWidth: 1,
       borderColor: theme.border,
+    },
+    /** Справа место под глазик, чтобы текст под него не заезжал. */
+    passwordInput: { paddingRight: 48 },
+    eye: {
+      position: 'absolute',
+      right: 6,
+      top: 0,
+      bottom: 0,
+      width: 40,
+      alignItems: 'center',
+      justifyContent: 'center',
     },
 
     cta: {
