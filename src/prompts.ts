@@ -594,6 +594,78 @@ function buildPhrasalVocabularyPrompt(verb: string, level: Level, variant?: Engl
   ].join('\n');
 }
 
+/**
+ * Тренажёры: лист сигналов и правил трудного места грамматики и упражнения на
+ * пропуск. Что входит на каком уровне — своё у каждой темы.
+ */
+interface DrillSpec {
+  /** Что тренируем — для первой строки промпта. */
+  subject: string;
+  /** Что входит на каждом уровне: лист и предложения — только это. */
+  levels: Record<Level, string>;
+  /** Как устроен пропуск и подсказка к нему. */
+  gap: string;
+  /** Из чего делать неверные варианты. */
+  options: string;
+  /** Как писать записи листа. */
+  entries: string;
+}
+
+const DRILLS: Record<string, DrillSpec> = {
+  'dr-subjuntivo': {
+    subject: 'the Spanish subjunctive (subjuntivo) against the indicative',
+    levels: {
+      A1: 'Only the very first uses: ojalá + presente de subjuntivo, quiero que + presente de subjuntivo; against creo que + indicativo.',
+      A2: 'Presente de subjuntivo after querer que, esperar que, ojalá, para que, cuando with a future meaning; against the indicative after creo que, sé que, cuando with a habitual meaning.',
+      B1: 'Presente de subjuntivo: wishes and requests (quiero que, te pido que), feelings (me alegra que, me molesta que), doubt and denied opinion (no creo que, dudo que), impersonal judgements (es importante que, es mejor que), cuando / hasta que / en cuanto with a future meaning, para que, ojalá; and the contrasts with the indicative (creo que, es verdad que, cuando + habit).',
+      B2: 'Everything of B1 plus pretérito perfecto de subjuntivo (me alegro de que hayas venido), imperfecto de subjuntivo after past triggers (quería que viniera), si + imperfecto de subjuntivo for unreal conditions, como si, aunque + subjuntivo against aunque + indicativo, antes de que, relative clauses with an unknown or denied antecedent (busco a alguien que sepa…, no hay nadie que…).',
+      C1: 'Everything of B2 plus pluscuamperfecto de subjuntivo (si hubiera sabido…, como si no hubiera pasado nada), the sequence of tenses, el hecho de que / el que + subjuntivo, por mucho que, a no ser que, siempre que (condition), decir / sentir / comprender que with a change of meaning between moods, independent wishes with que (¡que te mejores!).',
+      C2: 'Everything of C1 plus the finest contrasts (aunque llueve / aunque llueva, el que lo diga / lo dice), quizá(s) and tal vez with both moods, set phrases with the future subjunctive (sea como fuere, venga lo que viniere), literary and formal uses, and the -ra / -se forms.',
+    },
+    gap: 'The gap replaces one verb form (with its auxiliary for compound tenses, like "hayas venido"). Right after the gap put the infinitive in brackets as a hint, like "Quiero que ___ (venir) mañana."',
+    options: 'the same verb in other forms: the indicative of the same tense, the other subjunctive tense, the infinitive or another person, — only one is correct in this sentence',
+    entries: 'a trigger or rule with its mood, like "quiero que… + subjuntivo", "creo que… + indicativo", "si + imperfecto de subjuntivo, condicional"; "translation" explains it briefly with a meaning',
+  },
+  'dr-pronombres': {
+    subject: 'Spanish object pronouns: lo, la, los, las (direct), le, les (indirect), se lo and their position',
+    levels: {
+      A1: 'Only lo, la, los, las for things with a conjugated verb (lo compro, la veo) and le for "to him / to her" with a few verbs (le doy, le escribo).',
+      A2: 'Direct lo, la, los, las against indirect le, les with common verbs (ver, llamar, conocer, dar, decir, escribir, gustar), position before the conjugated verb.',
+      B1: 'Direct against indirect with the verbs where learners slip, position before the conjugated verb and attached to the infinitive, the gerund and the affirmative imperative (voy a comprarlo, estoy leyéndolo, cómpralo), le with gustar-type verbs. No double pronouns (se lo) yet — they are B2.',
+      B2: 'Everything of B1 plus double pronouns with le → se (se lo doy, dáselo, voy a decírselo), the two possible positions with periphrasis (lo voy a hacer / voy a hacerlo), duplication with a él / a ella and with a fronted object (a María la vi ayer), accent marks when pronouns are attached, leísmo accepted in Spain (le vi for a man) and when to avoid it.',
+      C1: 'Everything of B2 plus neuter lo (lo es, lo sé, no lo parece), pronouns with verbs of changing meaning, se with unplanned events (se me olvidó), laísmo and loísmo recognised as errors, duplication rules in formal writing.',
+      C2: 'Everything of C1 plus the finest cases: le for usted, le / lo with verbs of influence (le / lo obligaron a…), impersonal se against reflexive and passive se, regional usage and register.',
+    },
+    gap: 'The gap replaces the pronoun or pronouns. When they are attached to a verb (dámelo, voy a decírselo), the gap replaces the whole word with the verb, and the answer is that whole word. The sentence itself names what the pronoun stands for, earlier in the sentence. Mind the case each verb takes in standard Spanish: a direct object (lo, la, los, las) with ayudar, llamar, invitar, visitar, esperar, conocer, ver, saludar, querer, escuchar, buscar, comprar, leer; an indirect object (le, les) with decir, preguntar, pedir, escribir, dar, enviar, regalar, prestar, explicar, gustar, doler, interesar, parecer, contestar. So "a mis padres los llamo", "a mi abuela la ayudo", "a mi profesora le pregunto".',
+    options: 'the same slot with other pronouns: lo / la / le / los / las / les / me / te / nos / se lo / te lo / se la, attached in the same way when the answer is attached, — only one is correct in this sentence. The pronoun must agree with who is addressed and spoken about: "si quieres el libro, te lo doy" (tú), "se lo doy" only for usted or a third person. Leísmo de persona (le / les for a man or men as a direct object) is accepted in Spain, so never offer le / les as a wrong option where the direct object is a male person — use things or women as direct objects in those drills, or pick other distractors',
+    entries: 'a rule or a pattern with an example, like "lo / la — complemento directo: lo veo", "le + gustar: le gusta", "se lo (le + lo): se lo doy"; "translation" explains it briefly',
+  },
+};
+
+function buildDrillVocabularyPrompt(language: LanguageCode, spec: DrillSpec, level: Level, title: string): string {
+  const { englishName } = LANGUAGES[language];
+  return [
+    `You are a ${englishName} teacher compiling a practice sheet on ${spec.subject} for a CEFR ${level} learner, with exercises.`,
+    '',
+    'Rules:',
+    `- Level ${level}: ${spec.levels[level]} Stay within this: nothing beyond the level — not in the sheet, not in the drills — and cover everything listed.`,
+    `- Sections have kind "words". Group the entries by use or rule; three to six sections, four to eight entries each. "title" in ${englishName}, "gloss" the same in ${EXPLANATION_LANGUAGE}.`,
+    `- Every entry ("term"): ${spec.entries}. Terms are in ${englishName}; "translation" is in ${EXPLANATION_LANGUAGE}. No term appears twice.`,
+    `- "transcription" is the pronunciation of the whole term in IPA between slashes, ${pronunciationName(language)}, with stress marks, without the ellipsis and labels.`,
+    `- The sheet "title" is "${title}".`,
+    `- "dialogue": one conversation of ten to fourteen lines in ${englishName} between two people, turns alternating, without speaker labels, using as many of the rules as sounds natural.`,
+    `- "examples": ten to fourteen sentences in ${englishName}, each showing one rule.`,
+    '- "drills": twenty sentences covering all the entries, each entry at least once:',
+    `  - "sentence": a natural, everyday sentence in ${englishName} at the level, with "___" exactly once. ${spec.gap}`,
+    '  - "answer": the exact words that were replaced.',
+    `  - "options": four different options, one of them exactly "answer"; the other three are ${spec.options}. Check every distractor: if it would also give a correct sentence, replace it — exactly one option may fit.`,
+    `  - "translation": the whole sentence with the gap filled, translated into ${EXPLANATION_LANGUAGE}.`,
+    '  - "term": the "term" of the entry this sentence practises, exactly as written in the sections.',
+    '- Every sentence must be correct, natural and in use today — a learner will repeat it aloud.',
+    '- Finally re-read every drill as a learner who sees only the sentence and the four options: exactly one option must be right, and the answer must be that one. Fix or replace any drill that fails.',
+  ].join('\n');
+}
+
 export function buildVocabularyPrompt(
   language: LanguageCode,
   level: Level,
@@ -602,6 +674,8 @@ export function buildVocabularyPrompt(
 ): string {
   const verb = topic?.kind === 'phrasal' ? phrasalVerbOf(topic.id) : null;
   if (language === 'en' && verb) return buildPhrasalVocabularyPrompt(verb, level, variant);
+  const drill = topic?.kind === 'drill' ? DRILLS[topic.id] : undefined;
+  if (topic && drill) return buildDrillVocabularyPrompt(language, drill, level, topic.label);
 
   const { englishName } = LANGUAGES[language];
   const phrasal = language === 'en' ? PHRASAL_GUIDANCE[level] : undefined;

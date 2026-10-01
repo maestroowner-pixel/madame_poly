@@ -47,7 +47,7 @@ import {
 } from '../storage';
 import { useStyles, useTheme, type Theme } from '../theme';
 import { isSingleCourse } from '../grammar';
-import { findTopic, phrasalVerbOf } from '../topics';
+import { findTopic, isExerciseTopic } from '../topics';
 import type {
   CardDirection,
   LanguageCode,
@@ -135,10 +135,10 @@ export function VocabularyScreen({ menu, language, level, onSelectLevel, topicId
     });
   }, []);
 
-  // Ушли с темы фразовых глаголов — их вкладок у обычной темы нет.
+  // Ушли с темы с упражнениями — их вкладок у обычной темы нет.
   useEffect(() => {
-    if (!phrasalVerbOf(topic)) setTab((current) => (current === 'gaps' || current === 'speak' ? 'list' : current));
-  }, [topic]);
+    if (!isExerciseTopic(language, topic)) setTab((current) => (current === 'gaps' || current === 'speak' ? 'list' : current));
+  }, [language, topic]);
 
   // Сменили тему или уровень — показываем готовый список под них, если он есть.
   useEffect(() => {
@@ -353,8 +353,8 @@ export function VocabularyScreen({ menu, language, level, onSelectLevel, topicId
 
   const saved = index.filter((entry) => entry.language === language);
   const due = dueCards(review).length;
-  /** Тема фразовых глаголов — у неё свои упражнения на пропуск. */
-  const phrasal = language === 'en' && phrasalVerbOf(topic) !== null;
+  /** Фразовые глаголы и тренажёры — у них свои упражнения на пропуск. */
+  const phrasal = isExerciseTopic(language, topic);
   const drills = vocabulary?.drills ?? [];
   const tabs: { key: Tab; label: string; badge?: number }[] = [
     { key: 'list', label: t.wordsTabList },
@@ -703,7 +703,7 @@ export function VocabularyScreen({ menu, language, level, onSelectLevel, topicId
         anchor={pickerAnchor}
         language={language}
         topicId={topic}
-        phrasal
+        exercises
         onSelect={setTopic}
         onClose={() => setPickerOpen(false)}
       />

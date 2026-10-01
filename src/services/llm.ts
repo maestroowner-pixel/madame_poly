@@ -873,15 +873,17 @@ export async function generateVocabulary(params: {
   variant?: EnglishVariant;
 }): Promise<Vocabulary> {
   const { language, level, topic, variant } = params;
-  /** Тема фразовых глаголов: лист с упражнениями — схема шире. */
-  const phrasal = language === 'en' && topic?.kind === 'phrasal';
+  /** Фразовые глаголы и тренажёры: лист с упражнениями — схема шире. */
+  const phrasal = topic?.kind === 'phrasal' || topic?.kind === 'drill';
 
   const response = await metered(() =>
     client.messages.parse({
       model: CLAUDE_MODEL,
       max_tokens: 16384,
       system: buildVocabularyPrompt(language, level, topic, variant),
-      thinking: { type: 'disabled' },
+      // Тренажёр грамматики хранится и заучивается вслух: без рассуждения модель
+      // путала переходность глаголов (los llamo → «les llamo») и уровни.
+      thinking: topic?.kind === 'drill' ? { type: 'adaptive' } : { type: 'disabled' },
       messages: [{ role: 'user', content: 'Compile the sheet.' }],
       output_config: { format: zodOutputFormat(phrasal ? PhrasalVocabularySchema : VocabularySchema) },
     }),

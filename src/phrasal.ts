@@ -1,9 +1,14 @@
-/** Слова без регистра и знаков: «Got over!» и «got over» — одно и то же. */
+/**
+ * Слова без регистра, знаков и ударений: «Got over!» и «got over» — одно и
+ * то же, как и «hayas» и «hayás», если Whisper поставит лишний знак.
+ */
 function words(text: string): string[] {
   return text
     .toLowerCase()
+    .normalize('NFD')
+    .replace(/\p{M}+/gu, '')
     .replace(/[’‘`]/g, "'")
-    .replace(/[^a-z' ]+/g, ' ')
+    .replace(/[^\p{L}' ]+/gu, ' ')
     .split(/\s+/)
     .filter(Boolean);
 }
@@ -16,7 +21,7 @@ function words(text: string): string[] {
 const AUXILIARIES = new Set(['is', 'are', 'was', 'were', 'am', 'be', 'been', 'has', 'have', 'had', 'will', 'would', 'did', 'do', 'does']);
 
 /**
- * Сказан ли фразовый глагол из ответа: его слова идут подряд где-то во фразе.
+ * Сказан ли ответ (фразовый глагол, форма глагола, местоимения): его слова идут подряд где-то во фразе.
  * Остальное предложение не сверяем — Whisper может переписать его по-своему,
  * а упражнение не о нём.
  */

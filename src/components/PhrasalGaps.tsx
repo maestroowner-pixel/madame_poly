@@ -20,9 +20,12 @@ export function drillRound(drills: PhrasalDrill[]): PhrasalDrill[] {
   return copy.slice(0, DRILL_ROUND);
 }
 
-/** Предложение целиком — с ответом на месте пропуска. */
+/**
+ * Предложение целиком — с ответом на месте пропуска. Подсказка в скобках
+ * после пропуска («___ (venir)») нужна, пока отвечают, и уходит вместе с ним.
+ */
 export function filled(drill: PhrasalDrill): string {
-  return drill.sentence.replace('___', drill.answer);
+  return drill.sentence.replace(/___(\s*\([^)]*\))?/, drill.answer);
 }
 
 /** Записи листа под ошибки — чтобы отложить их в очередь повторения. */
@@ -110,7 +113,9 @@ export function PhrasalGaps({ vocabulary, drills, speaking, onSpeak, onLater }: 
 
   const answered = chosen !== null;
   const last = index === round.length - 1;
-  const [before, after] = drill.sentence.split('___');
+  const [before, rest] = drill.sentence.split('___');
+  // Подсказка в скобках после пропуска («(venir)») после ответа больше не нужна.
+  const after = answered ? rest.replace(/^\s*\([^)]*\)/, '') : rest;
 
   const choose = (option: string) => {
     if (answered) return;

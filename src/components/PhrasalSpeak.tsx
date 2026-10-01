@@ -100,7 +100,9 @@ export function PhrasalSpeak({ vocabulary, drills, speaking, onSpeak, onLater }:
   const answered = heard !== null;
   const right = answered && saidRight(heard, drill.answer);
   const last = index === round.length - 1;
-  const [before, after] = drill.sentence.split('___');
+  const [before, rest] = drill.sentence.split('___');
+  // Подсказка в скобках после пропуска («(venir)») после ответа больше не нужна.
+  const after = answered ? rest.replace(/^\s*\([^)]*\)/, '') : rest;
 
   /** Первое нажатие открывает микрофон, второе — закрывает и проверяет. */
   const toggleRecording = async () => {
@@ -112,7 +114,7 @@ export function PhrasalSpeak({ vocabulary, drills, speaking, onSpeak, onLater }:
         const uri = recorder.uri;
         if (!uri) throw new Error(t.recordingLost);
         setChecking(true);
-        const text = await transcribe(uri, 'en');
+        const text = await transcribe(uri, vocabulary.language);
         setHeard(text);
         if (!saidRight(text, drill.answer)) setMistakes((prev) => [...prev, drill]);
         onSpeak(filled(drill));

@@ -8,9 +8,10 @@ export interface Topic {
   /**
    * Ролевая ситуация: партнёр играет сотрудника, а не расспрашивает о
    * впечатлениях. Фразовые глаголы — темы «Слов» английского по базовому
-   * глаголу. Обычным темам поле не нужно.
+   * глаголу, тренажёры — темы «Слов» с упражнениями на трудную грамматику.
+   * Обычным темам поле не нужно.
    */
-  kind?: 'roleplay' | 'phrasal';
+  kind?: 'roleplay' | 'phrasal' | 'drill';
 }
 
 /**
@@ -732,11 +733,41 @@ export function phrasalVerbOf(id: string | null): string | null {
   return id?.startsWith(PHRASAL_PREFIX) ? id.slice(PHRASAL_PREFIX.length) : null;
 }
 
+/**
+ * Тренажёры — темы «Слов», где главное не слова, а трудное место грамматики:
+ * лист сигналов и правил и упражнения на пропуск, как у фразовых глаголов.
+ * Объём и тонкость — по уровню, это решает промпт.
+ */
+export const DRILL_TOPICS: Partial<Record<LanguageCode, Topic[]>> = {
+  es: [
+    { id: 'dr-subjuntivo', label: 'El subjuntivo', kind: 'drill' },
+    { id: 'dr-pronombres', label: 'Le, lo, la: los pronombres', kind: 'drill' },
+  ],
+};
+
+/** Темы с упражнениями на пропуск — фразовые глаголы и тренажёры. */
+export function isExerciseTopic(language: LanguageCode, id: string | null): boolean {
+  const topic = findTopic(language, id);
+  return topic?.kind === 'phrasal' || topic?.kind === 'drill';
+}
+
+/** Группы тем с упражнениями для выбора темы в «Словах»: заголовок и темы. */
+export function exerciseTopicGroups(language: LanguageCode): { title: string; topics: Topic[] }[] {
+  return [
+    ...(language === 'en' ? [{ title: t.sectionPhrasal, topics: PHRASAL_TOPICS }] : []),
+    ...(DRILL_TOPICS[language]?.length ? [{ title: t.sectionDrills, topics: DRILL_TOPICS[language]! }] : []),
+  ];
+}
+
 /** Находит тему по идентификатору — он хранится отдельно от списка. */
 export function findTopic(language: LanguageCode, id: string | null): Topic | null {
   if (!id) return null;
   if (language === 'en' && phrasalVerbOf(id)) return PHRASAL_TOPICS.find((topic) => topic.id === id) ?? null;
-  return TOPICS[language].find((topic) => topic.id === id) ?? null;
+  return (
+    TOPICS[language].find((topic) => topic.id === id) ??
+    DRILL_TOPICS[language]?.find((topic) => topic.id === id) ??
+    null
+  );
 }
 
 /**
@@ -792,6 +823,9 @@ const GLOSSES: Record<string, Record<UiLocale, string>> = {
   jobinterview: { en: 'Job interview', uk: 'Співбесіда на роботу', es: 'Entrevista de trabajo', ru: 'Собеседование на работу', de: 'Vorstellungsgespräch', fr: 'Entretien d\'embauche', pt: 'Entrevista de emprego', zh: '求职面试', ja: '就職面接', ko: '취업 면접', nl: 'Sollicitatiegesprek', pl: 'Rozmowa o pracę', ro: 'Interviul de angajare' },
   schoolenrol: { en: 'Enrolling a child at school', uk: 'Запис дитини до школи', es: 'Matricular a un hijo en el colegio', ru: 'Запись ребёнка в школу', de: 'Kind in der Schule anmelden', fr: 'Inscrire un enfant à l\'école', pt: 'Matricular o filho na escola', zh: '为孩子办理入学', ja: '子どもの入学手続き', ko: '아이 학교 입학', nl: 'Kind inschrijven op school', pl: 'Zapisanie dziecka do szkoły', ro: 'Înscrierea copilului la școală' },
   immigration: { en: 'At the immigration office', uk: 'У міграційній службі', es: 'En la oficina de extranjería', ru: 'В миграционной службе', de: 'Bei der Ausländerbehörde', fr: 'Au service des étrangers', pt: 'No serviço de imigração', zh: '在移民局', ja: '入国管理局で', ko: '출입국 사무소에서', nl: 'Bij de immigratiedienst', pl: 'W urzędzie ds. cudzoziemców', ro: 'La biroul de imigrări' },
+
+  'dr-subjuntivo': { en: 'The Spanish subjunctive', uk: 'Субхунтив (умовний спосіб)', es: 'El subjuntivo', ru: 'Субхунтив (сослагательное наклонение)', de: 'Der Subjuntivo', fr: 'Le subjonctif espagnol', pt: 'O subjuntivo espanhol', zh: '西班牙语虚拟式', ja: 'スペイン語の接続法', ko: '스페인어 접속법', nl: 'De Spaanse subjuntivo', pl: 'Tryb subjuntivo', ro: 'Subjonctivul spaniol' },
+  'dr-pronombres': { en: 'Object pronouns: le, lo, la', uk: 'Займенники додатка: le, lo, la', es: 'Pronombres de objeto: le, lo, la', ru: 'Местоимения-дополнения: le, lo, la', de: 'Objektpronomen: le, lo, la', fr: 'Pronoms compléments : le, lo, la', pt: 'Pronomes de objeto: le, lo, la', zh: '宾语代词：le、lo、la', ja: '目的格代名詞：le・lo・la', ko: '목적격 대명사: le, lo, la', nl: 'Objectvoornaamwoorden: le, lo, la', pl: 'Zaimki dopełnienia: le, lo, la', ro: 'Pronumele complement: le, lo, la' },
 
   'local-en': { en: 'British and American English', uk: 'Британська та американська', es: 'Inglés británico y americano', ru: 'Британский и американский', de: 'Britisches und amerikanisches Englisch', fr: 'L\'anglais britannique et américain' , pt: 'O inglês britânico e o americano' , zh: '英式英语与美式英语', ja: 'イギリス英語とアメリカ英語', ko: '영국 영어와 미국 영어' , nl: 'Brits en Amerikaans Engels', pl: 'Brytyjski i amerykański angielski', ro: 'Engleza britanică și americană' },
   'local-de': { en: 'Christmas markets and Oktoberfest', uk: 'Різдвяні ярмарки та Октоберфест', es: 'Mercados navideños y Oktoberfest', ru: 'Ярмарки и Октоберфест', de: 'Weihnachtsmärkte und Oktoberfest', fr: 'Les marchés de Noël et l’Oktoberfest' , pt: 'Mercados de Natal e Oktoberfest' , zh: '圣诞市场与啤酒节', ja: 'クリスマスマーケットとオクトーバーフェスト', ko: '크리스마스 마켓과 옥토버페스트' , nl: 'Kerstmarkten en Oktoberfest', pl: 'Jarmarki bożonarodzeniowe i Oktoberfest', ro: 'Târgurile de Crăciun și Oktoberfest' },
