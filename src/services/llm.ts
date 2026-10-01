@@ -46,6 +46,7 @@ import {
   type Listening,
   type ListeningVerdict,
   type Message,
+  type PhrasalDrill,
   type Vocabulary,
   type WritingReview,
   type WritingTask,
@@ -172,6 +173,60 @@ const VocabularySchema = z.object({
   dialogue: z.array(z.string()),
   examples: z.array(z.string()),
 });
+
+/** Лист фразовых глаголов — тот же лист плюс предложения с пропуском. */
+const PhrasalVocabularySchema = VocabularySchema.extend({
+  drills: z.array(
+    z.object({
+      sentence: z.string(),
+      answer: z.string(),
+      options: z.array(z.string()),
+      translation: z.string(),
+      term: z.string(),
+    }),
+  ),
+});
+
+const GAP = '___';
+
+/** Варианты в случайном порядке: модель обычно ставит ответ первым. */
+function shuffled<T>(items: T[]): T[] {
+  const copy = [...items];
+  for (let i = copy.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
+/**
+ * Упражнения из ответа модели — только годные: пропуск ровно один, ответ среди
+ * вариантов, вариантов четыре разных. Кривое предложение хуже никакого:
+ * человек повторит его вслух и запомнит.
+ */
+function cleanDrills(drills: z.infer<typeof PhrasalVocabularySchema>['drills'], terms: Set<string>): PhrasalDrill[] {
+  return drills
+    .map((drill) => ({
+      sentence: drill.sentence.trim(),
+      answer: drill.answer.trim(),
+      options: [...new Set(drill.options.map((option) => option.trim()).filter(Boolean))],
+      translation: drill.translation.trim(),
+      term: drill.term.trim(),
+    }))
+    .filter(
+      (drill) =>
+        drill.sentence.split(GAP).length === 2 &&
+        drill.answer &&
+        drill.options.includes(drill.answer) &&
+        drill.options.length >= 3 &&
+        terms.has(drill.term),
+    )
+    .map((drill) => ({
+      ...drill,
+      // Ответ и не больше трёх отвлекающих — в случайном порядке.
+      options: shuffled([drill.answer, ...drill.options.filter((option) => option !== drill.answer).slice(0, 3)]),
+    }));
+}
 
 /**
  * Claude — через прокси: ключ живёт на сервере, SDK о нём не знает. apiKey
@@ -818,7 +873,8 @@ export async function generateVocabulary(params: {
   variant?: EnglishVariant;
 }): Promise<Vocabulary> {
   const { language, level, topic, variant } = params;
-
+  /** Тема фразовых глаголов: лист с упражнениями — схема шире. */
+  const phrasal = language === 'en' && topic?.kind === 'phrasal';
 
   const response = await metered(() =>
     client.messages.parse({
@@ -827,11 +883,11 @@ export async function generateVocabulary(params: {
       system: buildVocabularyPrompt(language, level, topic, variant),
       thinking: { type: 'disabled' },
       messages: [{ role: 'user', content: 'Compile the sheet.' }],
-      output_config: { format: zodOutputFormat(VocabularySchema) },
+      output_config: { format: zodOutputFormat(phrasal ? PhrasalVocabularySchema : VocabularySchema) },
     }),
   );
 
-  const parsed = response.parsed_output;
+  const parsed = response.parsed_output as z.infer<typeof PhrasalVocabularySchema> | z.infer<typeof VocabularySchema> | null;
   if (!parsed || parsed.sections.length === 0) throw new Error(t.badVocabulary);
 
   // Повторы и пустые строки режем сами: заучивать одно слово дважды незачем.
@@ -864,6 +920,10 @@ export async function generateVocabulary(params: {
     sections,
     dialogue: parsed.dialogue.map((line) => line.trim()).filter(Boolean),
     examples: parsed.examples.map((line) => line.trim()).filter(Boolean),
+    drills:
+      'drills' in parsed
+        ? cleanDrills(parsed.drills, new Set(sections.flatMap((section) => section.entries.map((entry) => entry.term))))
+        : undefined,
     createdAt: Date.now(),
   };
 }

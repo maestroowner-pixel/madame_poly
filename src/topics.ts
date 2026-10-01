@@ -1,4 +1,4 @@
-import { locale, type UiLocale } from './i18n';
+import { locale, t, type UiLocale } from './i18n';
 import type { LanguageCode } from './types';
 
 export interface Topic {
@@ -7,9 +7,10 @@ export interface Topic {
   label: string;
   /**
    * Ролевая ситуация: партнёр играет сотрудника, а не расспрашивает о
-   * впечатлениях. Обычным темам поле не нужно.
+   * впечатлениях. Фразовые глаголы — темы «Слов» английского по базовому
+   * глаголу. Обычным темам поле не нужно.
    */
-  kind?: 'roleplay';
+  kind?: 'roleplay' | 'phrasal';
 }
 
 /**
@@ -688,9 +689,53 @@ export const TOPICS: Record<LanguageCode, Topic[]> = {
   ],
 };
 
+/**
+ * Фразовые глаголы — обязательная часть B2, и учить их удобнее гнездом от
+ * одного глагола: get up, get over, get along. Это темы только «Слов» и только
+ * английского: беседовать «о глаголе get» не о чем. Порядок — по частоте.
+ */
+export const PHRASAL_VERBS = [
+  'get',
+  'look',
+  'come',
+  'go',
+  'take',
+  'put',
+  'make',
+  'give',
+  'turn',
+  'bring',
+  'break',
+  'set',
+  'run',
+  'keep',
+  'carry',
+  'pick',
+  'fall',
+  'cut',
+  'hold',
+  'call',
+  'work',
+  'pull',
+] as const;
+
+const PHRASAL_PREFIX = 'pv-';
+
+export const PHRASAL_TOPICS: Topic[] = PHRASAL_VERBS.map((verb) => ({
+  id: `${PHRASAL_PREFIX}${verb}`,
+  label: `Phrasal verbs with “${verb}”`,
+  kind: 'phrasal',
+}));
+
+/** Базовый глагол темы фразовых глаголов; null — тема обычная. */
+export function phrasalVerbOf(id: string | null): string | null {
+  return id?.startsWith(PHRASAL_PREFIX) ? id.slice(PHRASAL_PREFIX.length) : null;
+}
+
 /** Находит тему по идентификатору — он хранится отдельно от списка. */
 export function findTopic(language: LanguageCode, id: string | null): Topic | null {
   if (!id) return null;
+  if (language === 'en' && phrasalVerbOf(id)) return PHRASAL_TOPICS.find((topic) => topic.id === id) ?? null;
   return TOPICS[language].find((topic) => topic.id === id) ?? null;
 }
 
@@ -764,5 +809,7 @@ const GLOSSES: Record<string, Record<UiLocale, string>> = {
 
 /** Название темы на языке интерфейса; пусто, если перевода нет. */
 export function topicGloss(id: string): string {
+  const verb = phrasalVerbOf(id);
+  if (verb) return t.phrasalTopic(verb);
   return GLOSSES[id]?.[locale] ?? '';
 }

@@ -11,7 +11,7 @@ import { CONTENT_MAX_WIDTH } from '../layout';
 import type { Anchor } from '../anchor';
 import { t } from '../i18n';
 import { useStyles, useTheme, type Theme } from '../theme';
-import { TOPICS, topicGloss, type Topic } from '../topics';
+import { PHRASAL_TOPICS, TOPICS, topicGloss, type Topic } from '../topics';
 import type { LanguageCode } from '../types';
 
 interface Props {
@@ -20,6 +20,8 @@ interface Props {
   anchor: Anchor | null;
   language: LanguageCode;
   topicId: string | null;
+  /** Показать и темы фразовых глаголов — они есть только в «Словах» английского. */
+  phrasal?: boolean;
   onSelect: (id: string | null) => void;
   onClose: () => void;
 }
@@ -30,7 +32,7 @@ const FREE: Topic = { id: '', label: t.freeTopic };
 /** Ролевые ситуации и обычные темы читаются по-разному — разводим заголовками. */
 type Row = { kind: 'header'; title: string } | { kind: 'topic'; topic: Topic };
 
-export function TopicPicker({ visible, anchor, language, topicId, onSelect, onClose }: Props) {
+export function TopicPicker({ visible, anchor, language, topicId, phrasal, onSelect, onClose }: Props) {
   const { theme } = useTheme();
   const styles = useStyles(createStyles);
 
@@ -39,8 +41,12 @@ export function TopicPicker({ visible, anchor, language, topicId, onSelect, onCl
     const roleplay = all.filter((topic) => topic.kind === 'roleplay');
     const talk = all.filter((topic) => topic.kind !== 'roleplay');
 
+    const verbs = phrasal && language === 'en' ? PHRASAL_TOPICS : [];
+
     return [
       { kind: 'topic', topic: FREE },
+      ...(verbs.length ? ([{ kind: 'header', title: t.sectionPhrasal }] as Row[]) : []),
+      ...verbs.map<Row>((topic) => ({ kind: 'topic', topic })),
       ...(roleplay.length
         ? ([{ kind: 'header', title: t.sectionRoleplay }] as Row[])
         : []),
@@ -48,7 +54,7 @@ export function TopicPicker({ visible, anchor, language, topicId, onSelect, onCl
       { kind: 'header', title: t.sectionTalk },
       ...talk.map<Row>((topic) => ({ kind: 'topic', topic })),
     ];
-  }, [language]);
+  }, [language, phrasal]);
 
   return (
     <ZoomModal visible={visible} anchor={anchor} onRequestClose={onClose}>

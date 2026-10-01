@@ -11,6 +11,8 @@ import {
 
 import { WideButton } from './WideButton';
 import { DirectionToggle } from './FlipCard';
+import { PhrasalGaps } from './PhrasalGaps';
+import { PhrasalSpeak } from './PhrasalSpeak';
 import { ChevronIcon, EyeIcon, ShareIcon } from './icons';
 import { ScreenTitle } from './ScreenMenu';
 import { TopicPicker } from './TopicPicker';
@@ -44,7 +46,7 @@ import {
 } from '../storage';
 import { useStyles, useTheme, type Theme } from '../theme';
 import { isSingleCourse } from '../grammar';
-import { findTopic } from '../topics';
+import { findTopic, phrasalVerbOf } from '../topics';
 import type {
   CardDirection,
   LanguageCode,
@@ -63,8 +65,11 @@ interface Props {
   topicId: string | null;
 }
 
-/** Четыре вкладки под темой: список, колода карточек, очередь повторения, тест. */
-type Tab = 'list' | 'cards' | 'review' | 'quiz';
+/**
+ * Вкладки под темой: список, колода карточек, очередь повторения, тест. У темы
+ * фразовых глаголов ещё две — пропуски и ответ голосом.
+ */
+type Tab = 'list' | 'cards' | 'review' | 'quiz' | 'gaps' | 'speak';
 
 /**
  * Слова: тематический список лексики под уровень — как лист, который учитель
@@ -125,6 +130,11 @@ export function VocabularyScreen({ menu, language, level, topicId }: Props) {
       rate.current = mode === 'auto' ? 1 : mode;
     });
   }, []);
+
+  // Ушли с темы фразовых глаголов — их вкладок у обычной темы нет.
+  useEffect(() => {
+    if (!phrasalVerbOf(topic)) setTab((current) => (current === 'gaps' || current === 'speak' ? 'list' : current));
+  }, [topic]);
 
   // Сменили тему или уровень — показываем готовый список под них, если он есть.
   useEffect(() => {
@@ -339,13 +349,22 @@ export function VocabularyScreen({ menu, language, level, topicId }: Props) {
 
   const saved = index.filter((entry) => entry.language === language);
   const due = dueCards(review).length;
+  /** Тема фразовых глаголов — у неё свои упражнения на пропуск. */
+  const phrasal = language === 'en' && phrasalVerbOf(topic) !== null;
+  const drills = vocabulary?.drills ?? [];
   const tabs: { key: Tab; label: string; badge?: number }[] = [
     { key: 'list', label: t.wordsTabList },
+    ...(phrasal
+      ? ([
+          { key: 'gaps', label: t.wordsTabGaps },
+          { key: 'speak', label: t.wordsTabSpeak },
+        ] as const)
+      : []),
     { key: 'cards', label: t.wordsTabCards },
     { key: 'review', label: t.wordsTabReview, badge: due },
     { key: 'quiz', label: t.wordsTabQuiz },
   ];
-  const tabIndex = tabs.findIndex((item) => item.key === tab);
+  const tabIndex = Math.max(0, tabs.findIndex((item) => item.key === tab));
   /** Стрелки листают по кругу: с последнего раздела — на первый. */
   const shiftTab = (step: number) => setTab(tabs[(tabIndex + step + tabs.length) % tabs.length].key);
 
@@ -441,7 +460,7 @@ export function VocabularyScreen({ menu, language, level, topicId }: Props) {
           </Pressable>
         </View>
 
-        {tab !== 'list' && (
+        {tab !== 'list' && tab !== 'gaps' && tab !== 'speak' && (
           <DirectionToggle learning={language} native={locale} value={direction} onChange={changeDirection} />
         )}
 
@@ -481,6 +500,31 @@ export function VocabularyScreen({ menu, language, level, topicId }: Props) {
             />
           ) : (
             <Text style={styles.intro}>{t.wordsNoSheet}</Text>
+          ))}
+
+        {(tab === 'gaps' || tab === 'speak') && phrasal &&
+          (!vocabulary ? (
+            <Text style={styles.intro}>{t.wordsNoSheet}</Text>
+          ) : drills.length === 0 ? (
+            <Text style={styles.intro}>{t.phrasalRebuild}</Text>
+          ) : tab === 'gaps' ? (
+            <PhrasalGaps
+              key={vocabulary.createdAt}
+              vocabulary={vocabulary}
+              drills={drills}
+              speaking={speaking}
+              onSpeak={(text) => void speak(text)}
+              onLater={postpone}
+            />
+          ) : (
+            <PhrasalSpeak
+              key={vocabulary.createdAt}
+              vocabulary={vocabulary}
+              drills={drills}
+              speaking={speaking}
+              onSpeak={(text) => void speak(text)}
+              onLater={postpone}
+            />
           ))}
 
         {tab === 'list' && !vocabulary ? (
@@ -653,6 +697,7 @@ export function VocabularyScreen({ menu, language, level, topicId }: Props) {
         anchor={pickerAnchor}
         language={language}
         topicId={topic}
+        phrasal
         onSelect={setTopic}
         onClose={() => setPickerOpen(false)}
       />

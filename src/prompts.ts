@@ -2,7 +2,7 @@ import { EXPLANATION_LANGUAGE } from './config';
 import { examFormat, examPlan, placeOfAnswer } from './exam';
 import { unitTitles } from './grammar';
 import { LANGUAGES } from './languages';
-import { ROLEPLAY_SCENES, type Topic } from './topics';
+import { ROLEPLAY_SCENES, phrasalVerbOf, type Topic } from './topics';
 import type {
   Correction,
   DialogueTurn,
@@ -551,12 +551,58 @@ export function pronunciationName(language: LanguageCode, variant?: EnglishVaria
   return variant === 'american' ? 'General American' : 'British Received Pronunciation';
 }
 
+/**
+ * Сколько фразовых глаголов одного гнезда брать на уровень. На A1–A2 — самые
+ * ходовые с прямым значением; на B2 — то, что ждут на экзамене, с
+ * переносными значениями; на C1–C2 — вплоть до книжных и разговорных.
+ */
+const PHRASAL_TOPIC_GUIDANCE: Record<Level, string> = {
+  A1: 'Two or three sections, eight to ten entries in all: the most common phrasal verbs of this verb with literal meanings (like "get up", "get on the bus").',
+  A2: 'Two or three sections, ten to twelve entries in all: common phrasal verbs with literal or transparent meanings.',
+  B1: 'Three or four sections, fourteen to eighteen entries in all: frequent phrasal verbs, literal and the most common idiomatic meanings.',
+  B2: 'Four or five sections, twenty to twenty-six entries in all: the phrasal verbs a B2 exam expects, idiomatic meanings, three-part verbs (like "get on with", "get away with"), separable and inseparable ones.',
+  C1: 'Five or six sections, twenty-four to thirty entries in all: idiomatic and figurative meanings, three-part verbs, several meanings of one verb as separate entries.',
+  C2: 'Five or six sections, twenty-six to thirty-two entries in all: everything of C1 plus less frequent, figurative, formal and informal phrasal verbs a native speaker uses.',
+};
+
+/**
+ * Тема «фразовые глаголы с get»: гнездо одного глагола, сгруппированное по
+ * частицам или смыслу, и к каждому — предложение с пропуском и четырьмя
+ * вариантами того же глагола с другими частицами. Из предложений растут
+ * упражнения «Пропуски» и «Голосом».
+ */
+function buildPhrasalVocabularyPrompt(verb: string, level: Level, variant?: EnglishVariant): string {
+  return [
+    `You are an English teacher compiling a sheet of phrasal verbs with "${verb}" for a CEFR ${level} learner, with exercises.`,
+    '',
+    'Rules:',
+    `- Level ${level}: ${PHRASAL_TOPIC_GUIDANCE[level]} Choose the ones a learner of this level needs most; every entry is a phrasal verb built on "${verb}". Only meanings in everyday use today — no rare, dated or regional senses.`,
+    '- Every section has kind "phrasal". Group the entries by particle or by a shared idea (like "up: starting and increasing", "relationships"); "title" in English, "gloss" the same in ' + EXPLANATION_LANGUAGE + '.',
+    '- A "term" is the verb without "to", with "sth" / "sb" showing where the object goes: "put sth off" when the object can go between verb and particle, "look after sb" when it cannot, "look forward to sth" for three-part verbs, no placeholder for intransitive ones like "break down". When one phrasal verb has two meanings worth learning, give them as two entries whose terms differ by the placeholder (like "take off" and "take sth off"); no term appears twice.',
+    `- "translation" is in ${EXPLANATION_LANGUAGE}: the meaning of this entry, short and natural.`,
+    `- "transcription" is the pronunciation of the whole term in IPA between slashes, ${pronunciationName('en', variant)}, with stress marks, without the placeholders.`,
+    `- The sheet "title" is "Phrasal verbs with ${verb}".`,
+    `- "dialogue": one conversation of ten to fourteen lines between two people, turns alternating, without speaker labels, using as many of the entries as sounds natural.`,
+    `- "examples": ten to fourteen sentences at the level's grammar, each using one entry, some with the object between verb and particle.`,
+    '- "drills": exactly one per entry, in the order of the entries:',
+    '  - "sentence": a natural, everyday sentence at the level that needs this entry, with the verb and its particle(s) replaced by "___" exactly once. The verb takes whatever form the sentence needs (past, -ing, third person). Build the sentence so the replaced words stand together: put the object after the particle, or leave it out — never split the gap around an object.',
+    '  - "answer": the exact words that were replaced, like "got over" or "is looking forward to".',
+    `  - "options": four different options, one of them exactly "answer". The other three are real phrasal verbs of "${verb}" in the same form as the answer with other particles (like "got over", "got through", "got by", "got off"), each clearly wrong in this sentence. Check every distractor: if it would also give a correct, natural sentence with a different meaning, replace it — exactly one option may fit.`,
+    `  - "translation": the whole sentence with the gap filled, translated into ${EXPLANATION_LANGUAGE}.`,
+    '  - "term": the "term" of the entry, exactly as written in the sections.',
+    '- Every sentence must be correct, natural and in use today — a learner will repeat it aloud.',
+  ].join('\n');
+}
+
 export function buildVocabularyPrompt(
   language: LanguageCode,
   level: Level,
   topic?: Topic,
   variant?: EnglishVariant,
 ): string {
+  const verb = topic?.kind === 'phrasal' ? phrasalVerbOf(topic.id) : null;
+  if (language === 'en' && verb) return buildPhrasalVocabularyPrompt(verb, level, variant);
+
   const { englishName } = LANGUAGES[language];
   const phrasal = language === 'en' ? PHRASAL_GUIDANCE[level] : undefined;
 
