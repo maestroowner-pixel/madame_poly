@@ -159,6 +159,7 @@ export function AccountScreen({
                   style={styles.input}
                   autoCapitalize="none"
                   autoCorrect={false}
+                  spellCheck={false}
                   keyboardType="email-address"
                   textContentType="emailAddress"
                 />
@@ -172,6 +173,7 @@ export function AccountScreen({
                     style={[styles.input, styles.passwordInput]}
                     autoCapitalize="none"
                     autoCorrect={false}
+                    spellCheck={false}
                     secureTextEntry={!passwordShown}
                     textContentType="password"
                   />

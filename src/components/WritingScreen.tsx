@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 
 import { LevelSwitch } from './LevelSwitch';
+import { NO_SUGGESTIONS } from './noSuggestions';
 import { WideButton } from './WideButton';
 import { ScreenTitle } from './ScreenMenu';
 import { useKeyboardInset } from '../hooks/useKeyboardInset';
@@ -228,6 +229,7 @@ export function WritingScreen({ menu, language, level, onSelectLevel, topicId }:
             </ScrollView>
 
             <TextInput
+              {...NO_SUGGESTIONS}
               value={state.text}
               onChangeText={(text) => setState((current) => ({ ...current, text }))}
               placeholder={t.writingPlaceholder}

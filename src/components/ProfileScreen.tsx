@@ -170,6 +170,8 @@ export function ProfileScreen({
                 placeholder={t.namePlaceholder}
                 placeholderTextColor={theme.textMuted}
                 style={styles.input}
+                autoCorrect={false}
+                spellCheck={false}
                 returnKeyType="done"
                 onSubmitEditing={save}
               />

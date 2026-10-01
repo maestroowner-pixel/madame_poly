@@ -18,6 +18,7 @@ import {
 } from 'expo-audio';
 
 import { LevelSwitch } from './LevelSwitch';
+import { NO_SUGGESTIONS } from './noSuggestions';
 import { WideButton } from './WideButton';
 import { ScreenTitle } from './ScreenMenu';
 import { useKeyboardInset } from '../hooks/useKeyboardInset';
@@ -402,6 +403,7 @@ export function ListeningScreen({ menu, language, level, onSelectLevel, topicId 
 
                       {question.kind === 'written' && (
                         <TextInput
+                          {...NO_SUGGESTIONS}
                           value={given}
                           editable={verdicts === null}
                           onChangeText={(text) =>
