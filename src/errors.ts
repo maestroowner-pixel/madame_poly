@@ -32,8 +32,45 @@ function isOffline(e: unknown): boolean {
   return e instanceof Error && e.cause !== undefined && isOffline(e.cause);
 }
 
-/** Текст ошибки для человека: сетевые сбои — одной понятной фразой. */
+/**
+ * Ошибки входа Firebase — «Firebase: Error (auth/email-already-in-use).»
+ * человеку ничего не говорит. По коду — фраза на языке интерфейса.
+ * invalid-credential — так новый SDK отвечает и на чужую почту, и на
+ * неверный пароль; credential-already-in-use — когда анонимный вход пытаются
+ * превратить в аккаунт с уже занятой почтой.
+ */
+function authText(e: unknown): string | null {
+  const code = typeof e === 'object' && e !== null && 'code' in e ? String(e.code) : '';
+  if (!code.startsWith('auth/')) return null;
+  switch (code) {
+    case 'auth/email-already-in-use':
+    case 'auth/credential-already-in-use':
+    case 'auth/account-exists-with-different-credential':
+      return t.authEmailInUse;
+    case 'auth/invalid-email':
+    case 'auth/missing-email':
+      return t.authInvalidEmail;
+    case 'auth/weak-password':
+      return t.authWeakPassword;
+    case 'auth/wrong-password':
+    case 'auth/user-not-found':
+    case 'auth/invalid-credential':
+    case 'auth/invalid-login-credentials':
+    case 'auth/missing-password':
+      return t.authWrongCredentials;
+    case 'auth/too-many-requests':
+      return t.authTooManyRequests;
+    case 'auth/user-disabled':
+      return t.authUserDisabled;
+    default:
+      return t.authFailed;
+  }
+}
+
+/** Текст ошибки для человека: сетевые сбои и ошибки входа — понятной фразой. */
 export function errorText(e: unknown): string {
   if (isOffline(e)) return t.offline;
+  const auth = authText(e);
+  if (auth) return auth;
   return e instanceof Error ? e.message : String(e);
 }
