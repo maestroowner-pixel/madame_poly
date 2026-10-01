@@ -23,12 +23,11 @@ const OPENAI_API_KEY = defineSecret('OPENAI_API_KEY');
 const REVENUECAT_SECRET_KEY = defineSecret('REVENUECAT_SECRET_KEY');
 /**
  * Lemon Squeezy — оплата картой в веб-версии. Ключ API создаёт страницу оплаты
- * и читает цены, секрет подписи проверяет вебхуки. Магазин и два варианта
- * (Pro, Max) — в `functions/.env`; пока их нет, оплата в вебе выключена.
+ * и читает цены, секрет подписи проверяет вебхуки. Два варианта (Pro, Max) —
+ * в `functions/.env`; магазин сервер узнаёт у Lemon по варианту.
  */
 const LEMON_API_KEY = defineSecret('LEMON_API_KEY');
 const LEMON_SIGNING_SECRET = defineSecret('LEMON_SIGNING_SECRET');
-const LEMON_STORE_ID = defineString('LEMON_STORE_ID', { default: '' });
 const LEMON_PRO_VARIANT = defineString('LEMON_PRO_VARIANT', { default: '' });
 const LEMON_MAX_VARIANT = defineString('LEMON_MAX_VARIANT', { default: '' });
 /** Куда Lemon возвращает после оплаты; метка в адресе — подождать вебхук. */
@@ -215,8 +214,20 @@ async function lemonApi(path: string, init?: RequestInit): Promise<unknown> {
   return response.json();
 }
 
-const lemonReady = () =>
-  Boolean(LEMON_STORE_ID.value() && LEMON_PRO_VARIANT.value() && LEMON_MAX_VARIANT.value());
+const lemonReady = () => Boolean(LEMON_PRO_VARIANT.value() && LEMON_MAX_VARIANT.value());
+
+/** Номер магазина — у продукта варианта; не меняется, спрашиваем один раз. */
+let storeId: string | null = null;
+
+async function lemonStore(): Promise<string> {
+  if (!storeId) {
+    const { data } = (await lemonApi(`/variants/${LEMON_PRO_VARIANT.value()}/product`)) as {
+      data: { attributes: { store_id: number } };
+    };
+    storeId = String(data.attributes.store_id);
+  }
+  return storeId;
+}
 
 interface Plan {
   tier: Exclude<Tier, 'free'>;
@@ -235,7 +246,7 @@ async function plans(res: Response): Promise<void> {
     return;
   }
   if (!plansCache || plansCache.until < Date.now()) {
-    const store = (await lemonApi(`/stores/${LEMON_STORE_ID.value()}`)) as {
+    const store = (await lemonApi(`/stores/${await lemonStore()}`)) as {
       data: { attributes: { currency: string } };
     };
     const variant = async (id: string, tier: Plan['tier']): Promise<Plan> => {
@@ -276,7 +287,7 @@ async function checkout(req: Request, res: Response, token: DecodedIdToken): Pro
           product_options: { redirect_url: `${WEB_APP_URL}/?lemon=success` },
         },
         relationships: {
-          store: { data: { type: 'stores', id: LEMON_STORE_ID.value() } },
+          store: { data: { type: 'stores', id: await lemonStore() } },
           variant: { data: { type: 'variants', id: variant } },
         },
       },
