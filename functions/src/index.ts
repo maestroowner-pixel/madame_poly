@@ -147,10 +147,25 @@ async function storeTierOf(uid: string): Promise<Tier> {
 
 const RANK: Record<Tier, number> = { free: 0, pro: 1, max: 2 };
 
-/** Тариф аккаунта — старший из магазинов и Lemon Squeezy: подписка одна на все устройства. */
+/**
+ * Тариф в подарок — Firestore `comp/{uid}` с полем tier: свои аккаунты,
+ * тестировщики. По uid, а не по почте: почту приложение не подтверждает, и
+ * подарок по адресу забрал бы тот, кто первым на него зарегистрируется.
+ */
+async function compOf(uid: string): Promise<Tier> {
+  try {
+    const tier = (await getFirestore().collection('comp').doc(uid).get()).data()?.tier;
+    return tier === 'max' || tier === 'pro' ? tier : 'free';
+  } catch (e) {
+    logger.warn('comp read failed', e);
+    return 'free';
+  }
+}
+
+/** Тариф аккаунта — старший из магазинов, Lemon Squeezy и подарка: подписка одна на все устройства. */
 async function tierOf(uid: string): Promise<Tier> {
-  const [store, lemon] = await Promise.all([storeTierOf(uid), lemonOf(uid)]);
-  return RANK[lemon.tier] > RANK[store] ? lemon.tier : store;
+  const [store, lemon, comp] = await Promise.all([storeTierOf(uid), lemonOf(uid), compOf(uid)]);
+  return [store, lemon.tier, comp].reduce((best, tier) => (RANK[tier] > RANK[best] ? tier : best), 'free' as Tier);
 }
 
 // --- Lemon Squeezy ---
