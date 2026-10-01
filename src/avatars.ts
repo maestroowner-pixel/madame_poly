@@ -20,20 +20,20 @@ export const AVATAR_GROUPS: { group: AvatarGroup; title: string }[] = [
 ];
 
 export const AVATARS: Avatar[] = [
-  { id: 'm1', group: 'male', photo: require('../assets/avatars/m1.png') },
-  { id: 'm2', group: 'male', photo: require('../assets/avatars/m2.png') },
-  { id: 'm3', group: 'male', photo: require('../assets/avatars/m3.png') },
-  { id: 'm4', group: 'male', photo: require('../assets/avatars/m4.png') },
+  { id: 'm1', group: 'male', photo: require('../assets/avatars/m1.jpg') },
+  { id: 'm2', group: 'male', photo: require('../assets/avatars/m2.jpg') },
+  { id: 'm3', group: 'male', photo: require('../assets/avatars/m3.jpg') },
+  { id: 'm4', group: 'male', photo: require('../assets/avatars/m4.jpg') },
 
-  { id: 'f1', group: 'female', photo: require('../assets/avatars/f1.png') },
-  { id: 'f2', group: 'female', photo: require('../assets/avatars/f2.png') },
-  { id: 'f3', group: 'female', photo: require('../assets/avatars/f3.png') },
-  { id: 'f4', group: 'female', photo: require('../assets/avatars/f4.png') },
+  { id: 'f1', group: 'female', photo: require('../assets/avatars/f1.jpg') },
+  { id: 'f2', group: 'female', photo: require('../assets/avatars/f2.jpg') },
+  { id: 'f3', group: 'female', photo: require('../assets/avatars/f3.jpg') },
+  { id: 'f4', group: 'female', photo: require('../assets/avatars/f4.jpg') },
 
-  { id: 'c1', group: 'child', photo: require('../assets/avatars/c1.png') },
-  { id: 'c2', group: 'child', photo: require('../assets/avatars/c2.png') },
-  { id: 'c3', group: 'child', photo: require('../assets/avatars/c3.png') },
-  { id: 'c4', group: 'child', photo: require('../assets/avatars/c4.png') },
+  { id: 'c1', group: 'child', photo: require('../assets/avatars/c1.jpg') },
+  { id: 'c2', group: 'child', photo: require('../assets/avatars/c2.jpg') },
+  { id: 'c3', group: 'child', photo: require('../assets/avatars/c3.jpg') },
+  { id: 'c4', group: 'child', photo: require('../assets/avatars/c4.jpg') },
 ];
 
 export function findAvatar(id: string | null): Avatar | null {
