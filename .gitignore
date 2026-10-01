@@ -50,3 +50,4 @@ functions/lib/
 .firebase/
 firebase-debug.log
 scripts/out/
+.netlify/

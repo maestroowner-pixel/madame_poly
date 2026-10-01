@@ -1,18 +1,9 @@
-import { Directory, File, Paths } from 'expo-file-system';
-
 import type { MaxVoice } from '../config';
 import { t } from '../i18n';
 import { loadVoice } from '../storage';
 import { assertBudget, charge, ttsCost } from './meter';
+import { saveAudio } from './audioFiles';
 import { proxy } from './proxy';
-
-/** Озвучка складывается в кэш — её всегда можно перегенерировать. */
-const AUDIO_DIR = new Directory(Paths.cache, 'tts');
-
-function audioFile(): File {
-  if (!AUDIO_DIR.exists) AUDIO_DIR.create({ intermediates: true });
-  return new File(AUDIO_DIR, `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.mp3`);
-}
 
 /** Собирает тело ответа в байты: arrayBuffer, а если его нет — через поток. */
 async function readBytes(response: Response): Promise<Uint8Array> {
@@ -68,8 +59,5 @@ export async function synthesize(text: string, speed = 1, voice?: MaxVoice): Pro
 
   const bytes = await synthesizeOpenAI(text, speed, voice);
 
-  const file = audioFile();
-  file.create({ overwrite: true });
-  file.write(bytes);
-  return file.uri;
+  return saveAudio(bytes);
 }

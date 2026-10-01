@@ -30,6 +30,10 @@
       "versionCode": 10319
     },
     "web": {
+      "name": "Madame Poly",
+      "shortName": "Madame Poly",
+      "themeColor": "#0B1046",
+      "backgroundColor": "#EFF6FD",
       "favicon": "./assets/favicon.png"
     },
     "plugins": [

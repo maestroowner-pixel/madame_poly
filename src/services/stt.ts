@@ -1,8 +1,7 @@
-import { File } from 'expo-file-system';
-
 import { LANGUAGES } from '../languages';
 import type { LanguageCode } from '../types';
 import { assertBudget, charge, whisperCost } from './meter';
+import { readRecording } from './audioFiles';
 import { proxy } from './proxy';
 
 /**
@@ -14,13 +13,13 @@ import { proxy } from './proxy';
 export async function transcribe(fileUri: string, language: LanguageCode): Promise<string> {
   await assertBudget();
 
-  const file = new File(fileUri);
+  const { bytes, type } = await readRecording(fileUri);
   const response = await proxy(`/transcribe?language=${LANGUAGES[language].whisper}`, {
-    body: await file.bytes(),
-    contentType: 'audio/m4a',
+    body: bytes,
+    contentType: type,
   });
 
-  await charge(whisperCost(file.size ?? 0));
+  await charge(whisperCost(bytes.length));
 
   const { text } = (await response.json()) as { text: string };
   return text.trim();

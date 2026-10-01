@@ -43,8 +43,11 @@ function periodLabel(item: PurchasesPackage): string | null {
   return null;
 }
 
+/** В браузере платят картой через Lemon Squeezy. */
+const WEB = Platform.OS === 'web';
+
 /** Название магазина — для кнопки управления и условий продления. */
-const STORE = Platform.OS === 'ios' ? 'App Store' : 'Google Play';
+const STORE = WEB ? 'Lemon Squeezy' : Platform.OS === 'ios' ? 'App Store' : 'Google Play';
 
 export function Paywall({ visible, anchor, left, used, block, tier, onClose, onBought }: Props) {
   const { theme } = useTheme();
@@ -136,7 +139,7 @@ export function Paywall({ visible, anchor, left, used, block, tier, onClose, onB
             {items === null ? (
               <ActivityIndicator color={theme.neon} style={styles.wait} />
             ) : items.length === 0 ? (
-              <Text style={styles.empty}>{t.paywallNone}</Text>
+              <Text style={styles.empty}>{WEB ? t.paywallWeb : t.paywallNone}</Text>
             ) : (
               items.map((item) => {
                 const period = periodLabel(item);
@@ -183,7 +186,7 @@ export function Paywall({ visible, anchor, left, used, block, tier, onClose, onB
               Apple требует на экране покупки условия автопродления и ссылки на
               политику и условия (App Review Guidelines 3.1.2) — без них отказ.
             */}
-            <Text style={styles.legal}>{t.paywallRenewNote(STORE)}</Text>
+            <Text style={styles.legal}>{WEB ? t.paywallWebRenewNote : t.paywallRenewNote(STORE)}</Text>
             <View style={styles.legalLinks}>
               <Pressable onPress={() => void Linking.openURL(TERMS_URL).catch(() => {})} hitSlop={8}>
                 <Text style={styles.legalLink}>{t.terms}</Text>

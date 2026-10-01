@@ -1,0 +1,14 @@
+# Веб-версия приложения: app.madamepoly.kuka-lab.com (сайт madamepoly-app).
+# Лендинг madamepoly.kuka-lab.com — отдельный сайт Netlify, этот файл его не касается.
+[build]
+  publish = "dist"
+
+[[headers]]
+  for = "/_expo/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"

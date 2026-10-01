@@ -1,7 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
 import { getApps, initializeApp, type FirebaseApp } from 'firebase/app';
 import {
   EmailAuthProvider,
+  browserLocalPersistence,
   createUserWithEmailAndPassword,
   linkWithCredential,
   getReactNativePersistence,
@@ -32,7 +34,11 @@ function ensure(): { auth: Auth; db: Firestore } | null {
   if (!app) {
     app = getApps()[0] ?? initializeApp(FIREBASE_CONFIG);
     // Вход должен переживать перезапуск — иначе аккаунт спрашивают каждый раз.
-    auth = initializeAuth(app, { persistence: getReactNativePersistence(AsyncStorage) });
+    // В браузерной сборке Firebase AsyncStorage-хранилища нет, там своё.
+    auth = initializeAuth(app, {
+      persistence:
+        Platform.OS === 'web' ? browserLocalPersistence : getReactNativePersistence(AsyncStorage),
+    });
     db = getFirestore(app);
   }
   return auth && db ? { auth, db } : null;

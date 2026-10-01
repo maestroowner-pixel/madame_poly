@@ -1,9 +1,10 @@
 import { initializeApp } from 'firebase-admin/app';
-import { getAuth } from 'firebase-admin/auth';
+import { getAuth, type DecodedIdToken } from 'firebase-admin/auth';
 import { FieldValue, getFirestore } from 'firebase-admin/firestore';
 import { onRequest, type Request } from 'firebase-functions/https';
 import { logger } from 'firebase-functions';
-import { defineSecret } from 'firebase-functions/params';
+import { createHmac, timingSafeEqual } from 'node:crypto';
+import { defineSecret, defineString } from 'firebase-functions/params';
 import type { Response } from 'express';
 
 /**
@@ -20,6 +21,18 @@ const ANTHROPIC_API_KEY = defineSecret('ANTHROPIC_API_KEY');
 const OPENAI_API_KEY = defineSecret('OPENAI_API_KEY');
 /** Секретный ключ RevenueCat (v1). «none» — магазины ещё не настроены. */
 const REVENUECAT_SECRET_KEY = defineSecret('REVENUECAT_SECRET_KEY');
+/**
+ * Lemon Squeezy — оплата картой в веб-версии. Ключ API создаёт страницу оплаты
+ * и читает цены, секрет подписи проверяет вебхуки. Магазин и два варианта
+ * (Pro, Max) — в `functions/.env`; пока их нет, оплата в вебе выключена.
+ */
+const LEMON_API_KEY = defineSecret('LEMON_API_KEY');
+const LEMON_SIGNING_SECRET = defineSecret('LEMON_SIGNING_SECRET');
+const LEMON_STORE_ID = defineString('LEMON_STORE_ID', { default: '' });
+const LEMON_PRO_VARIANT = defineString('LEMON_PRO_VARIANT', { default: '' });
+const LEMON_MAX_VARIANT = defineString('LEMON_MAX_VARIANT', { default: '' });
+/** Куда Lemon возвращает после оплаты; метка в адресе — подождать вебхук. */
+const WEB_APP_URL = 'https://app.madamepoly.kuka-lab.com';
 
 /** Что разрешено просить. Прокси не должен стать бесплатным входом в любые модели. */
 const CLAUDE_MODEL = 'claude-sonnet-5';
@@ -81,12 +94,12 @@ function sendError(res: Response, error: HttpError): void {
   res.status(error.status).json({ type: 'error', error: { type: error.type, message: error.message } });
 }
 
-async function verify(req: Request): Promise<string> {
+async function verifyToken(req: Request): Promise<DecodedIdToken> {
   const header = req.get('authorization') ?? '';
   const token = header.startsWith('Bearer ') ? header.slice(7) : '';
   if (!token) throw new HttpError(401, 'authentication_error', 'Missing token');
   try {
-    return (await getAuth().verifyIdToken(token)).uid;
+    return await getAuth().verifyIdToken(token);
   } catch {
     throw new HttpError(401, 'authentication_error', 'Invalid token');
   }
@@ -97,7 +110,8 @@ async function verify(req: Request): Promise<string> {
 /** Ответ RevenueCat кэшируем на пять минут: он нужен на каждом ходе беседы. */
 const tierCache = new Map<string, { tier: Tier; until: number }>();
 
-async function tierOf(uid: string): Promise<Tier> {
+/** Подписка из App Store и Google Play — через RevenueCat. */
+async function storeTierOf(uid: string): Promise<Tier> {
   const key = REVENUECAT_SECRET_KEY.value().trim();
   // Магазины не настроены — в приложении тогда тоже старшая подписка.
   if (!key || key === 'none') return 'max';
@@ -130,6 +144,212 @@ async function tierOf(uid: string): Promise<Tier> {
   }
   tierCache.set(uid, { tier, until: Date.now() + 5 * 60_000 });
   return tier;
+}
+
+const RANK: Record<Tier, number> = { free: 0, pro: 1, max: 2 };
+
+/** Тариф аккаунта — старший из магазинов и Lemon Squeezy: подписка одна на все устройства. */
+async function tierOf(uid: string): Promise<Tier> {
+  const [store, lemon] = await Promise.all([storeTierOf(uid), lemonOf(uid)]);
+  return RANK[lemon.tier] > RANK[store] ? lemon.tier : store;
+}
+
+// --- Lemon Squeezy ---
+
+/**
+ * Подписка Lemon лежит в Firestore `lemon/{uid}`: её пишет вебхук, читает
+ * tierOf. В RevenueCat Lemon не умеет, поэтому учёт здесь свой.
+ */
+interface LemonRecord {
+  subscriptionId: string;
+  variantId: string;
+  status: string;
+  /** Конец оплаченного периода у отменённой подписки, мс; null — продлевается. */
+  endsAt: number | null;
+  /** Страница Lemon, где меняют карту, тариф и отменяют. */
+  portal: string | null;
+  updatedAt: number;
+}
+
+const lemonDoc = (uid: string) => getFirestore().collection('lemon').doc(uid);
+
+/**
+ * cancelled у Lemon — «больше не продлевать», но оплаченный период ещё идёт;
+ * past_due — платёж не прошёл и Lemon пробует снова, доступ не отнимаем.
+ */
+function lemonTier(record: LemonRecord | undefined): Tier {
+  if (!record) return 'free';
+  const live =
+    ['active', 'on_trial', 'past_due'].includes(record.status) ||
+    (record.status === 'cancelled' && record.endsAt !== null && record.endsAt > Date.now());
+  if (!live) return 'free';
+  if (record.variantId === LEMON_MAX_VARIANT.value()) return 'max';
+  if (record.variantId === LEMON_PRO_VARIANT.value()) return 'pro';
+  return 'free';
+}
+
+async function lemonOf(uid: string): Promise<{ tier: Tier; portal: string | null }> {
+  try {
+    const record = (await lemonDoc(uid).get()).data() as LemonRecord | undefined;
+    const tier = lemonTier(record);
+    return { tier, portal: tier === 'free' ? null : (record?.portal ?? null) };
+  } catch (e) {
+    logger.warn('lemon read failed', e);
+    return { tier: 'free', portal: null };
+  }
+}
+
+async function lemonApi(path: string, init?: RequestInit): Promise<unknown> {
+  const response = await fetch(`https://api.lemonsqueezy.com/v1${path}`, {
+    ...init,
+    headers: {
+      Accept: 'application/vnd.api+json',
+      'Content-Type': 'application/vnd.api+json',
+      Authorization: `Bearer ${LEMON_API_KEY.value()}`,
+    },
+  });
+  if (!response.ok) {
+    logger.error('Lemon', path, response.status, await response.text());
+    throw new HttpError(502, 'api_error', `Lemon ${response.status}`);
+  }
+  return response.json();
+}
+
+const lemonReady = () =>
+  Boolean(LEMON_STORE_ID.value() && LEMON_PRO_VARIANT.value() && LEMON_MAX_VARIANT.value());
+
+interface Plan {
+  tier: Exclude<Tier, 'free'>;
+  /** Цена в центах и валюта магазина — строку соберёт приложение под язык человека. */
+  amount: number;
+  currency: string;
+  interval: string | null;
+}
+
+/** Цены меняются редко — держим час, чтобы пейвол не ждал Lemon каждый раз. */
+let plansCache: { plans: Plan[]; until: number } | null = null;
+
+async function plans(res: Response): Promise<void> {
+  if (!lemonReady()) {
+    res.json({ plans: [] });
+    return;
+  }
+  if (!plansCache || plansCache.until < Date.now()) {
+    const store = (await lemonApi(`/stores/${LEMON_STORE_ID.value()}`)) as {
+      data: { attributes: { currency: string } };
+    };
+    const variant = async (id: string, tier: Plan['tier']): Promise<Plan> => {
+      const { data } = (await lemonApi(`/variants/${id}`)) as {
+        data: { attributes: { price: number; interval: string | null } };
+      };
+      return { tier, amount: data.attributes.price, currency: store.data.attributes.currency, interval: data.attributes.interval };
+    };
+    plansCache = {
+      plans: await Promise.all([variant(LEMON_PRO_VARIANT.value(), 'pro'), variant(LEMON_MAX_VARIANT.value(), 'max')]),
+      until: Date.now() + 60 * 60_000,
+    };
+  }
+  res.json({ plans: plansCache.plans });
+}
+
+/**
+ * Страница оплаты — только для аккаунта с почтой: подписка на анонимном uid
+ * пропала бы вместе с данными браузера. uid едет в custom_data и вернётся
+ * в каждом вебхуке — по нему подписка и ложится на аккаунт.
+ */
+async function checkout(req: Request, res: Response, token: DecodedIdToken): Promise<void> {
+  if (!lemonReady()) throw new HttpError(503, 'api_error', 'Web payments are not configured');
+  if (token.firebase.sign_in_provider === 'anonymous' || !token.email) {
+    throw new HttpError(403, 'permission_error', 'Sign in to subscribe');
+  }
+  const { tier } = (req.body ?? {}) as { tier?: unknown };
+  const variant = tier === 'max' ? LEMON_MAX_VARIANT.value() : tier === 'pro' ? LEMON_PRO_VARIANT.value() : '';
+  if (!variant) throw new HttpError(400, 'invalid_request_error', 'Bad tier');
+
+  const created = (await lemonApi('/checkouts', {
+    method: 'POST',
+    body: JSON.stringify({
+      data: {
+        type: 'checkouts',
+        attributes: {
+          checkout_data: { email: token.email, custom: { uid: token.uid } },
+          product_options: { redirect_url: `${WEB_APP_URL}/?lemon=success` },
+        },
+        relationships: {
+          store: { data: { type: 'stores', id: LEMON_STORE_ID.value() } },
+          variant: { data: { type: 'variants', id: variant } },
+        },
+      },
+    }),
+  })) as { data: { attributes: { url: string } } };
+  res.json({ url: created.data.attributes.url });
+}
+
+/**
+ * Вебхук Lemon: подписка создана, продлена, сменила тариф, отменена, истекла.
+ * Подлинность — по HMAC тела секретом подписи. Отвечаем 200 и на события,
+ * которые не разбираем, иначе Lemon будет повторять их.
+ */
+async function lemonWebhook(req: Request, res: Response): Promise<void> {
+  const signature = Buffer.from(req.get('x-signature') ?? '', 'utf8');
+  const digest = Buffer.from(
+    createHmac('sha256', LEMON_SIGNING_SECRET.value()).update(req.rawBody).digest('hex'),
+    'utf8',
+  );
+  if (signature.length !== digest.length || !timingSafeEqual(signature, digest)) {
+    throw new HttpError(401, 'authentication_error', 'Bad signature');
+  }
+
+  const event = req.body as {
+    meta?: { event_name?: string; custom_data?: { uid?: string } };
+    data?: {
+      id?: string;
+      type?: string;
+      attributes?: {
+        variant_id?: number;
+        status?: string;
+        ends_at?: string | null;
+        urls?: { customer_portal?: string };
+      };
+    };
+  };
+  if (event.data?.type !== 'subscriptions' || !event.data.id || !event.data.attributes) {
+    res.json({ ok: true });
+    return;
+  }
+
+  const subscriptionId = String(event.data.id);
+  let uid = event.meta?.custom_data?.uid;
+  if (!uid) {
+    // Старые события могут прийти без custom_data — ищем аккаунт по подписке.
+    const found = await getFirestore().collection('lemon').where('subscriptionId', '==', subscriptionId).limit(1).get();
+    uid = found.docs[0]?.id;
+  }
+  if (!uid) {
+    logger.warn('Lemon webhook without uid', event.meta?.event_name, subscriptionId);
+    res.json({ ok: true });
+    return;
+  }
+
+  const { attributes } = event.data;
+  const record: LemonRecord = {
+    subscriptionId,
+    variantId: String(attributes.variant_id ?? ''),
+    status: attributes.status ?? 'expired',
+    endsAt: attributes.ends_at ? Date.parse(attributes.ends_at) : null,
+    portal: attributes.urls?.customer_portal ?? null,
+    updatedAt: Date.now(),
+  };
+
+  const ref = lemonDoc(uid);
+  await getFirestore().runTransaction(async (tx) => {
+    const current = (await tx.get(ref)).data() as LemonRecord | undefined;
+    // Купили вторую подписку — запоздалое «истекла» по первой не должно её затереть.
+    if (current && current.subscriptionId !== subscriptionId && lemonTier(current) !== 'free' && lemonTier(record) === 'free') return;
+    tx.set(ref, record);
+  });
+  logger.info('Lemon', event.meta?.event_name, uid, record.status);
+  res.json({ ok: true });
 }
 
 // --- Расход ---
@@ -223,7 +443,18 @@ async function transcribe(req: Request, res: Response, uid: string): Promise<voi
   if (!/^[a-z]{2}$/.test(language)) throw new HttpError(400, 'invalid_request_error', 'Bad language');
 
   const type = req.get('content-type') ?? 'audio/m4a';
-  const extension = type.includes('mpeg') ? 'mp3' : type.includes('wav') ? 'wav' : 'm4a';
+  // Браузеры пишут webm (Chrome, Firefox) или mp4 (Safari); Whisper судит по расширению.
+  const extension = type.includes('mpeg')
+    ? 'mp3'
+    : type.includes('wav')
+      ? 'wav'
+      : type.includes('webm')
+        ? 'webm'
+        : type.includes('ogg')
+          ? 'ogg'
+          : type.includes('mp4')
+            ? 'mp4'
+            : 'm4a';
   const form = new FormData();
   form.append('file', new Blob([new Uint8Array(audio)], { type }), `speech.${extension}`);
   form.append('model', 'whisper-1');
@@ -285,7 +516,14 @@ async function speak(req: Request, res: Response, uid: string, tier: Tier): Prom
 export const api = onRequest(
   {
     region: 'europe-west1',
-    secrets: [ANTHROPIC_API_KEY, OPENAI_API_KEY, REVENUECAT_SECRET_KEY],
+    // Веб-версия ходит сюда из браузера: Firebase Hosting, сайт и локальная
+    // разработка. Приложениям заголовок не нужен — они Origin не шлют.
+    cors: [
+      /^https:\/\/madame-poly\.(web\.app|firebaseapp\.com)$/,
+      /^https:\/\/([a-z0-9-]+\.)*kuka-lab\.com$/,
+      /^http:\/\/localhost(:\d+)?$/,
+    ],
+    secrets: [ANTHROPIC_API_KEY, OPENAI_API_KEY, REVENUECAT_SECRET_KEY, LEMON_API_KEY, LEMON_SIGNING_SECRET],
     // Ход беседы с разбором ошибок иногда идёт дольше минуты.
     timeoutSeconds: 180,
     memory: '512MiB',
@@ -295,7 +533,28 @@ export const api = onRequest(
   async (req, res) => {
     try {
       if (req.method !== 'POST') throw new HttpError(405, 'invalid_request_error', 'POST only');
-      const uid = await verify(req);
+      // Вебхук Lemon приходит без Firebase-токена — его подлинность в подписи.
+      if (req.path === '/lemon') {
+        await lemonWebhook(req, res);
+        return;
+      }
+      const token = await verifyToken(req);
+      const { uid } = token;
+      // Подписка и оплата — до проверки объёма: исчерпанный объём не мешает
+      // узнать свой тариф или купить старший.
+      if (req.path === '/tier') {
+        const [tier, lemon] = await Promise.all([tierOf(uid), lemonOf(uid)]);
+        res.json({ tier, portal: lemon.portal });
+        return;
+      }
+      if (req.path === '/plans') {
+        await plans(res);
+        return;
+      }
+      if (req.path === '/checkout') {
+        await checkout(req, res, token);
+        return;
+      }
       const tier = await assertBudget(uid);
 
       if (req.path === '/claude/v1/messages') await claude(req, res, uid);

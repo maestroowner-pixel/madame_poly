@@ -3,6 +3,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useEffect, useMemo, useState } from 'react';
 import {
   Image,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -78,9 +79,11 @@ export function ProfileScreen({
 
   /**
    * Фото из галереи лежит во временной папке — копируем к себе, иначе система
-   * когда-нибудь его вычистит и аватарка пропадёт.
+   * когда-нибудь его вычистит и аватарка пропадёт. В браузере выбор отдаёт
+   * data:-ссылку — она и есть сама картинка, копировать нечего и некуда.
    */
   const keepPhoto = (uri: string): string => {
+    if (Platform.OS === 'web') return uri;
     const folder = new Directory(Paths.document, 'avatar');
     if (!folder.exists) folder.create({ intermediates: true });
 

@@ -4,6 +4,7 @@
   "main": "index.ts",
   "dependencies": {
     "@anthropic-ai/sdk": "^0.124.0",
+    "@expo/metro-runtime": "~57.0.16",
     "@react-native-async-storage/async-storage": "2.2.0",
     "expo": "~57.0.20",
     "expo-audio": "~57.0.4",
@@ -20,9 +21,11 @@
     "expo-video": "~57.0.3",
     "firebase": "^12.19.0",
     "react": "19.2.3",
+    "react-dom": "19.2.3",
     "react-native": "0.86.3",
     "react-native-purchases": "^10.9.1",
     "react-native-safe-area-context": "~5.7.0",
+    "react-native-web": "^0.21.2",
     "zod": "^4.5.4"
   },
   "devDependencies": {
@@ -37,6 +40,8 @@
     "ios": "expo run:ios",
     "android": "expo run:android",
     "web": "expo start --web",
+    "build:web": "expo export --platform web",
+    "deploy:web": "expo export --platform web && npx -y netlify-cli deploy --prod --no-build --dir dist --site 89fa2451-9097-4513-a53b-2feb0ce9446c",
     "smoke": "tsx scripts/smoke.ts",
     "postinstall": "patch-package",
     "vocab-check": "tsx --tsconfig scripts/tsconfig.json scripts/vocab-check.ts",

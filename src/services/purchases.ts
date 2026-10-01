@@ -13,6 +13,7 @@ import {
   REVENUECAT_IOS_KEY,
   type Tier,
 } from '../config';
+import { accountTier, higherTier } from './accountTier';
 
 const API_KEY = Platform.select({
   ios: REVENUECAT_IOS_KEY,
@@ -47,8 +48,16 @@ function tierOf(info: CustomerInfo): Tier {
   return 'free';
 }
 
-/** Какая подписка. Без ключей — никакой: магазина нет, купить нечего. */
+/**
+ * Какая подписка: из магазина или с сайта (Lemon Squeezy) — старшая из двух.
+ * Подписку с сайта знает только сервер, поэтому спрашиваем и его.
+ */
 export async function loadTier(): Promise<Tier> {
+  const [store, account] = await Promise.all([storeTier(), accountTier()]);
+  return higherTier(store, account.tier);
+}
+
+async function storeTier(): Promise<Tier> {
   if (!PURCHASES_READY) return 'free';
 
   try {
@@ -67,7 +76,10 @@ export async function loadTier(): Promise<Tier> {
 export function watchTier(onChange: (tier: Tier) => void): () => void {
   if (!PURCHASES_READY) return () => {};
 
-  const listener = (info: CustomerInfo) => onChange(tierOf(info));
+  // Магазин сообщает только своё — подписку с сайта досчитываем по серверу.
+  const listener = (info: CustomerInfo) => {
+    void accountTier().then((account) => onChange(higherTier(tierOf(info), account.tier)));
+  };
   Purchases.addCustomerInfoUpdateListener(listener);
   return () => Purchases.removeCustomerInfoUpdateListener(listener);
 }
