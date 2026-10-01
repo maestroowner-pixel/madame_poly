@@ -1,4 +1,4 @@
-import { ActivityIndicator, Pressable, StyleSheet, Switch, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { t } from '../i18n';
 import { useStyles, useTheme, type Theme } from '../theme';
@@ -22,20 +22,17 @@ interface Props {
   onToggleMode: () => void;
 }
 
-/** Включённый АВТО — золото короны: сиреневое сливалось с полосой. */
-const AUTO_ON = '#F2C230';
-
 function formatDuration(millis: number): string {
   const seconds = Math.floor(millis / 1000);
   return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
 }
 
 /**
- * Полоса во всю ширину, переключатель авторежима — внутри неё, у левого края.
- * Это обычный тумблер, как у уведомлений в настройках: по нему сразу видно,
- * включён режим или нет. Включён — приложение само ловит паузу; выключен —
- * конец фразы отмечаете вы, и полоса превращается в «Готово». Ни отдельной строки, ни соседней кнопки
- * под режим не выделяем: на маленьком экране место дороже.
+ * Полоса беседы и слева от неё — квадратная клавиша «АВТО», того же цвета и
+ * объёма, через узкий зазор: читается как часть одной кнопки. Включена —
+ * яркая, приложение само ловит паузу; выключена — тусклая, конец фразы
+ * отмечаете вы, и полоса превращается в «Готово». Отдельной строки под режим
+ * не выделяем: на маленьком экране место дороже.
  *
  * Беседа закрывается долгим нажатием в два шага: первое выводит из авторежима,
  * второе заканчивает разговор. Одним движением не выйдет — в авторежиме
@@ -87,59 +84,62 @@ export function RecordButton({
           ? `${t.stop} · ${timer}`
           : t.stop;
 
-  // Пока идёт беседа полоса красная — подпись тумблера перекрашивается вместе с ней.
-  const tint = listening ? theme.danger : theme.ctaText;
-  /** Выключенный тумблер — приглушённая дорожка, видная и на цветной полосе. */
-  const offTrack = listening ? theme.border : 'rgba(255,255,255,0.28)';
-
   return (
     <View style={styles.container}>
-      {/* Тень — на обёртке: у самой полосы overflow hidden ради блика. */}
-      <View style={[styles.lift, listening && styles.liftListening]}>
-      <Pressable
-        onPress={manualTurn ? onEndTurn : manualWait ? onBeginTurn : onToggleSession}
-        onLongPress={longPress}
-        style={({ pressed }) => [
-          styles.bar,
-          listening && styles.barListening,
-          pressed && styles.barPressed,
-        ]}
-      >
-        {/* Объём: светлый блик сверху и тень внизу — полоса как выпуклая клавиша. */}
-        <Volume />
-
-        {/* Осциллограмма — золотой нитью под подписью: видно, что микрофон открыт. */}
-        {(listening || speaking) && (
-          <View style={styles.waves} pointerEvents="none">
-            <WaveThread
-              level={listening ? inputLevel : speechLevel}
-              active
-              height={34}
-              color={THREAD_GOLD[scheme]}
-            />
-          </View>
-        )}
-
-        {working && <ActivityIndicator size="small" color={theme.danger} />}
-        <Text style={[styles.label, listening && styles.labelListening]} numberOfLines={1}>
-          {label}
-        </Text>
-
-        {/* Тумблер работает и во время беседы: из авторежима нужно уметь выйти
+      <View style={styles.row}>
+        {/* Клавиша работает и во время беседы: из авторежима нужно уметь выйти
             посреди разговора, иначе микрофон открывается снова и снова. */}
-        <View style={styles.auto}>
-          <Switch
-            value={auto}
-            onValueChange={onToggleMode}
-            trackColor={{ true: AUTO_ON, false: offTrack }}
-            ios_backgroundColor={offTrack}
-            thumbColor="#FFFFFF"
-            style={styles.autoSwitch}
+        <View style={[styles.lift, styles.autoLift, listening && styles.liftListening, !auto && styles.autoOff]}>
+          <Pressable
+            onPress={onToggleMode}
+            accessibilityRole="switch"
+            accessibilityState={{ checked: auto }}
             accessibilityLabel={t.auto}
-          />
-          <Text style={[styles.autoLabel, { color: tint }]}>{t.auto}</Text>
+            style={({ pressed }) => [
+              styles.bar,
+              styles.autoKey,
+              listening && styles.barListening,
+              pressed && styles.barPressed,
+            ]}
+          >
+            <Volume />
+            <Text style={[styles.autoLabel, listening && styles.labelListening]}>{t.auto}</Text>
+          </Pressable>
         </View>
-      </Pressable>
+
+        {/* Тень — на обёртке: у самой полосы overflow hidden ради блика. */}
+        <View style={[styles.lift, styles.mainLift, listening && styles.liftListening]}>
+          <Pressable
+            onPress={manualTurn ? onEndTurn : manualWait ? onBeginTurn : onToggleSession}
+            onLongPress={longPress}
+            style={({ pressed }) => [
+              styles.bar,
+              styles.mainBar,
+              listening && styles.barListening,
+              pressed && styles.barPressed,
+            ]}
+          >
+            {/* Объём: светлый блик сверху и тень внизу — полоса как выпуклая клавиша. */}
+            <Volume />
+
+            {/* Осциллограмма — золотой нитью под подписью: видно, что микрофон открыт. */}
+            {(listening || speaking) && (
+              <View style={styles.waves} pointerEvents="none">
+                <WaveThread
+                  level={listening ? inputLevel : speechLevel}
+                  active
+                  height={34}
+                  color={THREAD_GOLD[scheme]}
+                />
+              </View>
+            )}
+
+            {working && <ActivityIndicator size="small" color={theme.danger} />}
+            <Text style={[styles.label, listening && styles.labelListening]} numberOfLines={1}>
+              {label}
+            </Text>
+          </Pressable>
+        </View>
       </View>
 
       {sessionActive && (
@@ -153,20 +153,19 @@ const createStyles = (theme: Theme) =>
   StyleSheet.create({
     container: { paddingHorizontal: 16, paddingTop: 6, paddingBottom: 10, gap: 4 },
 
-    /** Тумблер лежит поверх полосы, чтобы подпись оставалась по центру. */
-    auto: {
-      position: 'absolute',
-      left: 8,
-      top: 0,
-      bottom: 0,
-      width: 52,
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: 1,
-    },
-    /** Системный тумблер крупноват для полосы в 50 точек — уменьшаем. */
-    autoSwitch: { transform: [{ scale: 0.72 }], marginVertical: -5 },
-    autoLabel: { fontSize: 9, fontWeight: '800', letterSpacing: 0.5 },
+    row: { flexDirection: 'row', gap: 4 },
+
+    /**
+     * Клавиша «АВТО» — квадрат высотой с полосу. Стык с полосой скруглён
+     * меньше наружных углов: две клавиши читаются как одна кнопка.
+     */
+    autoLift: { width: 50, borderTopRightRadius: 6, borderBottomRightRadius: 6 },
+    autoKey: { paddingHorizontal: 0, borderTopRightRadius: 6, borderBottomRightRadius: 6 },
+    /** Выключена — тусклая, но различимая: по ней видно, что режим есть. */
+    autoOff: { opacity: 0.4 },
+    autoLabel: { fontSize: 10, fontWeight: '800', letterSpacing: 0.5, color: theme.ctaText },
+    mainLift: { flex: 1, borderTopLeftRadius: 6, borderBottomLeftRadius: 6 },
+    mainBar: { borderTopLeftRadius: 6, borderBottomLeftRadius: 6 },
 
     /** Тень под клавишей: снизу и чуть размытая — полоса приподнята над фоном. */
     lift: {
@@ -185,8 +184,7 @@ const createStyles = (theme: Theme) =>
       justifyContent: 'center',
       gap: 8,
       height: 50,
-      // Поля под значок режима и симметричные им справа — подпись не наезжает.
-      paddingHorizontal: 68,
+      paddingHorizontal: 16,
       borderRadius: 14,
       borderWidth: 2,
       backgroundColor: theme.ctaBg,
@@ -198,7 +196,7 @@ const createStyles = (theme: Theme) =>
     waves: {
       position: 'absolute',
       top: 0,
-      left: 68,
+      left: 16,
       right: 16,
       bottom: 0,
       justifyContent: 'center',
