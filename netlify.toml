@@ -1,4 +1,4 @@
-# Веб-версия приложения: app.madamepoly.kuka-lab.com (сайт madamepoly-app).
+# Бывшая выкладка веб-версии на Netlify (сайт madamepoly-app). С 2026-10-01 веб — на Firebase Hosting (firebase.json); файл оставлен на случай возврата.
 # Лендинг madamepoly.kuka-lab.com — отдельный сайт Netlify, этот файл его не касается.
 [build]
   publish = "dist"
