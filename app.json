@@ -13,7 +13,7 @@
       "infoPlist": {
         "CFBundleAllowMixedLocalizations": true
       },
-      "buildNumber": "10319"
+      "buildNumber": "10321"
     },
     "android": {
       "adaptiveIcon": {
@@ -27,7 +27,7 @@
       "permissions": [
         "CAMERA"
       ],
-      "versionCode": 10319
+      "versionCode": 10321
     },
     "web": {
       "name": "Madame Poly",
@@ -40,7 +40,8 @@
       [
         "expo-audio",
         {
-          "microphonePermission": "Madame Poly listens to your speech to recognise it and reply."
+          "microphonePermission": "Madame Poly listens to your speech to recognise it and reply.",
+          "enableBackgroundPlayback": false
         }
       ],
       [
