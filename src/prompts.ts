@@ -768,6 +768,20 @@ const DRILLS: Record<string, DrillSpec | ((language: LanguageCode) => DrillSpec 
     entries: 'a preposition with its case and an example, like "in + Dativ (Wo?): Ich bin in der Küche", "in + Akkusativ (Wohin?): Ich gehe in die Küche", "seit + Dativ: seit einem Jahr"; "translation" explains the use briefly',
   },
   'dr-verbpraep': (language) => VERB_PREP[language],
+  'dr-place-time': {
+    subject: 'English prepositions of place and time: in, on, at and the others',
+    levels: {
+      A1: 'Only in, on, at for time (at 5 o\'clock, at night, on Monday, on 3 May, in May, in 2020, in the morning, in summer) and for place (in the box, in London, on the table, on the wall, at home, at school, at work, at the bus stop), plus under, next to, behind, in front of.',
+      A2: 'Everything of A1 plus at the weekend / on the weekend (British / American), on Monday morning against in the morning, at Christmas against on Christmas Day, in / on / at with transport and buildings (in the car, on the bus, at the station, in the station), between, opposite, near, above, below; for and since, ago, before, after, from … to / until.',
+      B1: 'Everything of A2 plus in time / on time, at the end / in the end, at the beginning of, by (by Friday) against until, during against for, within, across / through / along / past / over, into / onto against in / on, arrive at / in, on the left / on the right, at the top / at the bottom, in the corner / at the corner, on the first floor.',
+      B2: 'Everything of B1 plus no preposition before this, next, last, every, tomorrow, yesterday (next week, not "in next week"), by the time, throughout, beyond, among against between, beside against besides, at / in for addresses (at 12 Green Street, in Green Street), on the coast, on an island, in the countryside.',
+      C1: 'Everything of B2 plus formal and less frequent prepositions (prior to, in the course of, towards the end of, in the vicinity of, adjacent to, alongside, amid), British against American use (in hospital / in the hospital, at the weekend / on the weekend, Monday through Friday), set phrases (at a time, at times, on occasion, in due course).',
+      C2: 'Everything of C1 plus the finest contrasts (in / at the corner, in / on the street, on / in time, at / in the end), literary use and idioms of place and time.',
+    },
+    gap: 'The gap replaces only the preposition (or a whole locution like "in front of", "next to"). The noun stays in the sentence. Sentences are full everyday sentences with context that leaves one option only — never bare frames like "The book is ___ the table." No hint after the gap.',
+    options: 'other prepositions a learner confuses here (in / on / at, for / since / during, by / until, into / in, among / between), — only one is correct in this sentence. A wrong option must be wrong in grammar, or ruled out by a word in the sentence — not merely a different meaning: in "The cat is sleeping ___ the table" both on and under stand, so add "in the shade" or offer distractors that cannot fit. British and American variants (at / on the weekend, in / in the hospital) are both correct — never offer one as wrong against the other',
+    entries: 'a preposition with its use and an example, like "at + clock time: at 5 o\'clock", "on + day: on Monday", "in + month, year: in May"; "translation" explains the use briefly',
+  },
   'dr-lieu-temps': {
     subject: 'French prepositions of place and time',
     levels: {
