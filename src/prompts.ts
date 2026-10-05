@@ -568,7 +568,7 @@ function buildPhrasalVocabularyPrompt(group: PhrasalGroup, level: Level, variant
   const distractors =
     group.by === 'verb'
       ? 'real phrasal verbs of the same verb in the same form as the answer with other particles (like "got over", "got through", "got by", "got off")'
-      : 'real phrasal verbs with the same particle and other verbs, in the same form as the answer (like "woke up", "grew up", "showed up", "ended up")';
+      : 'other entries of this sheet, put in the same form as the answer (like "woke up", "grew up", "showed up", "ended up") — only phrasal verbs from the list above, never invented ones like "rely in"';
   return [
     `You are an English teacher compiling a sheet of phrasal verbs with "${group.title}" for a CEFR ${level} learner, with exercises.`,
     '',
@@ -879,7 +879,8 @@ export function buildDrillCheckPrompt(language: LanguageCode): string {
     '- the intended answer is wrong, or not the most natural choice;',
     '- the sentence with the answer is wrong, unnatural or makes no sense.',
     'Try every option in the gap before deciding. Do not flag anything else: if exactly one option is right and the sentence is good, keep it.',
-    '"flagged": the numbers of the exercises to drop, each with a short reason in English. Empty when all are good.',
+    '"flagged": the numbers of the faulty exercises, each with a short reason in English. Empty when all are good.',
+    '"options" of a flagged exercise: when only the options are at fault and the sentence and answer are good, a new set of four — the answer exactly as given and three options clearly wrong here: other words of the same kind whose meaning is far from the answer, never its synonyms. Try each in the gap once more. Take the new wrong options from the other answers of this set where you can, put in the same form. Fix the options whenever the sentence and the answer are good — an empty list only when the sentence or the answer is at fault.',
   ].join('\n');
 }
 

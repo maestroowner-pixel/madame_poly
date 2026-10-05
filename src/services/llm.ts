@@ -52,6 +52,7 @@ import {
   type WritingReview,
   type WritingTask,
 } from '../types';
+import { joinSplitGap } from '../phrasal';
 import { t } from '../i18n';
 
 const CorrectionSchema = z.object({
@@ -189,7 +190,7 @@ const PhrasalVocabularySchema = VocabularySchema.extend({
 });
 
 const DrillCheckSchema = z.object({
-  flagged: z.array(z.object({ number: z.number().int(), reason: z.string() })),
+  flagged: z.array(z.object({ number: z.number().int(), reason: z.string(), options: z.array(z.string()) })),
 });
 
 const GAP = '___';
@@ -229,9 +230,17 @@ function expanded(text: string): string {
  */
 function cleanDrills(drills: z.infer<typeof PhrasalVocabularySchema>['drills'], terms: Set<string>): PhrasalDrill[] {
   return drills
+    .map((drill) =>
+      joinSplitGap({
+        ...drill,
+        // «let's just ___ ___ quickly» для «get it over with» — один пропуск, а не два.
+        sentence: drill.sentence.trim().replace(/___(\s+___)+/g, GAP),
+        answer: drill.answer.trim(),
+        options: drill.options.map((option) => option.trim()),
+      }),
+    )
     .map((drill) => ({
-      // «let's just ___ ___ quickly» для «get it over with» — один пропуск, а не два.
-      sentence: drill.sentence.trim().replace(/___(\s+___)+/g, GAP),
+      sentence: drill.sentence,
       answer: drill.answer.trim(),
       options: [...new Set(drill.options.map((option) => option.trim()).filter(Boolean))].filter(
         (option) => option === drill.answer.trim() || expanded(option) !== expanded(drill.answer.trim()),
@@ -957,7 +966,8 @@ export async function generateVocabulary(params: {
 
 /**
  * Второй проход: модель отдельно проверяет упражнения и называет те, где
- * верны два варианта или фраза кривая, — их выбрасываем. Проверка не
+ * верны два варианта или фраза кривая. Если дело только в вариантах — она
+ * же даёт новые, заведомо неверные; если во фразе — упражнение выбрасываем. Проверка не
  * удалась — лист остаётся как есть: без неё он хуже, но не сломан.
  */
 async function checkDrills(language: LanguageCode, drills: PhrasalDrill[]): Promise<PhrasalDrill[]> {
@@ -980,8 +990,14 @@ async function checkDrills(language: LanguageCode, drills: PhrasalDrill[]): Prom
         output_config: { effort: 'low', format: zodOutputFormat(DrillCheckSchema) },
       }),
     );
-    const flagged = new Set(response.parsed_output?.flagged.map((item) => item.number - 1) ?? []);
-    return drills.filter((_, i) => !flagged.has(i));
+    const flagged = new Map((response.parsed_output?.flagged ?? []).map((item) => [item.number - 1, item.options]));
+    return drills.flatMap((drill, i) => {
+      if (!flagged.has(i)) return [drill];
+      // Виноваты только варианты — берём новые; виновата фраза — упражнение долой.
+      const options = [...new Set((flagged.get(i) ?? []).map((option) => option.trim()).filter(Boolean))];
+      if (!options.includes(drill.answer) || options.length < 2) return [];
+      return [{ ...drill, options: shuffled([drill.answer, ...options.filter((option) => option !== drill.answer).slice(0, 3)]) }];
+    });
   } catch {
     return drills;
   }

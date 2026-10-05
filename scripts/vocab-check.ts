@@ -43,7 +43,7 @@ const VocabularySchema = z.object({
 });
 
 const DrillCheckSchema = z.object({
-  flagged: z.array(z.object({ number: z.number().int(), reason: z.string() })),
+  flagged: z.array(z.object({ number: z.number().int(), reason: z.string(), options: z.array(z.string()) })),
 });
 
 /** Та же схема, что PhrasalVocabularySchema: тренажёры и фразовые глаголы. */
@@ -136,11 +136,14 @@ async function main(): Promise<void> {
       ],
       output_config: { effort: 'low', format: zodOutputFormat(DrillCheckSchema) },
     });
-    const flagged = new Map((check.parsed_output?.flagged ?? []).map((item) => [item.number - 1, item.reason]));
-    console.log(`  упражнений ${sheet.drills.length}, проверка ${((Date.now() - checkStarted) / 1000).toFixed(0)} с, отброшено ${flagged.size}`);
+    const flagged = new Map((check.parsed_output?.flagged ?? []).map((item) => [item.number - 1, item]));
+    const fixed = [...flagged.values()].filter((item) => item.options.length > 0).length;
+    console.log(`  упражнений ${sheet.drills.length}, проверка ${((Date.now() - checkStarted) / 1000).toFixed(0)} с, исправлено ${fixed}, отброшено ${flagged.size - fixed}`);
     sheet.drills.forEach((item, i) => {
-      const reason = flagged.get(i);
-      console.log(`  ${reason ? '✗' : ' '}  ${item.sentence}  → ${item.answer}  [${item.options.join(' / ')}]${reason ? `\n        ${reason}` : ''}`);
+      const flag = flagged.get(i);
+      const mark = !flag ? ' ' : flag.options.length > 0 ? '~' : '✗';
+      console.log(`  ${mark}  ${item.sentence}  → ${item.answer}  [${item.options.join(' / ')}]`);
+      if (flag) console.log(`        ${flag.reason}${flag.options.length > 0 ? `\n        теперь: [${flag.options.join(' / ')}]` : ''}`);
     });
   }
   console.log(`  → ${file.pathname}\n`);

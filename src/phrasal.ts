@@ -35,3 +35,32 @@ export function saidRight(heard: string, answer: string): boolean {
   }
   return false;
 }
+
+const GAP = '___';
+
+/**
+ * Пропуск, разорванный дополнением: «couldn't ___ his main point ___» с
+ * ответом «get ... across». Дополнение уходит внутрь ответа и вариантов —
+ * «couldn't ___.» и «get his main point across», — и упражнение остаётся.
+ * Без многоточия в ответе глагол — первое слово, частицы — остальные.
+ * Не получилось — возвращаем как было: такое упражнение потом отбросят.
+ */
+export function joinSplitGap<T extends { sentence: string; answer: string; options: string[] }>(drill: T): T {
+  const pieces = drill.sentence.split(GAP);
+  if (pieces.length !== 3) return drill;
+  const object = pieces[1].trim();
+  if (!object || /[.,;:!?]/.test(object)) return drill;
+
+  const fill = (option: string): string | null => {
+    const parts = /\.\.\.|…/.test(option)
+      ? option.split(/\s*(?:\.\.\.|…)\s*/)
+      : [option.split(' ')[0], option.split(' ').slice(1).join(' ')];
+    if (parts.length !== 2 || !parts[0] || !parts[1]) return null;
+    return `${parts[0]} ${object} ${parts[1]}`;
+  };
+
+  const answer = fill(drill.answer);
+  const options = drill.options.map(fill);
+  if (!answer || options.some((option) => option === null)) return drill;
+  return { ...drill, sentence: `${pieces[0]}${GAP}${pieces[2]}`, answer, options: options as string[] };
+}
