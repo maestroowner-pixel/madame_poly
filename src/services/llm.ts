@@ -230,7 +230,8 @@ function expanded(text: string): string {
 function cleanDrills(drills: z.infer<typeof PhrasalVocabularySchema>['drills'], terms: Set<string>): PhrasalDrill[] {
   return drills
     .map((drill) => ({
-      sentence: drill.sentence.trim(),
+      // «let's just ___ ___ quickly» для «get it over with» — один пропуск, а не два.
+      sentence: drill.sentence.trim().replace(/___(\s+___)+/g, GAP),
       answer: drill.answer.trim(),
       options: [...new Set(drill.options.map((option) => option.trim()).filter(Boolean))].filter(
         (option) => option === drill.answer.trim() || expanded(option) !== expanded(drill.answer.trim()),
