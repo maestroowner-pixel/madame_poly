@@ -5,6 +5,7 @@
  *
  *   npm run vocab-check -- de B1 health     # язык, уровень, тема (id)
  *   npm run vocab-check -- uk A2            # без темы — общая лексика
+ *   npm run vocab-check -- es B1 dr-tildes  # тренажёр: лист и упражнения
  *
  * Лист пишется в scripts/out/vocab-<язык>-<уровень>.json.
  */
@@ -15,7 +16,7 @@ import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
 import { z } from 'zod';
 
 import { buildVocabularyPrompt } from '../src/prompts';
-import { TOPICS } from '../src/topics';
+import { findTopic } from '../src/topics';
 import { LEVELS, type LanguageCode, type Level } from '../src/types';
 
 function loadEnv(): void {
@@ -41,6 +42,19 @@ const VocabularySchema = z.object({
   examples: z.array(z.string()),
 });
 
+/** Та же схема, что PhrasalVocabularySchema: тренажёры и фразовые глаголы. */
+const DrillVocabularySchema = VocabularySchema.extend({
+  drills: z.array(
+    z.object({
+      sentence: z.string(),
+      answer: z.string(),
+      options: z.array(z.string()),
+      translation: z.string(),
+      term: z.string(),
+    }),
+  ),
+});
+
 async function anonymousToken(apiKey: string): Promise<string> {
   const response = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${apiKey}`, {
     method: 'POST',
@@ -57,7 +71,8 @@ async function main(): Promise<void> {
   const level = (process.argv[3] ?? 'B1') as Level;
   const topicId = process.argv[4];
   if (!LEVELS.includes(level)) throw new Error(`Неизвестный уровень: ${level}`);
-  const topic = topicId ? TOPICS[language].find((item) => item.id === topicId) : undefined;
+  const topic = topicId ? (findTopic(language, topicId) ?? undefined) : undefined;
+  const drill = topic?.kind === 'phrasal' || topic?.kind === 'drill';
   if (topicId && !topic) throw new Error(`Неизвестная тема: ${topicId}`);
 
   const project = process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID;
@@ -79,13 +94,13 @@ async function main(): Promise<void> {
     system: buildVocabularyPrompt(language, level, topic),
     thinking: { type: 'disabled' },
     messages: [{ role: 'user', content: 'Compile the sheet.' }],
-    output_config: { format: zodOutputFormat(VocabularySchema) },
+    output_config: { format: zodOutputFormat(drill ? DrillVocabularySchema : VocabularySchema) },
   });
-  const sheet = response.parsed_output;
+  const sheet = response.parsed_output as z.infer<typeof DrillVocabularySchema> | null;
   if (!sheet) throw new Error('Пустой ответ');
 
   mkdirSync(new URL('./out/', import.meta.url), { recursive: true });
-  const file = new URL(`./out/vocab-${language}-${level}.json`, import.meta.url);
+  const file = new URL(`./out/vocab-${language}-${level}${topic ? `-${topic.id}` : ''}.json`, import.meta.url);
   writeFileSync(file, JSON.stringify(sheet, null, 2));
 
   const entries = sheet.sections.reduce((sum, section) => sum + section.entries.length, 0);
@@ -99,6 +114,10 @@ async function main(): Promise<void> {
     }
   }
   console.log(`  диалог: ${sheet.dialogue[0]}`);
+  if (sheet.drills) {
+    console.log(`  упражнений ${sheet.drills.length}`);
+    for (const item of sheet.drills) console.log(`     ${item.sentence}  → ${item.answer}  [${item.options.join(' / ')}]`);
+  }
   console.log(`  → ${file.pathname}\n`);
 }
 

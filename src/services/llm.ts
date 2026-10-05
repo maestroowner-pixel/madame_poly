@@ -200,8 +200,26 @@ function shuffled<T>(items: T[]): T[] {
 }
 
 /**
+ * Немецкие слитные предлоги и их полная форма: «zum» и «zu dem» верны оба,
+ * а модель, бывает, ставит одно неверным вариантом к другому.
+ */
+const CONTRACTIONS: Record<string, string> = {
+  am: 'an dem', ans: 'an das', im: 'in dem', ins: 'in das', zum: 'zu dem', zur: 'zu der',
+  beim: 'bei dem', vom: 'von dem', aufs: 'auf das', ums: 'um das', durchs: 'durch das', fürs: 'für das',
+};
+
+function expanded(text: string): string {
+  return text
+    .toLowerCase()
+    .split(/\s+/)
+    .map((word) => CONTRACTIONS[word] ?? word)
+    .join(' ');
+}
+
+/**
  * Упражнения из ответа модели — только годные: пропуск ровно один, ответ среди
- * вариантов, вариантов четыре разных. Кривое предложение хуже никакого:
+ * вариантов, вариантов от двух (пара tu / tú) до четырёх разных, и ни один
+ * неверный не совпадает с ответом после раскрытия «zum» в «zu dem». Кривое предложение хуже никакого:
  * человек повторит его вслух и запомнит.
  */
 function cleanDrills(drills: z.infer<typeof PhrasalVocabularySchema>['drills'], terms: Set<string>): PhrasalDrill[] {
@@ -209,7 +227,9 @@ function cleanDrills(drills: z.infer<typeof PhrasalVocabularySchema>['drills'], 
     .map((drill) => ({
       sentence: drill.sentence.trim(),
       answer: drill.answer.trim(),
-      options: [...new Set(drill.options.map((option) => option.trim()).filter(Boolean))],
+      options: [...new Set(drill.options.map((option) => option.trim()).filter(Boolean))].filter(
+        (option) => option === drill.answer.trim() || expanded(option) !== expanded(drill.answer.trim()),
+      ),
       translation: drill.translation.trim(),
       term: drill.term.trim(),
     }))
@@ -218,7 +238,7 @@ function cleanDrills(drills: z.infer<typeof PhrasalVocabularySchema>['drills'], 
         drill.sentence.split(GAP).length === 2 &&
         drill.answer &&
         drill.options.includes(drill.answer) &&
-        drill.options.length >= 3 &&
+        drill.options.length >= 2 &&
         terms.has(drill.term),
     )
     .map((drill) => ({

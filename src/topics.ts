@@ -765,9 +765,15 @@ export const DRILL_TOPICS: Partial<Record<LanguageCode, Topic[]>> = {
   es: [
     { id: 'dr-subjuntivo', label: 'El subjuntivo', kind: 'drill' },
     { id: 'dr-pronombres', label: 'Le, lo, la: los pronombres', kind: 'drill' },
+    { id: 'dr-preposiciones', label: 'Preposiciones de lugar y tiempo', kind: 'drill' },
+    { id: 'dr-tildes', label: 'La tilde', kind: 'drill' },
     conditionals('es'),
   ],
-  de: [conditionals('de')],
+  de: [
+    { id: 'dr-praepositionen', label: 'Präpositionen: Ort und Zeit', kind: 'drill' },
+    { id: 'dr-verbpraep', label: 'Verben mit Präpositionen', kind: 'drill' },
+    conditionals('de'),
+  ],
   fr: [conditionals('fr')],
   it: [conditionals('it')],
   pt: [conditionals('pt')],
@@ -862,6 +868,10 @@ const GLOSSES: Record<string, Record<UiLocale, string>> = {
   'dr-subjuntivo': { en: 'The Spanish subjunctive', uk: 'Субхунтив (умовний спосіб)', es: 'El subjuntivo', ru: 'Субхунтив (сослагательное наклонение)', de: 'Der Subjuntivo', fr: 'Le subjonctif espagnol', pt: 'O subjuntivo espanhol', zh: '西班牙语虚拟式', ja: 'スペイン語の接続法', ko: '스페인어 접속법', nl: 'De Spaanse subjuntivo', pl: 'Tryb subjuntivo', ro: 'Subjonctivul spaniol' },
   'dr-pronombres': { en: 'Object pronouns: le, lo, la', uk: 'Займенники додатка: le, lo, la', es: 'Pronombres de objeto: le, lo, la', ru: 'Местоимения-дополнения: le, lo, la', de: 'Objektpronomen: le, lo, la', fr: 'Pronoms compléments : le, lo, la', pt: 'Pronomes de objeto: le, lo, la', zh: '宾语代词：le、lo、la', ja: '目的格代名詞：le・lo・la', ko: '목적격 대명사: le, lo, la', nl: 'Objectvoornaamwoorden: le, lo, la', pl: 'Zaimki dopełnienia: le, lo, la', ro: 'Pronumele complement: le, lo, la' },
 
+  'dr-preposiciones': { en: 'Spanish prepositions of place and time', uk: 'Прийменники місця та часу', es: 'Preposiciones de lugar y tiempo', ru: 'Предлоги места и времени', de: 'Spanische Präpositionen: Ort und Zeit', fr: 'Les prépositions de lieu et de temps', pt: 'Preposições de lugar e de tempo', zh: '地点和时间介词', ja: '場所と時の前置詞', ko: '장소와 시간의 전치사', nl: 'Voorzetsels van plaats en tijd', pl: 'Przyimki miejsca i czasu', ro: 'Prepozițiile de loc și de timp' },
+  'dr-tildes': { en: 'Spanish accent marks', uk: 'Знак наголосу (tilde)', es: 'La tilde', ru: 'Знак ударения (tilde)', de: 'Der Akzent im Spanischen', fr: 'L\'accent écrit en espagnol', pt: 'O acento gráfico espanhol', zh: '西班牙语重音符号', ja: 'スペイン語のアクセント記号', ko: '스페인어 강세 부호', nl: 'Het Spaanse accentteken', pl: 'Akcent graficzny w hiszpańskim', ro: 'Accentul grafic în spaniolă' },
+  'dr-praepositionen': { en: 'German prepositions of place and time', uk: 'Прийменники місця та часу', es: 'Preposiciones alemanas de lugar y tiempo', ru: 'Предлоги места и времени', de: 'Präpositionen: Ort und Zeit', fr: 'Les prépositions allemandes de lieu et de temps', pt: 'Preposições alemãs de lugar e de tempo', zh: '德语地点和时间介词', ja: 'ドイツ語の場所と時の前置詞', ko: '독일어 장소와 시간의 전치사', nl: 'Duitse voorzetsels van plaats en tijd', pl: 'Niemieckie przyimki miejsca i czasu', ro: 'Prepozițiile germane de loc și de timp' },
+  'dr-verbpraep': { en: 'Verbs with prepositions', uk: 'Дієслова з прийменниками', es: 'Verbos con preposición', ru: 'Глаголы с предлогами', de: 'Verben mit Präpositionen', fr: 'Les verbes à préposition', pt: 'Verbos com preposição', zh: '带介词的动词', ja: '前置詞と結びつく動詞', ko: '전치사와 함께 쓰는 동사', nl: 'Werkwoorden met een voorzetsel', pl: 'Czasowniki z przyimkami', ro: 'Verbele cu prepoziție' },
   'local-en': { en: 'British and American English', uk: 'Британська та американська', es: 'Inglés británico y americano', ru: 'Британский и американский', de: 'Britisches und amerikanisches Englisch', fr: 'L\'anglais britannique et américain' , pt: 'O inglês britânico e o americano' , zh: '英式英语与美式英语', ja: 'イギリス英語とアメリカ英語', ko: '영국 영어와 미국 영어' , nl: 'Brits en Amerikaans Engels', pl: 'Brytyjski i amerykański angielski', ro: 'Engleza britanică și americană' },
   'local-de': { en: 'Christmas markets and Oktoberfest', uk: 'Різдвяні ярмарки та Октоберфест', es: 'Mercados navideños y Oktoberfest', ru: 'Ярмарки и Октоберфест', de: 'Weihnachtsmärkte und Oktoberfest', fr: 'Les marchés de Noël et l’Oktoberfest' , pt: 'Mercados de Natal e Oktoberfest' , zh: '圣诞市场与啤酒节', ja: 'クリスマスマーケットとオクトーバーフェスト', ko: '크리스마스 마켓과 옥토버페스트' , nl: 'Kerstmarkten en Oktoberfest', pl: 'Jarmarki bożonarodzeniowe i Oktoberfest', ro: 'Târgurile de Crăciun și Oktoberfest' },
   'local-fr': { en: 'Cheese and wine', uk: 'Сир і вино', es: 'Queso y vino', ru: 'Сыр и вино', de: 'Käse und Wein', fr: 'Le fromage et le vin' , pt: 'Queijo e vinho' , zh: '奶酪与葡萄酒', ja: 'チーズとワイン', ko: '치즈와 와인' , nl: 'Kaas en wijn', pl: 'Ser i wino', ro: 'Brânza și vinul' },

@@ -607,6 +607,8 @@ interface DrillSpec {
   gap: string;
   /** Из чего делать неверные варианты. */
   options: string;
+  /** Сколько вариантов; по умолчанию четыре. У тильд пара tu / tú — честно только два. */
+  count?: string;
   /** Как писать записи листа. */
   entries: string;
 }
@@ -676,6 +678,63 @@ const DRILLS: Record<string, DrillSpec | ((language: LanguageCode) => DrillSpec)
     options: 'the same slot with other pronouns: lo / la / le / los / las / les / me / te / nos / se lo / te lo / se la, attached in the same way when the answer is attached, — only one is correct in this sentence. The pronoun must agree with who is addressed and spoken about: "si quieres el libro, te lo doy" (tú), "se lo doy" only for usted or a third person. Leísmo de persona (le / les for a man or men as a direct object) is accepted in Spain, so never offer le / les as a wrong option where the direct object is a male person — use things or women as direct objects in those drills, or pick other distractors',
     entries: 'a rule or a pattern with an example, like "lo / la — complemento directo: lo veo", "le + gustar: le gusta", "se lo (le + lo): se lo doy"; "translation" explains it briefly',
   },
+  'dr-preposiciones': {
+    subject: 'Spanish prepositions of place and time',
+    levels: {
+      A1: 'Only en, a, de, desde, hasta for place (en casa / a casa, de Madrid, voy a la playa) with the contractions al and del; for time a las + hour, el + day of the week (el lunes, never "en lunes"), en + month, year or season, por la mañana / tarde / noche.',
+      A2: 'Everything of A1 plus encima de, debajo de, delante de, detrás de, al lado de, enfrente de, cerca de, lejos de, entre, dentro de, fuera de; de… a and desde… hasta; antes de, después de; hace (hace dos años), desde, desde hace; por + place of passage (paseo por el parque) against a + destination.',
+      B1: 'Everything of A2 plus por against para for place and time (por la ciudad / para Madrid, por la tarde / para el lunes), hacia, sobre, durante, dentro de + time (dentro de una semana), a + distance or age (a dos kilómetros, a los veinte años), en + transport, llegar a against estar en, al + infinitive (al salir).',
+      B2: 'Everything of B1 plus a partir de, a lo largo de, alrededor de, a finales de, a mediados de, a principios de, de… en… (de puerta en puerta, de vez en cuando), tras, ante, bajo, desde que / hasta que, the contrasts a / en / por with movement and position verbs.',
+      C1: 'Everything of B2 plus en torno a, a raíz de, en el transcurso de, con motivo de, a escasos metros, de cara a, regional and register contrasts (en la mañana in América against por la mañana in Spain), set phrases of time and place (a la vuelta de la esquina, de buenas a primeras).',
+      C2: 'Everything of C1 plus the finest contrasts (sobre / encima de, bajo / debajo de, tras / detrás de / después de), literary and formal uses, and idioms built on prepositions of place and time.',
+    },
+    gap: 'The gap replaces the preposition: a single one, a contraction (al, del) or a whole locution (encima de, a partir de). No hint after the gap — the learner must remember the preposition.',
+    options: 'other prepositions a learner confuses here (en / a / por / para / de / desde, encima de / sobre / debajo de, hace / desde hace / desde), or the same preposition without the contraction (a el, de el), — only one is correct in this sentence. When two prepositions are both acceptable in a context (sobre la mesa / encima de la mesa, en la mañana in América), never offer the second as a wrong option. A wrong option must be wrong in grammar, or ruled out by a word in the sentence — not merely a different meaning: in "El gato duerme ___ la mesa" both encima de and debajo de stand, so add "en el suelo, a la sombra" or offer distractors that cannot fit (en de, a, desde)',
+    entries: 'a preposition with its use and an example, like "a + destino: voy a Madrid", "el + día de la semana: el lunes", "desde hace + tiempo: vivo aquí desde hace dos años"; "translation" explains the use briefly',
+  },
+  'dr-tildes': {
+    subject: 'the Spanish written accent (la tilde) under the current RAE rules (Ortografía 2010)',
+    levels: {
+      A1: 'Only the commonest diacritic pairs tú / tu, él / el, sí / si, mí / mi, más / mas; interrogatives and exclamatives qué, cómo, dónde, cuándo, quién, cuál; and very frequent words with a tilde (también, café, aquí, está, adiós).',
+      A2: 'Everything of A1 plus the basic rule of agudas, llanas and esdrújulas, the pretérito forms (habló / hablo, compré / compre, llegó), the hiato with í and ú (día, país, frío, Raúl), interrogatives in indirect questions (no sé dónde vive).',
+      B1: 'Everything of A2 plus té / te, sé / se, dé / de, aún / aun, qué / que and cuándo / cuando contrasts, plurals that gain or lose a tilde (joven / jóvenes, canción / canciones, examen / exámenes), imperatives and infinitives with pronouns attached (dímelo, cómpralo, dárselo).',
+      B2: 'Everything of B1 plus adverbs in -mente keeping the tilde of the adjective (fácilmente, rápidamente), monosyllables never written with a tilde (fue, fui, dio, vio, ti, vi), solo and the demonstratives (este, ese, aquel) without a tilde, porque / porqué / por qué / por que, diphthongs and triphthongs (vi-vió, a-ve-ri-guáis), compound words (decimoséptimo, tiovivo).',
+      C1: 'Everything of B2 plus monosyllables by spelling (guion, truhan, crie, lie), capitals keep the tilde (Ángel, ÁFRICA), o between numbers without a tilde, adonde / adónde, aun / aún with full meaning contrasts, Latin and foreign words.',
+      C2: 'Everything of C1 plus the finest cases: quién / quien and cuál / cual in relative against indirect interrogative use, como / cómo in "¿cómo que no?", the tilde in verb forms with enclitics and in the vos forms (decís, sabés, contame), place names and personal names.',
+    },
+    gap: 'The gap replaces one word that is the point of the drill — with or without a tilde. Right after the gap always put the same word without any tilde in brackets as a hint, like "Ayer mi hermano ___ (hablo) con mi madre." for the answer "habló", "Dame ___ (tu) cuaderno." for the answer "tu". The sentence around the gap must decide the spelling by its meaning, and the sentence must make full sense with the answer in it. Relative quien only after a preposition or a comma (la chica con quien hablé), never "el chico quien llamó".',
+    count: 'real spellings of the same word, one of them exactly "answer": for a diacritic pair (tu / tú, el / él, que / qué, aun / aún) just these two options; for other words three or four, so the other options are',
+    options: 'the same letters with the tilde removed, added or moved to another vowel (hablo / habló / háblo, dia / día / diá, examen / exámen / examén), — only the acute accent (á é í ó ú), never a grave or circumflex accent, never two tildes in one word, never doubled or changed letters. Only one spelling is correct in this sentence. Since the RAE still allows sólo and éste where a sentence is ambiguous, never offer sólo, éste, ése, aquél as wrong options — practise those rules on other words',
+    entries: 'a rule or a pair with an example, like "tú (pronombre) / tu (posesivo): tú tienes tu libro", "esdrújulas — siempre con tilde: médico, música", "habló (pretérito) / hablo (presente)"; "translation" explains the rule briefly; "transcription" is of the example words only',
+  },
+  'dr-praepositionen': {
+    subject: 'German prepositions of place and time with their cases',
+    levels: {
+      A1: 'Only in, nach, zu, bei, aus, von for place (in Berlin, nach Hause / zu Hause, nach Spanien / in die Schweiz, zum Arzt / beim Arzt, aus Polen) and um, am, im for time (um acht Uhr, am Montag, im Mai, im Sommer), with the contractions im, am, zum, zur, beim.',
+      A2: 'Everything of A1 plus the two-way prepositions in, an, auf, über, unter, vor, hinter, neben, zwischen: Wo? + Dativ against Wohin? + Akkusativ (in der Küche / in die Küche), the verb pairs liegen / legen, stehen / stellen, sitzen / setzen, hängen; contractions ins, ans; time: vor, nach, seit, ab, bis, von … bis, in + Dativ (in zwei Tagen), für.',
+      B1: 'Everything of A2 plus gegenüber, entlang, durch, um … herum, bis zu; time: während, innerhalb, außerhalb, seit against vor against ab, zwischen against von … bis, gegen (gegen acht Uhr), über (über Nacht); the case after each preposition.',
+      B2: 'Everything of B1 plus the genitive prepositions of place and time (innerhalb, außerhalb, oberhalb, unterhalb, diesseits, jenseits, während, anlässlich), the colloquial dative after them, ab + Dativ against ab + Akkusativ with time, an against auf against in with places and institutions (an der Uni, auf der Post, in der Schule).',
+      C1: 'Everything of B2 plus binnen, längs, zeit seines Lebens, postpositions and circumpositions (der Straße entlang, von … an, von … aus, um … willen with time), fixed phrases (zu Beginn, am Rande, im Laufe, unter der Woche) and formal written variants.',
+      C2: 'Everything of C1 plus the finest contrasts of meaning and register between prepositions of place and time, regional variants (am Wochenende / übers Wochenende, auf Urlaub in Austria), literary uses and idioms.',
+    },
+    gap: 'The gap replaces only the preposition together with the article that shows the case (in der, in die, auf den, mit dem), or the contraction (im, ins, am, zum, beim), or the preposition alone when there is no article (nach, um, seit). The noun always stays in the sentence after the gap: "Ich bin ___ Küche." → "in der", "Wir fliegen ___ Spanien." → "nach". With entlang the gap is the article only when it shows the case (___ Fluss entlang → den), otherwise drill another preposition. No hint after the gap.',
+    options: 'other prepositions a learner confuses here (in / nach / zu, an / auf / in, vor / seit / ab), or the same preposition with the article in the wrong case (in der / in die / in den), — only one is correct in this sentence. A contraction and its full form (zum / zu dem, vom / von dem, im / in dem) are both right, and so are two ways of saying the same (gegen acht Uhr / um acht Uhr herum) — never offer one as a wrong option against the other. With verbs of motion several prepositions often fit (durch den Park / um den Park / in den Park): make the sentence rule out all but one, or choose other distractors. A wrong option must be wrong in grammar, or ruled out by a word in the sentence — not merely a different meaning: "Die Bänke stehen ___ den Bäumen" lets zwischen and unter both stand, so either add "links und rechts" or drop unter; "Wir treffen uns ___ acht Uhr, so ungefähr" rules out um.',
+    entries: 'a preposition with its case and an example, like "in + Dativ (Wo?): Ich bin in der Küche", "in + Akkusativ (Wohin?): Ich gehe in die Küche", "seit + Dativ: seit einem Jahr"; "translation" explains the use briefly',
+  },
+  'dr-verbpraep': {
+    subject: 'German verbs with fixed prepositions (Verben mit Präpositionen), the case after them and the da- / wo- compounds',
+    levels: {
+      A1: 'Only the first verbs: warten auf + Akk., sprechen mit + Dat., spielen mit, wohnen bei, fahren mit + transport, fragen nach.',
+      A2: 'warten auf, sich freuen auf, sich freuen über, denken an, sprechen mit / über, sich interessieren für, Angst haben vor, fragen nach, telefonieren mit, helfen bei, erzählen von, träumen von, Lust haben auf, sich kümmern um — each with its case.',
+      B1: 'Everything of A2 plus sich ärgern über, sich erinnern an, teilnehmen an, sich bewerben um / bei, sich entschuldigen bei / für, bitten um, abhängen von, achten auf, sich gewöhnen an, sich beschweren über / bei, sich verlassen auf, sich unterhalten über, sich beschäftigen mit; questions with wo- (Worauf wartest du? Auf wen wartest du?) and da-compounds (Ich freue mich darauf).',
+      B2: 'Everything of B1 plus adjectives with prepositions (stolz auf, zufrieden mit, abhängig von, interessiert an, gespannt auf, verantwortlich für), nouns with prepositions (Interesse an, Angst vor, Lust auf), verbs that change meaning with the preposition (bestehen aus / auf, sich halten an / für, leiden an / unter), da-compound as a correlate before a dass-clause or zu-infinitive (Ich warte darauf, dass…), verzichten auf, sich sehnen nach, zweifeln an.',
+      C1: 'Everything of B2 plus less frequent and formal verbs (sich auseinandersetzen mit, sich berufen auf, beitragen zu, sich erkundigen nach, appellieren an, neigen zu), Nomen-Verb-Verbindungen with prepositions (in Frage kommen, zur Verfügung stehen, in Kauf nehmen), and the case after the preposition in all of them.',
+      C2: 'Everything of C1 plus the finest contrasts (sich freuen auf / über, sich ärgern über / auf, denken an / über / von), literary and archaic government, and idioms built on verbs with prepositions.',
+    },
+    gap: 'The gap replaces the preposition, or the preposition with the article or pronoun when that shows the case (auf den, an die, mit dem, über ihn), or the da- / wo-compound (darauf, worüber). No hint after the gap — the learner must remember the preposition.',
+    options: 'other prepositions that sound plausible with this verb or that belong to a similar verb (auf / an / über / für / um / von / nach / vor / mit), or the same preposition with the article in the wrong case (auf den / auf dem), or da- against wo- and the wrong da-compound (darauf / daran / darüber), — only one is correct in this sentence. A contraction and its full form (vom / von dem, beim / bei dem) are both right — never offer them against each other. When a verb takes two prepositions with different meanings (sich freuen auf / über, sich entschuldigen bei / für), the sentence must make clear which one is needed',
+    entries: 'a verb (or adjective, noun) with its preposition and case and an example, like "warten auf + Akk.: Ich warte auf den Bus", "sich erinnern an + Akk.: Ich erinnere mich an den Urlaub", "abhängen von + Dat.: Das hängt vom Wetter ab"; "translation" gives the meaning briefly; "transcription" is of the verb with its preposition only (/ˈvaʁtn̩ aʊ̯f/), never of "+ Akk." or the example. Group the sections by preposition or by meaning, and a section title must be true of every entry in it',
+  },
 };
 
 function buildDrillVocabularyPrompt(language: LanguageCode, spec: DrillSpec, level: Level, title: string): string {
@@ -694,7 +753,7 @@ function buildDrillVocabularyPrompt(language: LanguageCode, spec: DrillSpec, lev
     '- "drills": twenty sentences covering all the entries, each entry at least once:',
     `  - "sentence": a natural, everyday sentence in ${englishName} at the level, with "___" exactly once. ${spec.gap}`,
     '  - "answer": the exact words that were replaced.',
-    `  - "options": four different options, one of them exactly "answer"; the other three are ${spec.options}. Check every distractor: if it would also give a correct sentence, replace it — exactly one option may fit.`,
+    `  - "options": ${spec.count ?? 'four different options, one of them exactly "answer"; the other three are'} ${spec.options}. Check every distractor: if it would also give a correct sentence, replace it — exactly one option may fit.`,
     `  - "translation": the whole sentence with the gap filled, translated into ${EXPLANATION_LANGUAGE}.`,
     '  - "term": the "term" of the entry this sentence practises, exactly as written in the sections.',
     '- Every sentence must be correct, natural and in use today — a learner will repeat it aloud.',
