@@ -9,7 +9,7 @@ import {
   WPM_BLEND,
   type SpeechMode,
 } from '../config';
-import { explainCorrection, generateHomework, openConversation, respond } from '../services/llm';
+import { explainCorrection, generateHomework, openConversation, recordWeakSpots, respond } from '../services/llm';
 import { synthesize } from '../services/tts';
 import {
   archiveSession,
@@ -397,6 +397,10 @@ export function useConversation() {
     };
 
     setArchive(await archiveSession(session, current));
+
+    // Ошибки беседы раскладываются по тренажёрам фоном: закрыть беседу можно сразу.
+    const corrections = current.flatMap((message) => message.corrections ?? []);
+    void recordWeakSpots(language, corrections, session.endedAt).catch(() => undefined);
 
     // Задание переезжает с беседы: ключ языка освобождается под следующую.
     if (homework) {

@@ -22,6 +22,8 @@ interface Props {
   topicId: string | null;
   /** Показать и темы с упражнениями — фразовые глаголы, тренажёры; они только в «Словах». */
   exercises?: boolean;
+  /** Сколько ошибок из бесед у каждого тренажёра — такие идут первыми, со счётчиком. */
+  mistakeCounts?: Record<string, number>;
   onSelect: (id: string | null) => void;
   onClose: () => void;
 }
@@ -30,9 +32,9 @@ interface Props {
 const FREE: Topic = { id: '', label: t.freeTopic };
 
 /** Ролевые ситуации и обычные темы читаются по-разному — разводим заголовками. */
-type Row = { kind: 'header'; title: string } | { kind: 'topic'; topic: Topic };
+type Row = { kind: 'header'; title: string } | { kind: 'topic'; topic: Topic; mine?: boolean };
 
-export function TopicPicker({ visible, anchor, language, topicId, exercises, onSelect, onClose }: Props) {
+export function TopicPicker({ visible, anchor, language, topicId, exercises, mistakeCounts, onSelect, onClose }: Props) {
   const { theme } = useTheme();
   const styles = useStyles(createStyles);
 
@@ -42,9 +44,20 @@ export function TopicPicker({ visible, anchor, language, topicId, exercises, onS
     const talk = all.filter((topic) => topic.kind !== 'roleplay');
 
     const groups = exercises ? exerciseTopicGroups(language) : [];
+    // Тренажёры, где человек ошибался в беседах, — наверх, самые частые первыми.
+    const mine = groups
+      .flatMap((group) => group.topics)
+      .filter((topic) => (mistakeCounts?.[topic.id] ?? 0) > 0)
+      .sort((a, b) => (mistakeCounts?.[b.id] ?? 0) - (mistakeCounts?.[a.id] ?? 0));
 
     return [
       { kind: 'topic', topic: FREE },
+      ...(mine.length
+        ? [
+            { kind: 'header', title: t.sectionYourMistakes } as Row,
+            ...mine.map<Row>((topic) => ({ kind: 'topic', topic, mine: true })),
+          ]
+        : []),
       ...groups.flatMap<Row>((group) => [
         { kind: 'header', title: group.title },
         ...group.topics.map<Row>((topic) => ({ kind: 'topic', topic })),
@@ -56,7 +69,7 @@ export function TopicPicker({ visible, anchor, language, topicId, exercises, onS
       { kind: 'header', title: t.sectionTalk },
       ...talk.map<Row>((topic) => ({ kind: 'topic', topic })),
     ];
-  }, [language, exercises]);
+  }, [language, exercises, mistakeCounts]);
 
   return (
     <ZoomModal visible={visible} anchor={anchor} onRequestClose={onClose}>
@@ -73,7 +86,7 @@ export function TopicPicker({ visible, anchor, language, topicId, exercises, onS
           <FlatList
             data={data}
             keyExtractor={(row) =>
-              row.kind === 'header' ? `h-${row.title}` : row.topic.id || 'free'
+              row.kind === 'header' ? `h-${row.title}` : `${row.mine ? 'mine-' : ''}${row.topic.id || 'free'}`
             }
             contentContainerStyle={styles.list}
             renderItem={({ item: row }) => {
@@ -83,6 +96,7 @@ export function TopicPicker({ visible, anchor, language, topicId, exercises, onS
 
               const item = row.topic;
               const isFree = item.id === '';
+              const count = mistakeCounts?.[item.id] ?? 0;
               const active = isFree ? topicId === null : topicId === item.id;
               return (
                 <Pressable
@@ -98,6 +112,7 @@ export function TopicPicker({ visible, anchor, language, topicId, exercises, onS
                     {isFree ? t.freeTopicHint : topicGloss(item.id)}
                   </Text>
                   </View>
+                  {count > 0 && !active && <Text style={styles.count}>{t.mistakes(count)}</Text>}
                   {active && <Text style={styles.check}>✓</Text>}
                 </Pressable>
               );
@@ -152,5 +167,6 @@ const createStyles = (theme: Theme) =>
     labelActive: { color: theme.accentText },
     gloss: { color: theme.textMuted, fontSize: 13 },
     glossActive: { color: theme.accentText, opacity: 0.85 },
+    count: { color: theme.correctionText, fontSize: 13, fontWeight: '600' },
     check: { color: theme.accentText, fontSize: 17, fontWeight: '700' },
   });

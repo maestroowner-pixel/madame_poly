@@ -26,6 +26,8 @@ import type {
   EnglishVariant,
   Profile,
   TurnMode,
+  WeakSpot,
+  WeakSpotMistake,
 } from './types';
 
 const KEY_LEVELS = 'polyglotta:levels';
@@ -55,6 +57,7 @@ const keyVocabulary = (language: LanguageCode, level: Level, topicId: string | n
   `polyglotta:vocabulary:${language}:${level}:${topicId ?? 'free'}`;
 const keyVocabKnown = (language: LanguageCode) => `polyglotta:vocabKnown:${language}`;
 const keyVocabReview = (language: LanguageCode) => `polyglotta:vocabReview:${language}`;
+const keyWeakSpots = (language: LanguageCode) => `polyglotta:weakSpots:${language}`;
 const KEY_CARD_DIRECTION = 'polyglotta:cardDirection';
 const KEY_REMINDERS = 'polyglotta:reminders';
 const keyExamLevel = (language: LanguageCode) => `polyglotta:examLevel:${language}`;
@@ -624,6 +627,39 @@ export async function loadReviewCards(language: LanguageCode): Promise<ReviewCar
 
 export async function saveReviewCards(language: LanguageCode, cards: ReviewCard[]): Promise<void> {
   await write(keyVocabReview(language), JSON.stringify(cards));
+}
+
+/** Слабые места по тренажёрам: ключ — идентификатор темы-тренажёра. */
+export async function loadWeakSpots(language: LanguageCode): Promise<Record<string, WeakSpot>> {
+  return parse(await AsyncStorage.getItem(keyWeakSpots(language)), {} as Record<string, WeakSpot>);
+}
+
+/** Сколько последних ошибок помнить у тренажёра: для листа хватает. */
+const WEAK_SPOT_MISTAKES = 10;
+
+/**
+ * Дописывает ошибки беседы к их тренажёрам. Одна и та же ошибка дважды не
+ * копится — «warte für» из двух бесед считается дважды, но в примерах одна.
+ */
+export async function addWeakSpots(
+  language: LanguageCode,
+  found: { drillId: string; mistake: WeakSpotMistake }[],
+): Promise<Record<string, WeakSpot>> {
+  const spots = await loadWeakSpots(language);
+  for (const { drillId, mistake } of found) {
+    const spot = spots[drillId] ?? { drillId, count: 0, lastAt: 0, mistakes: [] };
+    spots[drillId] = {
+      drillId,
+      count: spot.count + 1,
+      lastAt: Math.max(spot.lastAt, mistake.at),
+      mistakes: [mistake, ...spot.mistakes.filter((item) => item.original !== mistake.original)].slice(
+        0,
+        WEAK_SPOT_MISTAKES,
+      ),
+    };
+  }
+  await write(keyWeakSpots(language), JSON.stringify(spots));
+  return spots;
 }
 
 export async function loadCardDirection(): Promise<CardDirection> {

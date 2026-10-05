@@ -40,6 +40,7 @@ import {
   loadSpeechRate,
   loadVocabulary,
   loadVocabularyIndex,
+  loadWeakSpots,
   saveCardDirection,
   saveKnownWords,
   saveReviewCards,
@@ -56,6 +57,7 @@ import type {
   Vocabulary,
   VocabularyEntry,
   VocabularyIndexEntry,
+  WeakSpot,
 } from '../types';
 import { LEVELS } from '../types';
 
@@ -109,6 +111,8 @@ export function VocabularyScreen({ menu, language, level, onSelectLevel, topicId
   /** Тема списка своя: учить слова про аптеку можно и посреди бесед о Риме. */
   const [topic, setTopic] = useState<string | null>(topicId);
   const [pickerOpen, setPickerOpen] = useState(false);
+  /** Ошибки из бесед по тренажёрам — счётчики в выборе темы и упражнения из них. */
+  const [weakSpots, setWeakSpots] = useState<Record<string, WeakSpot>>({});
   const [pickerAnchor, setPickerAnchor] = useState<Anchor | null>(null);
   const topicRef = useRef<View>(null);
   /** Озвучка слова на время сеанса — второй раз за тем же не ходим. */
@@ -126,6 +130,7 @@ export function VocabularyScreen({ menu, language, level, onSelectLevel, topicId
     void loadKnownWords(language).then(setKnown);
     void loadReviewCards(language).then(setReview);
     void loadVocabularyIndex().then(setIndex);
+    void loadWeakSpots(language).then(setWeakSpots);
   }, [language, topicId]);
 
   useEffect(() => {
@@ -196,11 +201,15 @@ export function VocabularyScreen({ menu, language, level, onSelectLevel, topicId
     setConfirmRebuild(false);
     try {
       const chosen = findTopic(language, topic);
+      // Ошибки читаем заново: беседа могла закончиться, пока экран был открыт.
+      const spots = await loadWeakSpots(language);
+      setWeakSpots(spots);
       const next = await generateVocabulary({
         language,
         level,
         topic: chosen ?? undefined,
         variant: await variantFor(),
+        mistakes: topic && isExerciseTopic(language, topic) ? spots[topic]?.mistakes : undefined,
       });
       setVocabulary(next);
       setCollapsed(new Set());
@@ -369,6 +378,12 @@ export function VocabularyScreen({ menu, language, level, onSelectLevel, topicId
     { key: 'quiz', label: t.wordsTabQuiz },
   ];
   const tabIndex = Math.max(0, tabs.findIndex((item) => item.key === tab));
+  /** Ошибки по теме, сделанные после того, как лист собран, — повод пересобрать. */
+  const freshMistakes =
+    phrasal && vocabulary && topic
+      ? (weakSpots[topic]?.mistakes.filter((mistake) => mistake.at > vocabulary.createdAt).length ?? 0)
+      : 0;
+  const mistakeCounts = Object.fromEntries(Object.values(weakSpots).map((spot) => [spot.drillId, spot.count]));
   /** Стрелки листают по кругу: с последнего раздела — на первый. */
   const shiftTab = (step: number) => setTab(tabs[(tabIndex + step + tabs.length) % tabs.length].key);
 
@@ -425,6 +440,18 @@ export function VocabularyScreen({ menu, language, level, onSelectLevel, topicId
             </Pressable>
           )}
         </View>
+
+        {freshMistakes > 0 && (
+          <Pressable onPress={() => void build()} disabled={busy} style={styles.reminder}>
+            <Text style={styles.reminderText}>
+              {t.weakSpotNew(freshMistakes)} · {t.weakSpotRebuild}
+            </Text>
+            <Text style={styles.reminderChevron}>›</Text>
+          </Pressable>
+        )}
+        {vocabulary?.fromMistakes && freshMistakes === 0 ? (
+          <Text style={styles.fromMistakes}>{t.weakSpotUsed(vocabulary.fromMistakes)}</Text>
+        ) : null}
 
         {due > 0 && tab !== 'review' && (
           <Pressable onPress={() => setTab('review')} style={styles.reminder}>
@@ -704,6 +731,7 @@ export function VocabularyScreen({ menu, language, level, onSelectLevel, topicId
         language={language}
         topicId={topic}
         exercises
+        mistakeCounts={mistakeCounts}
         onSelect={setTopic}
         onClose={() => setPickerOpen(false)}
       />
@@ -759,6 +787,7 @@ const createStyles = (theme: Theme) =>
       borderWidth: 1,
       borderColor: theme.correctionBorder,
     },
+    fromMistakes: { color: theme.textMuted, fontSize: 13, marginBottom: 8 },
     reminderText: { color: theme.correctionText, fontSize: 14, fontWeight: '600', flex: 1 },
     reminderChevron: { color: theme.correctionText, fontSize: 18, lineHeight: 20 },
     pager: { flexDirection: 'row', alignItems: 'center', gap: 4 },

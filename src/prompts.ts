@@ -3,7 +3,7 @@ import { examFormat, examPlan, placeOfAnswer } from './exam';
 import { unitTitles } from './grammar';
 import { LANGUAGES } from './languages';
 import { phrasalEntriesFor, type PhrasalGroup } from './phrasalVerbs';
-import { ROLEPLAY_SCENES, phrasalGroupOf, type Topic } from './topics';
+import { DRILL_TOPICS, PHRASAL_TOPICS, ROLEPLAY_SCENES, phrasalGroupOf, type Topic } from './topics';
 import type {
   Correction,
   DialogueTurn,
@@ -563,7 +563,12 @@ export function pronunciationName(language: LanguageCode, variant?: EnglishVaria
  * варианты — та же частица с другими глаголами или тот же глагол с другими
  * частицами: так видно, что учится именно сочетание.
  */
-function buildPhrasalVocabularyPrompt(group: PhrasalGroup, level: Level, variant?: EnglishVariant): string {
+function buildPhrasalVocabularyPrompt(
+  group: PhrasalGroup,
+  level: Level,
+  variant?: EnglishVariant,
+  mistakes?: Correction[],
+): string {
   const terms = phrasalEntriesFor(group, level);
   const distractors =
     group.by === 'verb'
@@ -586,6 +591,10 @@ function buildPhrasalVocabularyPrompt(group: PhrasalGroup, level: Level, variant
     `  - "options": four different options, one of them exactly "answer". The other three are ${distractors}, each clearly wrong in this sentence. Never a synonym or near-synonym of the answer, even one from this sheet (cook up / dream up, ramp up / step up, egg on / spur on, count on / bank on): it would be right too. Check every distractor: if it would also give a correct, natural sentence with a different meaning, replace it — exactly one option may fit.`,
     `  - "translation": the whole sentence with the gap filled, translated into ${EXPLANATION_LANGUAGE}.`,
     '  - "term": the "term" of the entry, exactly as written in the sections.',
+    ...mistakeRules(
+      mistakes,
+      'the drills of the entries involved (add a phrasal verb of this group the learner got wrong as an extra entry if it is not in the list)',
+    ),
     '- Every sentence must be correct, natural and in use today — a learner will repeat it aloud.',
   ].join('\n');
 }
@@ -794,7 +803,26 @@ const DRILLS: Record<string, DrillSpec | ((language: LanguageCode) => DrillSpec 
   },
 };
 
-function buildDrillVocabularyPrompt(language: LanguageCode, spec: DrillSpec, level: Level, title: string): string {
+/**
+ * Ошибки человека из бесед — к листу тренажёра: упражнения строятся на тех же
+ * правилах, но в новых фразах. Свою фразу заучивать незачем, а правило — да.
+ */
+function mistakeRules(mistakes: Correction[] | undefined, unit: string): string[] {
+  if (!mistakes?.length) return [];
+  return [
+    `- This learner made these mistakes in conversation (said → correct): ${mistakes
+      .map((mistake) => `"${mistake.original}" → "${mistake.corrected}"`)
+      .join('; ')}. The sheet covers the rules behind them, even where they lie beyond the level, and ${unit} practise exactly these rules — in new everyday sentences, never the learner's own sentence. Where the drill is a choice, the learner's own wrong form is one of the wrong options.`,
+  ];
+}
+
+function buildDrillVocabularyPrompt(
+  language: LanguageCode,
+  spec: DrillSpec,
+  level: Level,
+  title: string,
+  mistakes?: Correction[],
+): string {
   const { englishName } = LANGUAGES[language];
   return [
     `You are a ${englishName} teacher compiling a practice sheet on ${spec.subject} for a CEFR ${level} learner, with exercises.`,
@@ -814,6 +842,7 @@ function buildDrillVocabularyPrompt(language: LanguageCode, spec: DrillSpec, lev
     `  - "translation": the whole sentence with the gap filled, translated into ${EXPLANATION_LANGUAGE}.`,
     '  - "term": the "term" of the entry this sentence practises, exactly as written in the sections.',
     '- Every sentence must be correct, natural and in use today — a learner will repeat it aloud.',
+    ...mistakeRules(mistakes, 'at least half of the drills (one or two per mistake)'),
     '- Finally re-read every drill as a learner who sees only the sentence and the four options: exactly one option must be right, and the answer must be that one. Fix or replace any drill that fails.',
   ].join('\n');
 }
@@ -823,12 +852,13 @@ export function buildVocabularyPrompt(
   level: Level,
   topic?: Topic,
   variant?: EnglishVariant,
+  mistakes?: Correction[],
 ): string {
   const group = topic?.kind === 'phrasal' ? phrasalGroupOf(topic.id) : null;
-  if (language === 'en' && group) return buildPhrasalVocabularyPrompt(group, level, variant);
+  if (language === 'en' && group) return buildPhrasalVocabularyPrompt(group, level, variant, mistakes);
   const found = topic?.kind === 'drill' ? DRILLS[topic.id] : undefined;
   const drill = typeof found === 'function' ? found(language) : found;
-  if (topic && drill) return buildDrillVocabularyPrompt(language, drill, level, topic.label);
+  if (topic && drill) return buildDrillVocabularyPrompt(language, drill, level, topic.label, mistakes);
 
   const { englishName } = LANGUAGES[language];
   const phrasal = language === 'en' ? PHRASAL_GUIDANCE[level] : undefined;
@@ -863,6 +893,44 @@ export function buildVocabularyPrompt(
  * Транскрипция для набора, составленного до того, как она появилась: один
  * запрос на весь лист, чтобы не платить за каждое слово отдельно.
  */
+/**
+ * Тренажёры языка с тем, что в них входит, — для разметки ошибок беседы.
+ * Описание — то же, с чего начинается лист, чтобы граница была одна.
+ */
+export function drillCatalog(language: LanguageCode): { id: string; about: string }[] {
+  const drills = (DRILL_TOPICS[language] ?? []).flatMap((topic) => {
+    const found = DRILLS[topic.id];
+    const spec = typeof found === 'function' ? found(language) : found;
+    return spec ? [{ id: topic.id, about: spec.subject }] : [];
+  });
+  const phrasal =
+    language === 'en'
+      ? PHRASAL_TOPICS.flatMap((topic) => {
+          const group = phrasalGroupOf(topic.id);
+          return group
+            ? [{ id: topic.id, about: `phrasal verbs ${group.by === 'verb' ? 'of the verb' : 'with the particle'} "${group.title}", like ${group.entries.slice(0, 6).map(([term]) => term).join(', ')}` }]
+            : [];
+        })
+      : [];
+  return [...drills, ...phrasal];
+}
+
+/**
+ * Разметка ошибок беседы по тренажёрам: какая ошибка — на правило какого
+ * тренажёра. Ошибки не из тренажёров (лексика, порядок слов вне правила)
+ * остаются без пары — для них есть домашнее задание по беседе.
+ */
+export function buildMistakeSortPrompt(language: LanguageCode, catalog: { id: string; about: string }[]): string {
+  const { englishName } = LANGUAGES[language];
+  return [
+    `You sort a ${englishName} learner's mistakes into grammar drills.`,
+    'Drills:',
+    ...catalog.map((drill) => `- ${drill.id}: ${drill.about}`),
+    '',
+    'For each numbered mistake (said → correct) give the id of the drill whose rules the mistake breaks, or "none" when no drill covers it — a wrong word, a slip, word order outside these rules. A drill fits only when practising it would prevent exactly this mistake. One drill per mistake at most.',
+  ].join('\n');
+}
+
 /**
  * Второй проход по упражнениям тренажёра. Составляя двадцать предложений,
  * модель не замечает, что неверный вариант тоже верен по смыслу

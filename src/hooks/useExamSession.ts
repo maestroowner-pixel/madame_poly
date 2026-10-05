@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { EXAM_MAX_TURN_MS, EXAM_SILENCE_HOLD_MS, type SpeechMode } from '../config';
 import { examAnswers, findExamTopic, partOfAnswer } from '../exam';
-import { examinerTurn, reviewExam } from '../services/llm';
+import { examinerTurn, recordWeakSpots, reviewExam } from '../services/llm';
 import { synthesize } from '../services/tts';
 import {
   deleteExamSession,
@@ -171,6 +171,8 @@ export function useExamSession({ language, level, turnMode, speechRate, name }: 
         level: current.level,
       });
       update((item) => ({ ...item, report, errorCount: report.errors.length }));
+      // Ошибки экзамена — туда же, к тренажёрам; осечка здесь разбору не мешает.
+      void recordWeakSpots(current.language, report.errors).catch(() => undefined);
     } catch (e: unknown) {
       setError(errorText(e));
     } finally {

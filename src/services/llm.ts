@@ -19,6 +19,8 @@ import {
   buildListeningPrompt,
   buildTranscriptionPrompt,
   buildDrillCheckPrompt,
+  buildMistakeSortPrompt,
+  drillCatalog,
   buildVocabularyPrompt,
   buildSystemPrompt,
   buildWritingPrompt,
@@ -53,6 +55,7 @@ import {
   type WritingTask,
 } from '../types';
 import { joinSplitGap } from '../phrasal';
+import { addWeakSpots } from '../storage';
 import { t } from '../i18n';
 
 const CorrectionSchema = z.object({
@@ -906,8 +909,10 @@ export async function generateVocabulary(params: {
   level: Level;
   topic?: Topic;
   variant?: EnglishVariant;
+  /** Ошибки из бесед по этому тренажёру — часть упражнений строится на них. */
+  mistakes?: Correction[];
 }): Promise<Vocabulary> {
-  const { language, level, topic, variant } = params;
+  const { language, level, topic, variant, mistakes } = params;
   /** Фразовые глаголы и тренажёры: лист с упражнениями — схема шире. */
   const phrasal = topic?.kind === 'phrasal' || topic?.kind === 'drill';
 
@@ -915,7 +920,7 @@ export async function generateVocabulary(params: {
     client.messages.parse({
       model: CLAUDE_MODEL,
       max_tokens: 16384,
-      system: buildVocabularyPrompt(language, level, topic, variant),
+      system: buildVocabularyPrompt(language, level, topic, variant, mistakes),
       // Рассуждение здесь пробовали: оно съедало потолок ответа (16384), и лист
       // обрывался. Точность тренажёров держит сам промпт — таблица падежей
       // глаголов, проверка каждого варианта.
@@ -960,6 +965,7 @@ export async function generateVocabulary(params: {
     dialogue: parsed.dialogue.map((line) => line.trim()).filter(Boolean),
     examples: parsed.examples.map((line) => line.trim()).filter(Boolean),
     drills: 'drills' in parsed ? await checkDrills(language, cleanDrills(parsed.drills, terms)) : undefined,
+    fromMistakes: mistakes?.length || undefined,
     createdAt: Date.now(),
   };
 }
@@ -1001,6 +1007,42 @@ async function checkDrills(language: LanguageCode, drills: PhrasalDrill[]): Prom
   } catch {
     return drills;
   }
+}
+
+const MistakeSortSchema = z.object({
+  matches: z.array(z.object({ number: z.number().int(), drill: z.string() })),
+});
+
+/**
+ * Ошибки законченной беседы — по тренажёрам: «warte für den Bus» уходит в
+ * «Verben mit Präpositionen». Отсюда счётчики в выборе темы и упражнения из
+ * своих ошибок. Не вышло — беда небольшая: ошибки остаются в задании по беседе.
+ */
+export async function recordWeakSpots(
+  language: LanguageCode,
+  corrections: Correction[],
+  at: number = Date.now(),
+): Promise<void> {
+  const catalog = drillCatalog(language);
+  if (corrections.length === 0 || catalog.length === 0) return;
+  const ids = new Set(catalog.map((drill) => drill.id));
+
+  const response = await metered(() =>
+    client.messages.parse({
+      model: CLAUDE_MODEL,
+      max_tokens: 2048,
+      system: buildMistakeSortPrompt(language, catalog),
+      thinking: { type: 'disabled' },
+      messages: [{ role: 'user', content: corrections.map((item, i) => `${i + 1}. "${item.original}" → "${item.corrected}"`).join('\n') }],
+      output_config: { format: zodOutputFormat(MistakeSortSchema) },
+    }),
+  );
+
+  const found = (response.parsed_output?.matches ?? []).flatMap(({ number, drill }) => {
+    const correction = corrections[number - 1];
+    return correction && ids.has(drill) ? [{ drillId: drill, mistake: { ...correction, at } }] : [];
+  });
+  if (found.length > 0) await addWeakSpots(language, found);
 }
 
 const TranscriptionSchema = z.object({

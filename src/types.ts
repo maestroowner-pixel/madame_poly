@@ -31,6 +31,25 @@ export interface Correction {
   details?: string;
 }
 
+/** Ошибка из беседы, отнесённая к тренажёру, — с временем, когда сделана. */
+export interface WeakSpotMistake extends Correction {
+  at: number;
+}
+
+/**
+ * Слабое место: тренажёр, в правилах которого человек ошибался в беседах.
+ * Из этих ошибок собираются упражнения тренажёра.
+ */
+export interface WeakSpot {
+  /** Идентификатор темы-тренажёра: dr-verbpraep, pv-get. */
+  drillId: string;
+  /** Сколько всего ошибок в нём за всё время. */
+  count: number;
+  lastAt: number;
+  /** Последние ошибки, свежие первыми, — не больше десяти. */
+  mistakes: WeakSpotMistake[];
+}
+
 /** Тип упражнения — от него зависит, как показывать задание. */
 export type ExerciseKind = 'fill' | 'fix' | 'translate';
 
@@ -316,6 +335,8 @@ export interface Vocabulary {
   examples: string[];
   /** Упражнения на пропуск — только у тем фразовых глаголов. */
   drills?: PhrasalDrill[];
+  /** Сколько ошибок из бесед легло в упражнения тренажёра; нет — лист обычный. */
+  fromMistakes?: number;
   createdAt: number;
 }
 

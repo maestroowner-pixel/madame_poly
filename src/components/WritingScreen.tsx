@@ -20,7 +20,7 @@ import { measureAnchor, type Anchor } from '../anchor';
 import { t } from '../i18n';
 import { errorText } from '../errors';
 import { CONTENT_MAX_WIDTH } from '../layout';
-import { generateHomework, generateWritingTask, reviewWriting } from '../services/llm';
+import { generateHomework, generateWritingTask, recordWeakSpots, reviewWriting } from '../services/llm';
 import {
   EMPTY_WRITING,
   loadWriting,
@@ -117,6 +117,8 @@ export function WritingScreen({ menu, language, level, onSelectLevel, topicId }:
     try {
       const review = await reviewWriting({ text: state.text, task: state.task });
       const next = { ...state, review };
+      // Ошибки письма — к тренажёрам, как и ошибки речи; фоном, проверке не мешает.
+      void recordWeakSpots(language, review.corrections).catch(() => undefined);
       setState(next);
       await saveWriting(language, next);
     } catch (e: unknown) {
