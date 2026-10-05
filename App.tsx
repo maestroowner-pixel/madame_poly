@@ -37,7 +37,8 @@ import { Paywall } from './src/components/Paywall';
 import { useSubscription } from './src/hooks/useSubscription';
 import { TalkHeader } from './src/components/TalkHeader';
 import { TutorStrip } from './src/components/TutorStrip';
-import { VocabularyScreen } from './src/components/VocabularyScreen';
+import { TodayScreen } from './src/components/TodayScreen';
+import { VocabularyScreen, type Tab as WordsTab } from './src/components/VocabularyScreen';
 import { WritingScreen } from './src/components/WritingScreen';
 import { useAccount } from './src/hooks/useAccount';
 import { useConversation } from './src/hooks/useConversation';
@@ -49,7 +50,7 @@ import { FREE_TURNS_PER_TALK, UNLIMITED_TALKS, VOCABULARY_LANGUAGES } from './sr
 import { dueCards } from './src/review';
 import { ensureMicrophone } from './src/services/microphone';
 import { syncReminders } from './src/services/reminders';
-import { loadReviewCards } from './src/storage';
+import { loadReviewCards, recordActivity } from './src/storage';
 import { ThemeProvider, useStyles, useTheme, type Theme } from './src/theme';
 import { findTopic } from './src/topics';
 import type { Message } from './src/types';
@@ -71,7 +72,10 @@ function Screen() {
   const conversation = useConversation();
   const listRef = useRef<FlatList<Message>>(null);
   const [splashDone, setSplashDone] = useState(false);
-  const [section, setSection] = useState<Section>('talk');
+  // Приложение открывается планом дня: сразу видно, чем заняться.
+  const [section, setSection] = useState<Section>('today');
+  /** Куда открыть «Слова», когда в них ведут из «Сегодня». */
+  const [wordsFocus, setWordsFocus] = useState<{ topic: string | null; tab: WordsTab; at: number } | null>(null);
 
   const subscription = useSubscription();
   const [paywallOpen, setPaywallOpen] = useState(false);
@@ -237,6 +241,18 @@ function Screen() {
     }
   }, [section, conversation.language]);
 
+  // Минуты беседы — в учёт дня: на них держится задача «Беседа» в «Сегодня».
+  const sessionStarted = useRef<number | null>(null);
+  useEffect(() => {
+    if (conversation.sessionActive) {
+      sessionStarted.current = Date.now();
+      return;
+    }
+    const started = sessionStarted.current;
+    sessionStarted.current = null;
+    if (started) void recordActivity(conversation.language, { talkMs: Date.now() - started });
+  }, [conversation.sessionActive, conversation.language]);
+
   // Начали беседу — возвращаемся к ней и убираем всё открытое поверх.
   useEffect(() => {
     if (!conversation.sessionActive) return;
@@ -365,6 +381,18 @@ function Screen() {
             </>
           )}
 
+          {section === 'today' && (
+            <TodayScreen
+              menu={sectionMenu}
+              language={conversation.language}
+              onTalk={() => setSection('talk')}
+              onWords={(topic, tab) => {
+                setWordsFocus({ topic, tab, at: Date.now() });
+                setSection('words');
+              }}
+            />
+          )}
+
           {section === 'listen' && (
             <ListeningScreen
               menu={sectionMenu}
@@ -392,6 +420,7 @@ function Screen() {
               level={conversation.level}
               onSelectLevel={(next) => void conversation.setLevel(next)}
               topicId={conversation.topicId}
+              focus={wordsFocus}
             />
           )}
 

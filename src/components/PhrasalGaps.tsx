@@ -40,6 +40,8 @@ interface Props {
   speaking: string | null;
   onSpeak: (text: string) => void;
   onLater: (entries: VocabularyEntry[]) => void;
+  /** Ответ дан — для счёта упражнений дня. */
+  onAnswered?: () => void;
 }
 
 /**
@@ -48,7 +50,7 @@ interface Props {
  * под ним — предложение целиком с переводом и озвучкой. В конце — счёт и
  * кнопка отложить ошибки на повторение, как в тесте.
  */
-export function PhrasalGaps({ vocabulary, drills, speaking, onSpeak, onLater }: Props) {
+export function PhrasalGaps({ vocabulary, drills, speaking, onSpeak, onLater, onAnswered }: Props) {
   const styles = useStyles(createStyles);
 
   const [round, setRound] = useState<PhrasalDrill[] | null>(null);
@@ -121,6 +123,7 @@ export function PhrasalGaps({ vocabulary, drills, speaking, onSpeak, onLater }: 
     if (answered) return;
     setChosen(option);
     if (option !== drill.answer) setMistakes((prev) => [...prev, drill]);
+    onAnswered?.();
     // Правильное предложение — сразу вслух: так оно и запоминается.
     onSpeak(filled(drill));
   };

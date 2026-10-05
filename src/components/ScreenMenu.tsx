@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { Animated, Easing, Platform, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 
-import { BookIcon, ChatIcon, EarIcon, ExamIcon, GrammarIcon, HomeIcon, PenIcon, WordsIcon } from './icons';
+import { BookIcon, ChatIcon, CheckIcon, EarIcon, ExamIcon, GrammarIcon, HomeIcon, PenIcon, WordsIcon } from './icons';
 import { GlassPanel } from './GlassPanel';
 import { NeonButton } from './NeonButton';
 import { measureAnchor, type Anchor } from '../anchor';
@@ -9,10 +9,11 @@ import { BASE_BUTTON_SCALE, BUTTON_ICON_SCALE, BUTTON_SCALE, IS_TABLET, UI_SCALE
 import { t } from '../i18n';
 import { scaleStyles, useStyles, useTheme, type Theme } from '../theme';
 
-/** Восемь разделов приложения. Порядок — от ежедневного к редкому. */
-export type Screen = 'talk' | 'listen' | 'write' | 'words' | 'grammar' | 'exam' | 'book' | 'settings';
+/** Девять разделов приложения. Порядок — от ежедневного к редкому; «Сегодня» — план дня. */
+export type Screen = 'today' | 'talk' | 'listen' | 'write' | 'words' | 'grammar' | 'exam' | 'book' | 'settings';
 
 export const SCREEN_ICONS = {
+  today: CheckIcon,
   talk: ChatIcon,
   listen: EarIcon,
   write: PenIcon,
@@ -25,6 +26,7 @@ export const SCREEN_ICONS = {
 
 export function screenLabels(): Record<Screen, string> {
   return {
+    today: t.tabToday,
     talk: t.tabTalk,
     listen: t.tabListen,
     write: t.tabWrite,

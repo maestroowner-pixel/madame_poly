@@ -19,6 +19,8 @@ interface Props {
   speaking: string | null;
   onSpeak: (text: string) => void;
   onLater: (entries: VocabularyEntry[]) => void;
+  /** Ответ дан — для счёта упражнений дня. */
+  onAnswered?: () => void;
 }
 
 /**
@@ -27,7 +29,7 @@ interface Props {
  * сверяет глагол с частицей; верный вариант тут же читает вслух. Фразовый
  * глагол, сказанный в предложении, запоминается прочнее выбранного из списка.
  */
-export function PhrasalSpeak({ vocabulary, drills, speaking, onSpeak, onLater }: Props) {
+export function PhrasalSpeak({ vocabulary, drills, speaking, onSpeak, onLater, onAnswered }: Props) {
   const { theme } = useTheme();
   const styles = useStyles(createDrillStyles);
   const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
@@ -117,6 +119,7 @@ export function PhrasalSpeak({ vocabulary, drills, speaking, onSpeak, onLater }:
         const text = await transcribe(uri, vocabulary.language);
         setHeard(text);
         if (!saidRight(text, drill.answer)) setMistakes((prev) => [...prev, drill]);
+        onAnswered?.();
         onSpeak(filled(drill));
         return;
       }

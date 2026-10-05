@@ -41,6 +41,7 @@ import {
   loadVocabulary,
   loadVocabularyIndex,
   loadWeakSpots,
+  recordActivity,
   saveCardDirection,
   saveKnownWords,
   saveReviewCards,
@@ -69,13 +70,18 @@ interface Props {
   /** Сменить уровень — из шапки, по кругу и с подтверждением. */
   onSelectLevel: (level: Level) => void;
   topicId: string | null;
+  /**
+   * Куда открыть раздел — из «Сегодня»: повторение или пропуски тренажёра.
+   * Новое значение `at` — новый переход, даже в ту же тему.
+   */
+  focus?: { topic: string | null; tab: Tab; at: number } | null;
 }
 
 /**
  * Вкладки под темой: список, колода карточек, очередь повторения, тест. У темы
  * фразовых глаголов ещё две — пропуски и ответ голосом.
  */
-type Tab = 'list' | 'cards' | 'review' | 'quiz' | 'gaps' | 'speak';
+export type Tab = 'list' | 'cards' | 'review' | 'quiz' | 'gaps' | 'speak';
 
 /**
  * Слова: тематический список лексики под уровень — как лист, который учитель
@@ -85,7 +91,7 @@ type Tab = 'list' | 'cards' | 'review' | 'quiz' | 'gaps' | 'speak';
  * же растут карточки и тест; отложенные слова копятся в очереди повторения по
  * языку и возвращаются по расписанию — сначала часто, потом всё реже.
  */
-export function VocabularyScreen({ menu, language, level, onSelectLevel, topicId }: Props) {
+export function VocabularyScreen({ menu, language, level, onSelectLevel, topicId, focus }: Props) {
   const { theme } = useTheme();
   const styles = useStyles(createStyles);
   const player = useAudioPlayer(null);
@@ -133,6 +139,13 @@ export function VocabularyScreen({ menu, language, level, onSelectLevel, topicId
     void loadWeakSpots(language).then(setWeakSpots);
   }, [language, topicId]);
 
+  // Пришли из «Сегодня» — сразу в нужную тему и вкладку.
+  useEffect(() => {
+    if (!focus) return;
+    if (focus.topic !== null) setTopic(focus.topic);
+    setTab(focus.tab);
+  }, [focus?.at]);
+
   useEffect(() => {
     void loadCardDirection().then(setDirection);
     void loadSpeechRate().then((mode) => {
@@ -149,6 +162,8 @@ export function VocabularyScreen({ menu, language, level, onSelectLevel, topicId
   useEffect(() => {
     void loadVocabulary(language, level, topic).then((stored) => {
       setVocabulary(stored);
+      // Листа ещё нет — упражнениям не из чего взяться: начинаем со сборки.
+      if (!stored) setTab((current) => (current === 'gaps' || current === 'speak' ? 'list' : current));
       setCollapsed(new Set());
       setPeeked(new Set());
     });
@@ -292,6 +307,7 @@ export function VocabularyScreen({ menu, language, level, onSelectLevel, topicId
 
   /** Ответ в повторении: карточка сдвигается по лестнице или, выученная, уходит в «знаю». */
   const answerReview = (card: ReviewCard, next: ReviewCard | null) => {
+    void recordActivity(language, { cards: 1 });
     storeReview(
       next
         ? review.map((item) => (item.term === card.term ? next : item))
@@ -548,6 +564,7 @@ export function VocabularyScreen({ menu, language, level, onSelectLevel, topicId
               speaking={speaking}
               onSpeak={(text) => void speak(text)}
               onLater={postpone}
+              onAnswered={() => void recordActivity(language, { drills: 1 })}
             />
           ) : (
             <PhrasalSpeak
@@ -557,6 +574,7 @@ export function VocabularyScreen({ menu, language, level, onSelectLevel, topicId
               speaking={speaking}
               onSpeak={(text) => void speak(text)}
               onLater={postpone}
+              onAnswered={() => void recordActivity(language, { drills: 1 })}
             />
           ))}
 

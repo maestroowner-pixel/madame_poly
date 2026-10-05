@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { MAX_VOICES, SPEECH_RATES, type MaxVoice, type SpeechMode } from './config';
 import { LANGUAGE_CODES } from './languages';
+import { EMPTY_DAY, KEEP_DAYS, dayKey, type ActivityLog, type DayActivity } from './activity';
 import { touch } from './services/sync';
 import type {
   ArchivedSession,
@@ -58,6 +59,7 @@ const keyVocabulary = (language: LanguageCode, level: Level, topicId: string | n
 const keyVocabKnown = (language: LanguageCode) => `polyglotta:vocabKnown:${language}`;
 const keyVocabReview = (language: LanguageCode) => `polyglotta:vocabReview:${language}`;
 const keyWeakSpots = (language: LanguageCode) => `polyglotta:weakSpots:${language}`;
+const keyActivity = (language: LanguageCode) => `polyglotta:activity:${language}`;
 const KEY_CARD_DIRECTION = 'polyglotta:cardDirection';
 const KEY_REMINDERS = 'polyglotta:reminders';
 const keyExamLevel = (language: LanguageCode) => `polyglotta:examLevel:${language}`;
@@ -627,6 +629,35 @@ export async function loadReviewCards(language: LanguageCode): Promise<ReviewCar
 
 export async function saveReviewCards(language: LanguageCode, cards: ReviewCard[]): Promise<void> {
   await write(keyVocabReview(language), JSON.stringify(cards));
+}
+
+/** Занятия по дням для экрана «Сегодня» — по языку: план дня у каждого свой. */
+export async function loadActivity(language: LanguageCode): Promise<ActivityLog> {
+  return parse(await AsyncStorage.getItem(keyActivity(language)), {} as ActivityLog);
+}
+
+/**
+ * Прибавляет к сегодняшнему дню. Записи идут очередью: два ответа подряд не
+ * должны прочитать одно и то же и затереть друг друга.
+ */
+let activityQueue: Promise<unknown> = Promise.resolve();
+export function recordActivity(language: LanguageCode, delta: Partial<DayActivity>): Promise<ActivityLog> {
+  const next = activityQueue.then(async () => {
+    const log = await loadActivity(language);
+    const key = dayKey();
+    const day = log[key] ?? EMPTY_DAY;
+    log[key] = {
+      talkMs: day.talkMs + (delta.talkMs ?? 0),
+      cards: day.cards + (delta.cards ?? 0),
+      drills: day.drills + (delta.drills ?? 0),
+    };
+    const oldest = Object.keys(log).sort().slice(0, -KEEP_DAYS);
+    for (const stale of oldest) delete log[stale];
+    await write(keyActivity(language), JSON.stringify(log));
+    return log;
+  });
+  activityQueue = next.catch(() => undefined);
+  return next;
 }
 
 /** Слабые места по тренажёрам: ключ — идентификатор темы-тренажёра. */
