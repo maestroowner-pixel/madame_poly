@@ -1,4 +1,5 @@
 import { locale, t, type UiLocale } from './i18n';
+import { PHRASAL_GROUPS, phrasalGroup, type PhrasalGroup } from './phrasalVerbs';
 import type { LanguageCode } from './types';
 
 export interface Topic {
@@ -691,46 +692,22 @@ export const TOPICS: Record<LanguageCode, Topic[]> = {
 };
 
 /**
- * Фразовые глаголы — обязательная часть B2, и учить их удобнее гнездом от
- * одного глагола: get up, get over, get along. Это темы только «Слов» и только
- * английского: беседовать «о глаголе get» не о чем. Порядок — по частоте.
+ * Фразовые глаголы — обязательная часть B2, и учить их удобнее гнездом: от
+ * одного глагола (get up, get over) или от частицы (wake up, grow up). Это
+ * темы только «Слов» и только английского: беседовать «о глаголе get» не о
+ * чем. Сами глаголы и их уровни — в phrasalVerbs.ts.
  */
-export const PHRASAL_VERBS = [
-  'get',
-  'look',
-  'come',
-  'go',
-  'take',
-  'put',
-  'make',
-  'give',
-  'turn',
-  'bring',
-  'break',
-  'set',
-  'run',
-  'keep',
-  'carry',
-  'pick',
-  'fall',
-  'cut',
-  'hold',
-  'call',
-  'work',
-  'pull',
-] as const;
-
 const PHRASAL_PREFIX = 'pv-';
 
-export const PHRASAL_TOPICS: Topic[] = PHRASAL_VERBS.map((verb) => ({
-  id: `${PHRASAL_PREFIX}${verb}`,
-  label: `Phrasal verbs with “${verb}”`,
+export const PHRASAL_TOPICS: Topic[] = PHRASAL_GROUPS.map((group) => ({
+  id: `${PHRASAL_PREFIX}${group.key}`,
+  label: `Phrasal verbs with “${group.title}”`,
   kind: 'phrasal',
 }));
 
-/** Базовый глагол темы фразовых глаголов; null — тема обычная. */
-export function phrasalVerbOf(id: string | null): string | null {
-  return id?.startsWith(PHRASAL_PREFIX) ? id.slice(PHRASAL_PREFIX.length) : null;
+/** Гнездо темы фразовых глаголов; null — тема обычная (или гнездо из старого списка). */
+export function phrasalGroupOf(id: string | null): PhrasalGroup | null {
+  return id?.startsWith(PHRASAL_PREFIX) ? (phrasalGroup(id.slice(PHRASAL_PREFIX.length)) ?? null) : null;
 }
 
 /**
@@ -810,7 +787,7 @@ export function exerciseTopicGroups(language: LanguageCode): { title: string; to
 /** Находит тему по идентификатору — он хранится отдельно от списка. */
 export function findTopic(language: LanguageCode, id: string | null): Topic | null {
   if (!id) return null;
-  if (language === 'en' && phrasalVerbOf(id)) return PHRASAL_TOPICS.find((topic) => topic.id === id) ?? null;
+  if (language === 'en' && phrasalGroupOf(id)) return PHRASAL_TOPICS.find((topic) => topic.id === id) ?? null;
   return (
     TOPICS[language].find((topic) => topic.id === id) ??
     DRILL_TOPICS[language]?.find((topic) => topic.id === id) ??
@@ -898,7 +875,7 @@ const GLOSSES: Record<string, Record<UiLocale, string>> = {
 
 /** Название темы на языке интерфейса; пусто, если перевода нет. */
 export function topicGloss(id: string): string {
-  const verb = phrasalVerbOf(id);
-  if (verb) return t.phrasalTopic(verb);
+  const group = phrasalGroupOf(id);
+  if (group) return t.phrasalTopic(group.title);
   return GLOSSES[id]?.[locale] ?? '';
 }
