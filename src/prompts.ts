@@ -647,7 +647,53 @@ const conditionalsSpec = (language: LanguageCode): DrillSpec => ({
   entries: 'a pattern with its forms and a tiny example, like "if + past simple → would + infinitive: if I had time, I would go"; "translation" explains when it is used, briefly',
 });
 
-const DRILLS: Record<string, DrillSpec | ((language: LanguageCode) => DrillSpec)> = {
+/** Глаголы с предлогами — у каждого языка свои; без строки язык тренажёра не получает. */
+const VERB_PREP: Partial<Record<LanguageCode, DrillSpec>> = {
+  de: {
+    subject: 'German verbs with fixed prepositions (Verben mit Präpositionen), the case after them and the da- / wo- compounds',
+    levels: {
+      A1: 'Only the first verbs: warten auf + Akk., sprechen mit + Dat., spielen mit, wohnen bei, fahren mit + transport, fragen nach.',
+      A2: 'warten auf, sich freuen auf, sich freuen über, denken an, sprechen mit / über, sich interessieren für, Angst haben vor, fragen nach, telefonieren mit, helfen bei, erzählen von, träumen von, Lust haben auf, sich kümmern um — each with its case.',
+      B1: 'Everything of A2 plus sich ärgern über, sich erinnern an, teilnehmen an, sich bewerben um / bei, sich entschuldigen bei / für, bitten um, abhängen von, achten auf, sich gewöhnen an, sich beschweren über / bei, sich verlassen auf, sich unterhalten über, sich beschäftigen mit; questions with wo- (Worauf wartest du? Auf wen wartest du?) and da-compounds (Ich freue mich darauf).',
+      B2: 'Everything of B1 plus adjectives with prepositions (stolz auf, zufrieden mit, abhängig von, interessiert an, gespannt auf, verantwortlich für), nouns with prepositions (Interesse an, Angst vor, Lust auf), verbs that change meaning with the preposition (bestehen aus / auf, sich halten an / für, leiden an / unter), da-compound as a correlate before a dass-clause or zu-infinitive (Ich warte darauf, dass…), verzichten auf, sich sehnen nach, zweifeln an.',
+      C1: 'Everything of B2 plus less frequent and formal verbs (sich auseinandersetzen mit, sich berufen auf, beitragen zu, sich erkundigen nach, appellieren an, neigen zu), Nomen-Verb-Verbindungen with prepositions (in Frage kommen, zur Verfügung stehen, in Kauf nehmen), and the case after the preposition in all of them.',
+      C2: 'Everything of C1 plus the finest contrasts (sich freuen auf / über, sich ärgern über / auf, denken an / über / von), literary and archaic government, and idioms built on verbs with prepositions.',
+    },
+    gap: 'The gap replaces the preposition, or the preposition with the article or pronoun when that shows the case (auf den, an die, mit dem, über ihn), or the da- / wo-compound (darauf, worüber). No hint after the gap — the learner must remember the preposition.',
+    options: 'other prepositions that sound plausible with this verb or that belong to a similar verb (auf / an / über / für / um / von / nach / vor / mit), or the same preposition with the article in the wrong case (auf den / auf dem), or da- against wo- and the wrong da-compound (darauf / daran / darüber), — only one is correct in this sentence. A contraction and its full form (vom / von dem, beim / bei dem) are both right — never offer them against each other. When a verb takes two prepositions with different meanings (sich freuen auf / über, sich entschuldigen bei / für), the sentence must make clear which one is needed',
+    entries: 'a verb (or adjective, noun) with its preposition and case and an example, like "warten auf + Akk.: Ich warte auf den Bus", "sich erinnern an + Akk.: Ich erinnere mich an den Urlaub", "abhängen von + Dat.: Das hängt vom Wetter ab"; "translation" gives the meaning briefly; "transcription" is of the verb with its preposition only (/ˈvaʁtn̩ aʊ̯f/), never of "+ Akk." or the example. Group the sections by preposition or by meaning, and a section title must be true of every entry in it',
+  },
+  en: {
+    subject: 'English verbs, adjectives and nouns with fixed (dependent) prepositions — prepositional verbs, not phrasal verbs, which have their own topics',
+    levels: {
+      A1: 'Only the first verbs: listen to, look at, wait for, talk to, think about, ask for.',
+      A2: 'Everything of A1 plus depend on, belong to, agree with, apply for, arrive at / in, pay for, worry about, look for, look after, and the adjectives interested in, good at, afraid of.',
+      B1: 'Everything of A2 plus apologise for / to, approve of, believe in, complain about / to, concentrate on, consist of, insist on, rely on, succeed in, suffer from, take part in, deal with; adjectives proud of, tired of, responsible for, keen on, similar to, different from; nouns reason for, increase in, cause of, solution to; the -ing form after the preposition (I am looking forward to seeing you).',
+      B2: 'Everything of B1 plus verbs with an object and a preposition (accuse sb of, blame sb for, congratulate sb on, prevent sb from, protect sb from, remind sb of / about, warn sb about / against), object to + -ing, verbs whose meaning changes with the preposition (think of / about, dream of / about, hear of / from / about, result in / from, care about / for), adjective contrasts (good at / for / to, angry about / with), nouns (attitude to, demand for, effect on).',
+      C1: 'Everything of B2 plus formal verbs (abide by, adhere to, comply with, refrain from, account for, attribute sth to, capitalise on, contribute to, preside over), prepositional verbs in the passive (was looked after, is being dealt with) and the preposition at the end of questions and relative clauses (Who are you waiting for? the person to whom I spoke).',
+      C2: 'Everything of C1 plus the finest contrasts (agree to / with / on, different from / to / than, consist of / in, compare to / with), British against American use, literary use and idioms built on dependent prepositions.',
+    },
+    gap: 'The gap replaces only the preposition (or two words when the preposition is a pair, like "on behalf of"); the verb, adjective or noun stays in the sentence. No hint after the gap — the learner must remember the preposition.',
+    options: 'other prepositions that sound plausible with this word or belong to a similar word (on / in / at / for / of / to / with / about / from / by), — only one is correct in this sentence. When a word takes two prepositions with different meanings (think of / about, angry with / about, complain to / about), the sentence must make clear which one is needed; when both are correct and mean the same (bored with / of, different from / to, suffer from / with), never offer one as wrong against the other',
+    entries: 'a verb (or adjective, noun) with its preposition and an example, like "depend on: It depends on the weather", "interested in: She is interested in art"; "translation" gives the meaning briefly; "transcription" is of the word with its preposition only (/dɪˈpend ɒn/), never of the example. Group the sections by preposition or by meaning, and a section title must be true of every entry in it',
+  },
+  fr: {
+    subject: 'French verbs, adjectives and nouns with fixed prepositions (à, de and others), the contractions au, aux, du, des, and the pronouns y and en that replace them',
+    levels: {
+      A1: 'Only the first verbs: parler à / de, penser à, jouer à (sport, game) / jouer de (instrument), téléphoner à, avoir besoin de, with the contractions au, aux, du, des.',
+      A2: 'Everything of A1 plus avoir envie de, avoir peur de, commencer à, finir de, essayer de, oublier de, aider à, s\'occuper de, s\'intéresser à, demander à quelqu\'un, répondre à, rêver de, and the contractions with à and de.',
+      B1: 'Everything of A2 plus à against de before an infinitive (apprendre à, réussir à, continuer à, décider de, refuser de, arrêter de, accepter de), verbs with a noun (se souvenir de, se moquer de, dépendre de, participer à, s\'habituer à, profiter de, croire à / en, se plaindre de), y and en for à / de + a thing (j\'y pense, j\'en ai besoin) against à lui / de lui for a person (je pense à lui).',
+      B2: 'Everything of B1 plus verbs with a person and an infinitive (demander à qn de, conseiller à qn de, permettre à qn de, empêcher qn de, inviter qn à, obliger qn à, encourager qn à), verbs whose meaning changes (manquer à / manquer de, tenir à / tenir de, penser à / penser de, jouer à / jouer de, croire à / croire en), adjectives (content de, prêt à, capable de, fier de, difficile à / il est difficile de), the relatives dont, auquel, duquel.',
+      C1: 'Everything of B2 plus formal verbs (se résoudre à, s\'abstenir de, se prévaloir de, remédier à, s\'attendre à, renoncer à, se méfier de, consister à / en), verbs that take no preposition where learners add one (attendre, chercher, écouter, regarder, payer qc) — practised by offering à / de / pour against the right preposition elsewhere in the sentence, and lequel, auquel, duquel after these verbs.',
+      C2: 'Everything of C1 plus the finest contrasts (s\'occuper de / s\'occuper à, traiter de / traiter qn de, se rendre à / se rendre compte de), literary constructions and idioms built on verbs with prepositions.',
+    },
+    gap: 'The gap replaces the preposition, the contracted article (au, aux, du, des) together with nothing else, or the pronoun y / en. The verb and the noun stay in the sentence. No hint after the gap — the learner must remember the preposition.',
+    options: 'other prepositions or forms a learner confuses here (à / de / en / pour / sur / avec, au / du / à la / de la, y / en / lui), or the uncontracted form that never exists (à le, de les), — only one is correct in this sentence. When a verb takes two prepositions with different meanings (penser à / de, jouer à / de), the sentence must make clear which one is needed; commencer à / de and continuer à / de are both correct — never offer one as wrong against the other. Each sentence gives enough context for one option only',
+    entries: 'a verb (or adjective, noun) with its preposition and an example, like "penser à + qn / qc : je pense à mes vacances", "avoir besoin de : j\'ai besoin d\'aide"; "translation" gives the meaning briefly; "transcription" is of the verb with its preposition only, never of "+ qn" or the example. Group the sections by preposition or by meaning, and a section title must be true of every entry in it',
+  },
+};
+
+const DRILLS: Record<string, DrillSpec | ((language: LanguageCode) => DrillSpec | undefined)> = {
   'dr-conditionals': conditionalsSpec,
 
   'dr-subjuntivo': {
@@ -721,19 +767,20 @@ const DRILLS: Record<string, DrillSpec | ((language: LanguageCode) => DrillSpec)
     options: 'other prepositions a learner confuses here (in / nach / zu, an / auf / in, vor / seit / ab), or the same preposition with the article in the wrong case (in der / in die / in den), — only one is correct in this sentence. A contraction and its full form (zum / zu dem, vom / von dem, im / in dem) are both right, and so are two ways of saying the same (gegen acht Uhr / um acht Uhr herum) — never offer one as a wrong option against the other. With verbs of motion several prepositions often fit (durch den Park / um den Park / in den Park): make the sentence rule out all but one, or choose other distractors. A wrong option must be wrong in grammar, or ruled out by a word in the sentence — not merely a different meaning: "Die Bänke stehen ___ den Bäumen" lets zwischen and unter both stand, so either add "links und rechts" or drop unter; "Wir treffen uns ___ acht Uhr, so ungefähr" rules out um.',
     entries: 'a preposition with its case and an example, like "in + Dativ (Wo?): Ich bin in der Küche", "in + Akkusativ (Wohin?): Ich gehe in die Küche", "seit + Dativ: seit einem Jahr"; "translation" explains the use briefly',
   },
-  'dr-verbpraep': {
-    subject: 'German verbs with fixed prepositions (Verben mit Präpositionen), the case after them and the da- / wo- compounds',
+  'dr-verbpraep': (language) => VERB_PREP[language],
+  'dr-lieu-temps': {
+    subject: 'French prepositions of place and time',
     levels: {
-      A1: 'Only the first verbs: warten auf + Akk., sprechen mit + Dat., spielen mit, wohnen bei, fahren mit + transport, fragen nach.',
-      A2: 'warten auf, sich freuen auf, sich freuen über, denken an, sprechen mit / über, sich interessieren für, Angst haben vor, fragen nach, telefonieren mit, helfen bei, erzählen von, träumen von, Lust haben auf, sich kümmern um — each with its case.',
-      B1: 'Everything of A2 plus sich ärgern über, sich erinnern an, teilnehmen an, sich bewerben um / bei, sich entschuldigen bei / für, bitten um, abhängen von, achten auf, sich gewöhnen an, sich beschweren über / bei, sich verlassen auf, sich unterhalten über, sich beschäftigen mit; questions with wo- (Worauf wartest du? Auf wen wartest du?) and da-compounds (Ich freue mich darauf).',
-      B2: 'Everything of B1 plus adjectives with prepositions (stolz auf, zufrieden mit, abhängig von, interessiert an, gespannt auf, verantwortlich für), nouns with prepositions (Interesse an, Angst vor, Lust auf), verbs that change meaning with the preposition (bestehen aus / auf, sich halten an / für, leiden an / unter), da-compound as a correlate before a dass-clause or zu-infinitive (Ich warte darauf, dass…), verzichten auf, sich sehnen nach, zweifeln an.',
-      C1: 'Everything of B2 plus less frequent and formal verbs (sich auseinandersetzen mit, sich berufen auf, beitragen zu, sich erkundigen nach, appellieren an, neigen zu), Nomen-Verb-Verbindungen with prepositions (in Frage kommen, zur Verfügung stehen, in Kauf nehmen), and the case after the preposition in all of them.',
-      C2: 'Everything of C1 plus the finest contrasts (sich freuen auf / über, sich ärgern über / auf, denken an / über / von), literary and archaic government, and idioms built on verbs with prepositions.',
+      A1: 'Only à + city (à Paris), en + feminine country, au + masculine country, aux + plural (en France, au Japon, aux États-Unis), chez + person, dans; time: à + hour (à huit heures), en + month, year or season (en mai, en été, but au printemps), le + day (le lundi), le matin.',
+      A2: 'Everything of A1 plus sur, sous, devant, derrière, à côté de, en face de, près de, loin de, entre, dans; de… à, depuis, il y a, pendant, avant, après, jusqu\'à; coming from a country (de France, du Japon, des États-Unis) with the contractions du, des, au, aux.',
+      B1: 'Everything of A2 plus en against dans with time (en deux heures / dans deux heures), depuis against il y a against pendant against pour, au bout de, dès, vers, à partir de, par (par la fenêtre), au-dessus de, au-dessous de, au milieu de, autour de, le long de.',
+      B2: 'Everything of B1 plus lors de, au cours de, d\'ici, au-delà de, à travers, parmi, à l\'intérieur de, à l\'extérieur de, en against dans with places (en ville / dans la ville), islands and regions (à Cuba, en Corse, à la Martinique, au Québec).',
+      C1: 'Everything of B2 plus au sein de, à l\'issue de, en l\'espace de, aux alentours de, à l\'aube de, à la veille de, vis-à-vis de, formal and written variants.',
+      C2: 'Everything of C1 plus the finest contrasts (sur / dans le train, en / dans le métro, au / dans le jardin, sous / au-dessous de), regional use (Belgium, Switzerland, Québec), literary use and idioms of place and time.',
     },
-    gap: 'The gap replaces the preposition, or the preposition with the article or pronoun when that shows the case (auf den, an die, mit dem, über ihn), or the da- / wo-compound (darauf, worüber). No hint after the gap — the learner must remember the preposition.',
-    options: 'other prepositions that sound plausible with this verb or that belong to a similar verb (auf / an / über / für / um / von / nach / vor / mit), or the same preposition with the article in the wrong case (auf den / auf dem), or da- against wo- and the wrong da-compound (darauf / daran / darüber), — only one is correct in this sentence. A contraction and its full form (vom / von dem, beim / bei dem) are both right — never offer them against each other. When a verb takes two prepositions with different meanings (sich freuen auf / über, sich entschuldigen bei / für), the sentence must make clear which one is needed',
-    entries: 'a verb (or adjective, noun) with its preposition and case and an example, like "warten auf + Akk.: Ich warte auf den Bus", "sich erinnern an + Akk.: Ich erinnere mich an den Urlaub", "abhängen von + Dat.: Das hängt vom Wetter ab"; "translation" gives the meaning briefly; "transcription" is of the verb with its preposition only (/ˈvaʁtn̩ aʊ̯f/), never of "+ Akk." or the example. Group the sections by preposition or by meaning, and a section title must be true of every entry in it',
+    gap: 'The gap replaces the preposition with its contraction if any (au, aux, du, des) or a whole locution (à côté de, en face du, il y a). The noun stays in the sentence. Sentences are full everyday sentences of eight words or more, with context that leaves one option only — never bare frames like "Le livre est ___ la table." No hint after the gap — the learner must remember the preposition.',
+    options: 'other prepositions a learner confuses here (à / en / au / aux / dans, depuis / il y a / pendant / pour, en / dans with time), or the uncontracted form that never exists (à le, de les), — only one is correct in this sentence. A wrong option must be wrong in grammar, or ruled out by a word in the sentence — not merely a different meaning: in "Le chat dort ___ la table" both sur and sous stand, so add "à l\'ombre, par terre" or offer distractors that cannot fit. When two prepositions are both acceptable (en train / dans le train with a change of nuance, sur / dans with a vehicle) never offer the second as wrong',
+    entries: 'a preposition with its use and an example, like "en + pays féminin : en France", "au + pays masculin : au Japon", "depuis + durée : j\'habite ici depuis deux ans"; "translation" explains the use briefly',
   },
 };
 
@@ -806,6 +853,26 @@ export function buildVocabularyPrompt(
  * Транскрипция для набора, составленного до того, как она появилась: один
  * запрос на весь лист, чтобы не платить за каждое слово отдельно.
  */
+/**
+ * Второй проход по упражнениям тренажёра. Составляя двадцать предложений,
+ * модель не замечает, что неверный вариант тоже верен по смыслу
+ * («vor / hinter dem Haus»); на отдельной проверке — замечает.
+ */
+export function buildDrillCheckPrompt(language: LanguageCode): string {
+  const { englishName } = LANGUAGES[language];
+  return [
+    `You are a strict ${englishName} teacher checking gap-fill exercises before learners see them.`,
+    'Each numbered exercise gives the sentence with "___", the options and the intended answer. A word in brackets right after the gap is a hint by design — never flag it.',
+    'Flag an exercise when:',
+    '- another option also gives a correct, natural sentence — even with a different meaning (both "vor dem Haus" and "hinter dem Haus", both "debajo de" and "encima de" with nothing in the sentence ruling one out). Be suspicious: put each wrong option in the gap and ask whether the sentence could describe some real situation. If it could, flag it — "man sieht sie sofort" does not rule out neben, "porque hace sol" does not rule out detrás de;',
+    '- another option is an accepted variant of the answer in standard use — a contraction and its full form (zum / zu dem), two constructions with the same meaning (continuer à / de, different from / to, suffer from / with), regional standard forms;',
+    '- the intended answer is wrong, or not the most natural choice;',
+    '- the sentence with the answer is wrong, unnatural or makes no sense.',
+    'Try every option in the gap before deciding. Do not flag anything else: if exactly one option is right and the sentence is good, keep it.',
+    '"flagged": the numbers of the exercises to drop, each with a short reason in English. Empty when all are good.',
+  ].join('\n');
+}
+
 export function buildTranscriptionPrompt(language: LanguageCode, variant?: EnglishVariant): string {
   return [
     `You are a ${LANGUAGES[language].englishName} pronunciation dictionary.`,

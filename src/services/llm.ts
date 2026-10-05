@@ -18,6 +18,7 @@ import {
   buildListeningCheckPrompt,
   buildListeningPrompt,
   buildTranscriptionPrompt,
+  buildDrillCheckPrompt,
   buildVocabularyPrompt,
   buildSystemPrompt,
   buildWritingPrompt,
@@ -185,6 +186,10 @@ const PhrasalVocabularySchema = VocabularySchema.extend({
       term: z.string(),
     }),
   ),
+});
+
+const DrillCheckSchema = z.object({
+  flagged: z.array(z.object({ number: z.number().int(), reason: z.string() })),
 });
 
 const GAP = '___';
@@ -935,6 +940,7 @@ export async function generateVocabulary(params: {
     }))
     .filter((section) => section.entries.length > 0);
 
+  const terms = new Set(sections.flatMap((section) => section.entries.map((entry) => entry.term)));
   return {
     title: parsed.title.trim(),
     language,
@@ -943,12 +949,41 @@ export async function generateVocabulary(params: {
     sections,
     dialogue: parsed.dialogue.map((line) => line.trim()).filter(Boolean),
     examples: parsed.examples.map((line) => line.trim()).filter(Boolean),
-    drills:
-      'drills' in parsed
-        ? cleanDrills(parsed.drills, new Set(sections.flatMap((section) => section.entries.map((entry) => entry.term))))
-        : undefined,
+    drills: 'drills' in parsed ? await checkDrills(language, cleanDrills(parsed.drills, terms)) : undefined,
     createdAt: Date.now(),
   };
+}
+
+/**
+ * Второй проход: модель отдельно проверяет упражнения и называет те, где
+ * верны два варианта или фраза кривая, — их выбрасываем. Проверка не
+ * удалась — лист остаётся как есть: без неё он хуже, но не сломан.
+ */
+async function checkDrills(language: LanguageCode, drills: PhrasalDrill[]): Promise<PhrasalDrill[]> {
+  if (drills.length === 0) return drills;
+  try {
+    const response = await metered(() =>
+      client.messages.parse({
+        model: CLAUDE_MODEL,
+        max_tokens: 8192,
+        system: buildDrillCheckPrompt(language),
+        thinking: { type: 'adaptive' },
+        messages: [
+          {
+            role: 'user',
+            content: drills
+              .map((drill, i) => `${i + 1}. ${drill.sentence}\n   options: ${drill.options.join(' / ')}\n   answer: ${drill.answer}`)
+              .join('\n'),
+          },
+        ],
+        output_config: { effort: 'low', format: zodOutputFormat(DrillCheckSchema) },
+      }),
+    );
+    const flagged = new Set(response.parsed_output?.flagged.map((item) => item.number - 1) ?? []);
+    return drills.filter((_, i) => !flagged.has(i));
+  } catch {
+    return drills;
+  }
 }
 
 const TranscriptionSchema = z.object({

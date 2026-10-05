@@ -761,7 +761,7 @@ const conditionals = (language: LanguageCode): Topic => ({
 });
 
 export const DRILL_TOPICS: Partial<Record<LanguageCode, Topic[]>> = {
-  en: [conditionals('en')],
+  en: [{ id: 'dr-verbpraep', label: 'Verbs with prepositions', kind: 'drill' }, conditionals('en')],
   es: [
     { id: 'dr-subjuntivo', label: 'El subjuntivo', kind: 'drill' },
     { id: 'dr-pronombres', label: 'Le, lo, la: los pronombres', kind: 'drill' },
@@ -774,7 +774,11 @@ export const DRILL_TOPICS: Partial<Record<LanguageCode, Topic[]>> = {
     { id: 'dr-verbpraep', label: 'Verben mit Präpositionen', kind: 'drill' },
     conditionals('de'),
   ],
-  fr: [conditionals('fr')],
+  fr: [
+    { id: 'dr-lieu-temps', label: 'Prépositions de lieu et de temps', kind: 'drill' },
+    { id: 'dr-verbpraep', label: 'Les verbes à préposition', kind: 'drill' },
+    conditionals('fr'),
+  ],
   it: [conditionals('it')],
   pt: [conditionals('pt')],
   br: [conditionals('br')],
@@ -871,6 +875,7 @@ const GLOSSES: Record<string, Record<UiLocale, string>> = {
   'dr-preposiciones': { en: 'Spanish prepositions of place and time', uk: 'Прийменники місця та часу', es: 'Preposiciones de lugar y tiempo', ru: 'Предлоги места и времени', de: 'Spanische Präpositionen: Ort und Zeit', fr: 'Les prépositions de lieu et de temps', pt: 'Preposições de lugar e de tempo', zh: '地点和时间介词', ja: '場所と時の前置詞', ko: '장소와 시간의 전치사', nl: 'Voorzetsels van plaats en tijd', pl: 'Przyimki miejsca i czasu', ro: 'Prepozițiile de loc și de timp' },
   'dr-tildes': { en: 'Spanish accent marks', uk: 'Знак наголосу (tilde)', es: 'La tilde', ru: 'Знак ударения (tilde)', de: 'Der Akzent im Spanischen', fr: 'L\'accent écrit en espagnol', pt: 'O acento gráfico espanhol', zh: '西班牙语重音符号', ja: 'スペイン語のアクセント記号', ko: '스페인어 강세 부호', nl: 'Het Spaanse accentteken', pl: 'Akcent graficzny w hiszpańskim', ro: 'Accentul grafic în spaniolă' },
   'dr-praepositionen': { en: 'German prepositions of place and time', uk: 'Прийменники місця та часу', es: 'Preposiciones alemanas de lugar y tiempo', ru: 'Предлоги места и времени', de: 'Präpositionen: Ort und Zeit', fr: 'Les prépositions allemandes de lieu et de temps', pt: 'Preposições alemãs de lugar e de tempo', zh: '德语地点和时间介词', ja: 'ドイツ語の場所と時の前置詞', ko: '독일어 장소와 시간의 전치사', nl: 'Duitse voorzetsels van plaats en tijd', pl: 'Niemieckie przyimki miejsca i czasu', ro: 'Prepozițiile germane de loc și de timp' },
+  'dr-lieu-temps': { en: 'French prepositions of place and time', uk: 'Прийменники місця та часу', es: 'Preposiciones francesas de lugar y tiempo', ru: 'Предлоги места и времени', de: 'Französische Präpositionen: Ort und Zeit', fr: 'Prépositions de lieu et de temps', pt: 'Preposições francesas de lugar e de tempo', zh: '法语地点和时间介词', ja: 'フランス語の場所と時の前置詞', ko: '프랑스어 장소와 시간의 전치사', nl: 'Franse voorzetsels van plaats en tijd', pl: 'Francuskie przyimki miejsca i czasu', ro: 'Prepozițiile franceze de loc și de timp' },
   'dr-verbpraep': { en: 'Verbs with prepositions', uk: 'Дієслова з прийменниками', es: 'Verbos con preposición', ru: 'Глаголы с предлогами', de: 'Verben mit Präpositionen', fr: 'Les verbes à préposition', pt: 'Verbos com preposição', zh: '带介词的动词', ja: '前置詞と結びつく動詞', ko: '전치사와 함께 쓰는 동사', nl: 'Werkwoorden met een voorzetsel', pl: 'Czasowniki z przyimkami', ro: 'Verbele cu prepoziție' },
   'local-en': { en: 'British and American English', uk: 'Британська та американська', es: 'Inglés británico y americano', ru: 'Британский и американский', de: 'Britisches und amerikanisches Englisch', fr: 'L\'anglais britannique et américain' , pt: 'O inglês britânico e o americano' , zh: '英式英语与美式英语', ja: 'イギリス英語とアメリカ英語', ko: '영국 영어와 미국 영어' , nl: 'Brits en Amerikaans Engels', pl: 'Brytyjski i amerykański angielski', ro: 'Engleza britanică și americană' },
   'local-de': { en: 'Christmas markets and Oktoberfest', uk: 'Різдвяні ярмарки та Октоберфест', es: 'Mercados navideños y Oktoberfest', ru: 'Ярмарки и Октоберфест', de: 'Weihnachtsmärkte und Oktoberfest', fr: 'Les marchés de Noël et l’Oktoberfest' , pt: 'Mercados de Natal e Oktoberfest' , zh: '圣诞市场与啤酒节', ja: 'クリスマスマーケットとオクトーバーフェスト', ko: '크리스마스 마켓과 옥토버페스트' , nl: 'Kerstmarkten en Oktoberfest', pl: 'Jarmarki bożonarodzeniowe i Oktoberfest', ro: 'Târgurile de Crăciun și Oktoberfest' },

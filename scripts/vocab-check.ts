@@ -15,7 +15,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
 import { z } from 'zod';
 
-import { buildVocabularyPrompt } from '../src/prompts';
+import { buildDrillCheckPrompt, buildVocabularyPrompt } from '../src/prompts';
 import { findTopic } from '../src/topics';
 import { LEVELS, type LanguageCode, type Level } from '../src/types';
 
@@ -40,6 +40,10 @@ const VocabularySchema = z.object({
   ),
   dialogue: z.array(z.string()),
   examples: z.array(z.string()),
+});
+
+const DrillCheckSchema = z.object({
+  flagged: z.array(z.object({ number: z.number().int(), reason: z.string() })),
 });
 
 /** Та же схема, что PhrasalVocabularySchema: тренажёры и фразовые глаголы. */
@@ -115,8 +119,29 @@ async function main(): Promise<void> {
   }
   console.log(`  диалог: ${sheet.dialogue[0]}`);
   if (sheet.drills) {
-    console.log(`  упражнений ${sheet.drills.length}`);
-    for (const item of sheet.drills) console.log(`     ${item.sentence}  → ${item.answer}  [${item.options.join(' / ')}]`);
+    // Тот же второй проход, что checkDrills в src/services/llm.ts.
+    const checkStarted = Date.now();
+    const check = await client.messages.parse({
+      model: 'claude-sonnet-5',
+      max_tokens: 8192,
+      system: buildDrillCheckPrompt(language),
+      thinking: { type: 'adaptive' },
+      messages: [
+        {
+          role: 'user',
+          content: sheet.drills
+            .map((item, i) => `${i + 1}. ${item.sentence}\n   options: ${item.options.join(' / ')}\n   answer: ${item.answer}`)
+            .join('\n'),
+        },
+      ],
+      output_config: { effort: 'low', format: zodOutputFormat(DrillCheckSchema) },
+    });
+    const flagged = new Map((check.parsed_output?.flagged ?? []).map((item) => [item.number - 1, item.reason]));
+    console.log(`  упражнений ${sheet.drills.length}, проверка ${((Date.now() - checkStarted) / 1000).toFixed(0)} с, отброшено ${flagged.size}`);
+    sheet.drills.forEach((item, i) => {
+      const reason = flagged.get(i);
+      console.log(`  ${reason ? '✗' : ' '}  ${item.sentence}  → ${item.answer}  [${item.options.join(' / ')}]${reason ? `\n        ${reason}` : ''}`);
+    });
   }
   console.log(`  → ${file.pathname}\n`);
 }
