@@ -417,6 +417,68 @@ interface ClaudeUsage {
   cache_read_input_tokens?: number | null;
 }
 
+function claudeCost(usage: ClaudeUsage): number {
+  return (
+    usage.input_tokens * CLAUDE_PRICE.input +
+    usage.output_tokens * CLAUDE_PRICE.output +
+    (usage.cache_creation_input_tokens ?? 0) * CLAUDE_PRICE.cacheWrite +
+    (usage.cache_read_input_tokens ?? 0) * CLAUDE_PRICE.cacheRead
+  );
+}
+
+/**
+ * Поток Claude отдаём приложению как есть, кусок за куском, а расход читаем
+ * по дороге: ввод и кэш — в `message_start`, вывод нарастающим итогом — в
+ * `message_delta`. Списываем и тогда, когда приложение оборвало связь на
+ * полуслове: токены до обрыва уже потрачены.
+ */
+async function claudeStream(upstream: globalThis.Response, res: Response, uid: string): Promise<void> {
+  res.status(200).set({
+    'Content-Type': 'text/event-stream; charset=utf-8',
+    'Cache-Control': 'no-cache, no-transform',
+    // Подсказка прокси на пути: не копить поток, отдавать сразу.
+    'X-Accel-Buffering': 'no',
+  });
+  res.flushHeaders();
+
+  const usage: ClaudeUsage = { input_tokens: 0, output_tokens: 0 };
+  const read = (line: string) => {
+    if (!line.startsWith('data:')) return;
+    try {
+      const event = JSON.parse(line.slice(5)) as {
+        type?: string;
+        message?: { usage?: Partial<ClaudeUsage> };
+        usage?: Partial<ClaudeUsage>;
+      };
+      const part = event.type === 'message_start' ? event.message?.usage : event.type === 'message_delta' ? event.usage : undefined;
+      if (!part) return;
+      for (const key of ['input_tokens', 'output_tokens', 'cache_creation_input_tokens', 'cache_read_input_tokens'] as const) {
+        const value = part[key];
+        if (typeof value === 'number') usage[key] = value;
+      }
+    } catch {
+      // Строка не JSON (ping, обрывок) — к расходу отношения не имеет.
+    }
+  };
+
+  const decoder = new TextDecoder();
+  let tail = '';
+  try {
+    for await (const chunk of upstream.body as unknown as AsyncIterable<Uint8Array>) {
+      res.write(chunk);
+      const lines = (tail + decoder.decode(chunk, { stream: true })).split('\n');
+      tail = lines.pop() ?? '';
+      lines.forEach(read);
+    }
+    read(tail);
+  } catch (e) {
+    logger.warn('claude stream interrupted', e);
+  } finally {
+    await charge(uid, claudeCost(usage));
+    res.end();
+  }
+}
+
 async function claude(req: Request, res: Response, uid: string): Promise<void> {
   const body = req.body as { model?: unknown; max_tokens?: unknown; stream?: unknown };
   if (!body || typeof body !== 'object') throw new HttpError(400, 'invalid_request_error', 'Bad body');
@@ -424,7 +486,6 @@ async function claude(req: Request, res: Response, uid: string): Promise<void> {
   if (typeof body.max_tokens !== 'number' || body.max_tokens > CLAUDE_MAX_TOKENS) {
     throw new HttpError(400, 'invalid_request_error', 'max_tokens not allowed');
   }
-  if (body.stream) throw new HttpError(400, 'invalid_request_error', 'Streaming not supported');
 
   const headers: Record<string, string> = {
     'x-api-key': ANTHROPIC_API_KEY.value(),
@@ -439,20 +500,20 @@ async function claude(req: Request, res: Response, uid: string): Promise<void> {
     headers,
     body: JSON.stringify(body),
   });
+
+  // Потоком идёт ход беседы: реплику озвучивают, не дожидаясь разбора ошибок.
+  // Отказ Anthropic приходит обычным JSON — он уходит ниже, как и раньше.
+  if (body.stream === true && upstream.ok && upstream.body) {
+    await claudeStream(upstream, res, uid);
+    return;
+  }
+
   const text = await upstream.text();
 
   if (upstream.ok) {
     try {
       const usage = (JSON.parse(text) as { usage?: ClaudeUsage }).usage;
-      if (usage) {
-        await charge(
-          uid,
-          usage.input_tokens * CLAUDE_PRICE.input +
-            usage.output_tokens * CLAUDE_PRICE.output +
-            (usage.cache_creation_input_tokens ?? 0) * CLAUDE_PRICE.cacheWrite +
-            (usage.cache_read_input_tokens ?? 0) * CLAUDE_PRICE.cacheRead,
-        );
-      }
+      if (usage) await charge(uid, claudeCost(usage));
     } catch (e) {
       logger.error('usage parse failed', e);
     }

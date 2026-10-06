@@ -253,25 +253,42 @@ export function useConversation() {
       const wrapUp = limit !== null && sessionTurnsRef.current >= limit;
       if (wrapUp) setTurnLimitHit(true);
 
-      const turn = await respond({
-        history,
-        userText: text,
-        language: currentLanguage,
-        level: currentLevels[currentLanguage],
-        topic: findTopic(currentLanguage, topicRef.current),
-        name: profileRef.current.name || undefined,
-        age: profileRef.current.age,
-        variant: variantRef.current,
-        wrapUp,
+      /**
+       * Ответ отдаём голосу, как только готова сама реплика: разбор ошибок
+       * модель дописывает ещё несколько секунд, и ждать его молча незачем — он
+       * ляжет под фразу человека, пока Poly уже говорит.
+       */
+      return new Promise<Reply>((resolve, reject) => {
+        let early = false;
+
+        respond({
+          history,
+          userText: text,
+          language: currentLanguage,
+          level: currentLevels[currentLanguage],
+          topic: findTopic(currentLanguage, topicRef.current),
+          name: profileRef.current.name || undefined,
+          age: profileRef.current.age,
+          variant: variantRef.current,
+          wrapUp,
+          onReply: (reply, farewell) => {
+            early = true;
+            resolve(addReply(reply, farewell));
+          },
+        })
+          .then((turn) => {
+            persist((previous) =>
+              previous.map((message) =>
+                message.id === userMessage.id ? { ...message, corrections: turn.corrections } : message,
+              ),
+            );
+            if (!early) resolve(addReply(turn.reply, turn.farewell));
+          })
+          // Связь оборвалась на разборе: реплика уже звучит, беседу не рвём.
+          .catch((e: unknown) => {
+            if (!early) reject(e);
+          });
       });
-
-      persist((previous) =>
-        previous.map((message) =>
-          message.id === userMessage.id ? { ...message, corrections: turn.corrections } : message,
-        ),
-      );
-
-      return addReply(turn.reply, turn.farewell);
     },
     [persist, measurePace, addReply],
   );

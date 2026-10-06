@@ -74,14 +74,28 @@ const CorrectionSchema = z.object({
 /** В беседе разбор правила не просим: за ним ходим отдельно и по нажатию. */
 const TurnCorrectionSchema = CorrectionSchema.omit({ details: true });
 
+/**
+ * Порядок полей — порядок, в котором модель их пишет. Реплика и признак
+ * прощания идут первыми: их хватает, чтобы начать озвучку, пока разбор ошибок
+ * ещё дописывается (см. `respond`).
+ */
 const TurnSchema = z.object({
   /** Реплика партнёра на изучаемом языке — она же уходит в TTS. */
   reply: z.string(),
-  /** Ошибки в последней реплике пользователя. */
-  corrections: z.array(TurnCorrectionSchema),
   /** Человек попрощался: после этой реплики беседу пора закрывать. */
   farewell: z.boolean(),
+  /** Ошибки в последней реплике пользователя. */
+  corrections: z.array(TurnCorrectionSchema),
 });
+
+/** Начало ответа, в котором реплика и прощание уже дописаны, а разбор — ещё нет. */
+const TURN_HEAD = /^\s*\{\s*"reply"\s*:\s*("(?:[^"\\]|\\.)*")\s*,\s*"farewell"\s*:\s*(true|false)/;
+
+/**
+ * Прокси, выложенный до потокового хода, отвечает на `stream` отказом; тогда
+ * до конца сеанса ходим по-старому, целым ответом.
+ */
+let turnStreaming = true;
 
 const ExerciseSchema = z.object({
   rule: z.string(),
@@ -342,9 +356,13 @@ export async function respond(params: {
   variant?: EnglishVariant;
   /** Последняя реплика бесплатной беседы: пора прощаться. */
   wrapUp?: boolean;
+  /**
+   * Реплика готова, разбор ошибок ещё пишется. Зовётся не больше одного раза и
+   * только с той репликой, что вернётся в итоге, — по ней можно начинать озвучку.
+   */
+  onReply?: (reply: string, farewell: boolean) => void;
 }): Promise<TurnResult> {
-  const { history, userText, language, level, topic, name, age, variant, wrapUp } = params;
-
+  const { history, userText, language, level, topic, name, age, variant, wrapUp, onReply } = params;
 
   const context: Anthropic.MessageParam[] = windowed(history).map((message) => ({
     role: message.role,
@@ -374,40 +392,68 @@ export async function respond(params: {
           },
         ];
 
+  /** Реплика уже отдана наружу: переспрашивать модель после этого нельзя. */
+  let announced = false;
+
   const ask = async () => {
-    const response = await metered(() =>
-      client.messages.parse({
-        model: CLAUDE_MODEL,
-        max_tokens: CLAUDE_MAX_TOKENS,
-        // Системный промпт неизменен всю беседу — кэшируем и его.
-        system: [
-          {
-            type: 'text',
-            text: buildSystemPrompt(language, level, topic, name, variant, age),
-            cache_control: { type: 'ephemeral' },
-          },
-        ],
-        // Разговорная латентность важнее глубины рассуждения: реплики короткие,
-        // а пауза между «сказал» и «услышал ответ» ощущается сразу.
-        thinking: { type: 'disabled' },
-        messages: [
-          ...cached,
-          {
-            role: 'user',
-            content: wrapUp
-              ? [
-                  { type: 'text', text: userText },
-                  {
-                    type: 'text',
-                    text: '(Note for you, not from the learner: this is the last turn of their free conversation today. Answer briefly, then say a warm goodbye and invite them back tomorrow. Set "farewell" to true.)',
-                  },
-                ]
-              : userText,
-          },
-        ],
-        output_config: { format: zodOutputFormat(TurnSchema) },
-      }),
-    );
+    const request = {
+      model: CLAUDE_MODEL,
+      max_tokens: CLAUDE_MAX_TOKENS,
+      // Системный промпт неизменен всю беседу — кэшируем и его.
+      system: [
+        {
+          type: 'text',
+          text: buildSystemPrompt(language, level, topic, name, variant, age),
+          cache_control: { type: 'ephemeral' },
+        },
+      ],
+      // Разговорная латентность важнее глубины рассуждения: реплики короткие,
+      // а пауза между «сказал» и «услышал ответ» ощущается сразу.
+      thinking: { type: 'disabled' },
+      messages: [
+        ...cached,
+        {
+          role: 'user',
+          content: wrapUp
+            ? [
+                { type: 'text', text: userText },
+                {
+                  type: 'text',
+                  text: '(Note for you, not from the learner: this is the last turn of their free conversation today. Answer briefly, then say a warm goodbye and invite them back tomorrow. Set "farewell" to true.)',
+                },
+              ]
+            : userText,
+        },
+      ],
+      output_config: { format: zodOutputFormat(TurnSchema) },
+    } satisfies Anthropic.MessageCreateParamsNonStreaming;
+
+    if (onReply && turnStreaming) {
+      try {
+        const response = await metered(() => {
+          const stream = client.messages.stream(request);
+          stream.on('text', (_delta, snapshot) => {
+            if (announced) return;
+            const head = TURN_HEAD.exec(snapshot);
+            if (!head) return;
+            const reply = (JSON.parse(head[1]) as string).trim();
+            // Пустую реплику не объявляем: её переспросят ниже.
+            if (!reply) return;
+            announced = true;
+            onReply(reply, head[2] === 'true' || Boolean(wrapUp));
+          });
+          return stream.finalMessage();
+        });
+        return response.parsed_output;
+      } catch (e) {
+        // Реплика уже звучит — другой ответ на её место не подставить.
+        if (announced || e instanceof BudgetError) throw e;
+        // Поток не дошёл: старый прокси или среда без потокового fetch.
+        turnStreaming = false;
+      }
+    }
+
+    const response = await metered(() => client.messages.parse(request));
     return response.parsed_output;
   };
 
@@ -417,7 +463,7 @@ export async function respond(params: {
    * поэтому просим ещё раз, а не рвём беседу на первой же.
    */
   let parsed = await ask();
-  if (!parsed?.reply.trim()) parsed = await ask();
+  if (!parsed?.reply.trim() && !announced) parsed = await ask();
 
   const reply = parsed?.reply.trim() ?? '';
   if (!parsed || !reply) throw new Error(t.badTurn);
