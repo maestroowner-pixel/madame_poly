@@ -652,6 +652,71 @@ const conditionalsSpec = (language: LanguageCode): DrillSpec => ({
   entries: 'a pattern with its forms and a tiny example, like "if + past simple → would + infinitive: if I had time, I would go"; "translation" explains when it is used, briefly',
 });
 
+/**
+ * Предлоги места и времени и глаголы с предлогами для языков, где отдельных
+ * тренажёров не составляли: ступени общие, а что трудно в языке — своя строка.
+ * Без неё модель подставляла английскую схему in / on / at.
+ */
+const PLACE_TIME_FORMS: Partial<Record<LanguageCode, string>> = {
+  it: 'a, in, da, di, su, per, tra / fra and their articulated forms (al, nel, dal, del, sul): a Roma / in Italia, a casa / in ufficio, da + person (dal medico), in + transport; time: alle otto, il lunedì, a maggio / in maggio, da tre anni, fa, tra due giorni, per due ore, entro',
+  pt: 'European Portuguese: em with contractions (no, na, num), a / para with movement (vou a Lisboa / para casa), de with contractions (do, da), por (pelo, pela), até, desde, entre, em cima de, debaixo de, ao lado de, em frente a; time: às oito, na segunda-feira, em maio, no verão, há dois anos, daqui a, durante, de … a',
+  br: 'Brazilian Portuguese: em with contractions (no, na, num), para with movement (vou para São Paulo) and colloquial em (vou no mercado) as informal, de with contractions (do, da), por (pelo, pela), até, desde, entre, em cima de, embaixo de, do lado de, na frente de; time: às oito, na segunda-feira, em maio, no verão, há dois anos, daqui a, durante, de … a',
+  uk: 'the case after each preposition: у / в + місцевий (де?) against у / в + знахідний (куди?), на + місцевий / знахідний, з / із / зі + родовий (звідки?), до + родовий, від, біля, коло, між + орудний, над, під, за, перед with орудний / знахідний; time: о восьмій, у понеділок, у травні, взимку, через годину, тому (годину тому), протягом, з … до',
+  nl: 'in, op, aan, bij, naar, uit, van, voor, achter, naast, tussen, onder, boven; op school / op het werk / in de stad, bij + person, naar + place; time: om acht uur, op maandag, in mei, in de zomer, over twee dagen, twee jaar geleden, sinds, tot, van … tot, gedurende; er + preposition (erop, ervoor)',
+  pl: 'the case after each preposition: w / na + miejscownik (gdzie?) against do / na + dopełniacz or biernik (dokąd?), w szkole / na uczelni / na poczcie, do szkoły / na pocztę, u + dopełniacz (u lekarza), z + dopełniacz (skąd?), przy, obok, między, nad, pod, przed, za with narzędnik / biernik; time: o ósmej, w poniedziałek, w maju, latem, za godzinę, godzinę temu, od … do, przez',
+  ro: 'în, la, pe, de la, din, spre, până la, lângă, între, sub, deasupra, în fața, în spatele (with genitive), the articled noun after prepositions (pe masă, pe masa mea); în oraș / la mare / la doctor; time: la ora opt, luni, în mai, vara, peste două zile, acum doi ani, de … până la, timp de',
+  cs: 'the case after each preposition: v / na + lokál (kde?) against do / na + genitiv or akuzativ (kam?), ve škole / na poště, do školy / na poštu, u + genitiv (u lékaře), z + genitiv (odkud?), k + dativ, mezi, nad, pod, před, za with instrumentál / akuzativ; time: v osm hodin, v pondělí, v květnu, v létě, za hodinu, před hodinou, od … do, přes',
+};
+
+const VERB_PREP_FORMS: Partial<Record<LanguageCode, string>> = {
+  it: 'Italian verbs with a or di before an infinitive (cominciare a, riuscire a, finire di, decidere di, smettere di), verbs with a noun (pensare a, credere a / in, parlare di, dipendere da, partecipare a, innamorarsi di, interessarsi di / a), articulated prepositions (penso al viaggio), ci and ne replacing a / di + noun (ci penso, ne parlo)',
+  pt: 'European Portuguese verbs with fixed prepositions (gostar de, precisar de, pensar em, acreditar em, depender de, sonhar com, preocupar-se com, lembrar-se de, começar a, acabar de, deixar de, ter de), contractions with the article (gosto do filme, penso na viagem)',
+  br: 'Brazilian Portuguese verbs with fixed prepositions (gostar de, precisar de, pensar em, acreditar em, depender de, sonhar com, preocupar-se com, lembrar de, começar a, acabar de, parar de, ter que / ter de), contractions with the article (gosto do filme, penso na viagem)',
+  uk: 'Ukrainian verbs with a preposition and its case (думати про + знахідний, чекати на + знахідний, дякувати за + знахідний, залежати від + родовий, готуватися до + родового, захоплюватися + орудним without a preposition, сумувати за + орудним, піклуватися про), and verbs that take a bare case where Russian or English uses a preposition (дякувати кому, допомагати кому)',
+  nl: 'Dutch verbs with fixed prepositions (wachten op, denken aan, houden van, zorgen voor, luisteren naar, kijken naar, zich interesseren voor, praten over, afhangen van, deelnemen aan, zin hebben in, bang zijn voor), er / waar + preposition (ik wacht erop, waarop wacht je?)',
+  pl: 'Polish verbs with a preposition and its case (czekać na + biernik, myśleć o + miejscownik, dziękować za + biernik, zależeć od + dopełniacz, przygotowywać się do + dopełniacz, martwić się o + biernik, tęsknić za + narzędnik, interesować się + narzędnik without a preposition), and verbs that take a bare case (pomagać komu, słuchać kogo)',
+  ro: 'Romanian verbs with fixed prepositions (a se gândi la, a aștepta pe / după, a depinde de, a avea nevoie de, a se îndrăgosti de, a se baza pe, a visa la, a se uita la, a participa la, a se teme de, a-și aminti de), pe with a personal direct object (îl aștept pe Ion)',
+  cs: 'Czech verbs with a preposition and its case (čekat na + akuzativ, myslet na + akuzativ, děkovat za + akuzativ, záviset na + lokál, připravovat se na + akuzativ, starat se o + akuzativ, stýskat se po + lokál, zajímat se o + akuzativ, bát se + genitiv without a preposition)',
+};
+
+const placeTimeSpec = (language: LanguageCode): DrillSpec | undefined => {
+  const forms = PLACE_TIME_FORMS[language];
+  if (!forms) return undefined;
+  return {
+    subject: `${LANGUAGES[language].englishName} prepositions of place and time: ${forms}`,
+    levels: {
+      A1: 'Only the most common prepositions of place (where someone is, where someone goes, where from) with cities, countries, home, work and school, and of time with clock time, days, months and seasons.',
+      A2: 'Everything of A1 plus position (on, under, in front of, behind, next to, between), where against where to with the right form or case, from … to, since, ago, in two days, for two hours.',
+      B1: 'Everything of A2 plus less frequent prepositions of place and time, the contrasts learners confuse most in this language, prepositions with transport and institutions, duration against point in time.',
+      B2: 'Everything of B1 plus compound prepositions, prepositions with the genitive or other less common cases where the language has them, formal written variants and fixed phrases of place and time.',
+      C1: 'Everything of B2 plus rare and formal prepositions, the finest contrasts between near-synonyms, regional and register variants.',
+      C2: 'Everything of C1 plus literary use and idioms built on prepositions of place and time.',
+    },
+    gap: 'The gap replaces the preposition, together with the article it fuses with where the language does that (nel, do, na). The noun stays in the sentence in the form the preposition requires — the case ending is a clue. Sentences are full everyday sentences with context that leaves one option only. No hint after the gap.',
+    options: 'other prepositions a learner confuses here, or the same preposition fused with the wrong article, — only one is correct in this sentence. A wrong option must be wrong in grammar, or ruled out by a word in the sentence — not merely a different meaning: if both "on" and "under" fit, add context or choose other distractors. A contraction and its full form are never offered against each other',
+    entries: 'a preposition with its use (and its case, where the language has cases) and an example; "translation" explains the use briefly',
+  };
+};
+
+const genericVerbPrep = (language: LanguageCode): DrillSpec | undefined => {
+  const forms = VERB_PREP_FORMS[language];
+  if (!forms) return undefined;
+  return {
+    subject: forms,
+    levels: {
+      A1: 'Only five or six of the most frequent verbs with a preposition (wait for, think about, talk with or about).',
+      A2: 'The most frequent verbs with a preposition in everyday talk, each with its case or contraction.',
+      B1: 'Everything of A2 plus the common verbs with a preposition a B1 learner needs, verbs that take a bare case or no preposition where learners add one, and the pronouns or adverbs that replace preposition + noun where the language has them.',
+      B2: 'Everything of B1 plus adjectives and nouns with fixed prepositions, verbs whose meaning changes with the preposition, and a preposition before a clause or an infinitive.',
+      C1: 'Everything of B2 plus formal and less frequent verbs with prepositions, fixed noun-verb phrases with prepositions.',
+      C2: 'Everything of C1 plus the finest contrasts, literary government and idioms built on verbs with prepositions.',
+    },
+    gap: 'The gap replaces the preposition (fused with the article where the language does that), or the pronoun or adverb that replaces it. The verb and the noun stay in the sentence in the form the preposition requires. No hint after the gap — the learner must remember the preposition.',
+    options: 'other prepositions that sound plausible with this verb or belong to a similar verb, or the same preposition fused with the wrong article, — only one is correct in this sentence. When a verb takes two prepositions with different meanings, the sentence must make clear which one is needed; when two are both correct and mean the same, never offer one as wrong against the other',
+    entries: 'a verb (or adjective, noun) with its preposition and its case and an example; "translation" gives the meaning briefly; "transcription" is of the verb with its preposition only. Group the sections by preposition or by meaning',
+  };
+};
+
 /** Глаголы с предлогами — у каждого языка свои; без строки язык тренажёра не получает. */
 const VERB_PREP: Partial<Record<LanguageCode, DrillSpec>> = {
   de: {
@@ -772,7 +837,8 @@ const DRILLS: Record<string, DrillSpec | ((language: LanguageCode) => DrillSpec 
     options: 'other prepositions a learner confuses here (in / nach / zu, an / auf / in, vor / seit / ab), or the same preposition with the article in the wrong case (in der / in die / in den), — only one is correct in this sentence. A contraction and its full form (zum / zu dem, vom / von dem, im / in dem) are both right, and so are two ways of saying the same (gegen acht Uhr / um acht Uhr herum) — never offer one as a wrong option against the other. With verbs of motion several prepositions often fit (durch den Park / um den Park / in den Park): make the sentence rule out all but one, or choose other distractors. A wrong option must be wrong in grammar, or ruled out by a word in the sentence — not merely a different meaning: "Die Bänke stehen ___ den Bäumen" lets zwischen and unter both stand, so either add "links und rechts" or drop unter; "Wir treffen uns ___ acht Uhr, so ungefähr" rules out um.',
     entries: 'a preposition with its case and an example, like "in + Dativ (Wo?): Ich bin in der Küche", "in + Akkusativ (Wohin?): Ich gehe in die Küche", "seit + Dativ: seit einem Jahr"; "translation" explains the use briefly',
   },
-  'dr-verbpraep': (language) => VERB_PREP[language],
+  'dr-verbpraep': (language) => VERB_PREP[language] ?? genericVerbPrep(language),
+  'dr-prep-place-time': placeTimeSpec,
   'dr-place-time': {
     subject: 'English prepositions of place and time: in, on, at and the others',
     levels: {
