@@ -76,11 +76,16 @@ export function TodayScreen({ menu, language, onTalk, onWords }: Props) {
   const styles = useStyles(createStyles);
   const [log, setLog] = useState<ActivityLog>({});
   const [due, setDue] = useState(0);
+  /** Карточек в очереди всего — пустая очередь не значит «всё повторено». */
+  const [queued, setQueued] = useState(0);
   const [spots, setSpots] = useState<Record<string, WeakSpot>>({});
 
   useEffect(() => {
     void loadActivity(language).then(setLog);
-    void loadReviewCards(language).then((cards) => setDue(dueCards(cards).length));
+    void loadReviewCards(language).then((cards) => {
+      setDue(dueCards(cards).length);
+      setQueued(cards.length);
+    });
     void loadWeakSpots(language).then(setSpots);
   }, [language]);
 
@@ -92,9 +97,13 @@ export function TodayScreen({ menu, language, onTalk, onWords }: Props) {
 
   const talkMinutes = Math.floor(today.talkMs / 60000);
   const talkDone = talkMinutes >= DAILY_TALK_MINUTES;
-  const cardsDone = due === 0;
+  // Зелёная галочка — только за сделанное сегодня. Нечего повторять — задача
+  // не мешает плану, но и не отмечается; карточек нет вовсе — зовём их завести.
+  const cardsDone = due === 0 && today.cards > 0;
+  const cardsIdle = due === 0 && today.cards === 0 && queued > 0;
+  const cardsEmpty = queued === 0 && today.cards === 0;
   const drillDone = today.drills >= DAILY_DRILLS;
-  const allDone = talkDone && (!words || cardsDone) && (!drillTopic || drillDone);
+  const allDone = talkDone && (!words || cardsDone || cardsIdle) && (!drillTopic || drillDone);
 
   const days = lastDays(7);
   const week = days.map((day) => log[dayKey(day)] ?? EMPTY_DAY);
@@ -125,9 +134,12 @@ export function TodayScreen({ menu, language, onTalk, onWords }: Props) {
         {words && (
           <Task
             title={t.todayCards}
-            detail={cardsDone ? t.todayCardsDone : t.todayCardsDue(due)}
+            detail={
+              cardsDone ? t.todayCardsDone : cardsIdle ? t.todayCardsIdle : cardsEmpty ? t.todayCardsEmpty : t.todayCardsDue(due)
+            }
             done={cardsDone}
-            onPress={() => onWords(null, 'review')}
+            idle={cardsIdle}
+            onPress={() => onWords(null, cardsEmpty ? 'list' : 'review')}
           />
         )}
 
@@ -183,6 +195,7 @@ function Task({
   detail,
   progress,
   done,
+  idle,
   onPress,
 }: {
   title: string;
@@ -190,6 +203,8 @@ function Task({
   detail: string;
   progress?: number;
   done: boolean;
+  /** Делать сегодня нечего — серая отметка вместо зелёной. */
+  idle?: boolean;
   onPress: () => void;
 }) {
   const { theme } = useTheme();
@@ -198,6 +213,7 @@ function Task({
     <Pressable onPress={onPress} style={[styles.task, done && styles.taskDone]}>
       <View style={[styles.check, done && styles.checkDone]}>
         {done && <CheckIcon size={16} color={theme.accentText} />}
+        {idle && !done && <CheckIcon size={16} color={theme.border} />}
       </View>
       <View style={styles.taskText}>
         {caption ? <Text style={styles.caption}>{caption}</Text> : null}
