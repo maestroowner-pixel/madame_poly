@@ -37,6 +37,7 @@ import { Paywall } from './src/components/Paywall';
 import { useSubscription } from './src/hooks/useSubscription';
 import { TalkHeader } from './src/components/TalkHeader';
 import { TutorStrip } from './src/components/TutorStrip';
+import { PlacementScreen } from './src/components/PlacementScreen';
 import { TodayScreen } from './src/components/TodayScreen';
 import { VocabularyScreen, type Tab as WordsTab } from './src/components/VocabularyScreen';
 import { WritingScreen } from './src/components/WritingScreen';
@@ -75,6 +76,8 @@ function Screen() {
   // Приложение открывается планом дня: сразу видно, чем заняться.
   const [section, setSection] = useState<Section>('today');
   /** Куда открыть «Слова», когда в них ведут из «Сегодня». */
+  /** Тест уровня открыт поверх «Сегодня». */
+  const [placementOpen, setPlacementOpen] = useState(false);
   const [wordsFocus, setWordsFocus] = useState<{ topic: string | null; tab: WordsTab; at: number } | null>(null);
 
   const subscription = useSubscription();
@@ -381,17 +384,35 @@ function Screen() {
             </>
           )}
 
-          {section === 'today' && (
-            <TodayScreen
-              menu={sectionMenu}
-              language={conversation.language}
-              onTalk={() => setSection('talk')}
-              onWords={(topic, tab) => {
-                setWordsFocus({ topic, tab, at: Date.now() });
-                setSection('words');
-              }}
-            />
-          )}
+          {section === 'today' &&
+            (placementOpen ? (
+              <PlacementScreen
+                language={conversation.language}
+                level={conversation.level}
+                profile={conversation.profile}
+                turnMode={conversation.turnMode}
+                onToggleMode={() =>
+                  void conversation.setTurnMode(conversation.turnMode === 'auto' ? 'manual' : 'auto')
+                }
+                speechRate={conversation.speechRate}
+                onApplyLevel={(next) => void conversation.setLevel(next)}
+                onClose={() => setPlacementOpen(false)}
+              />
+            ) : (
+              <TodayScreen
+                menu={sectionMenu}
+                language={conversation.language}
+                onTalk={() => setSection('talk')}
+                onWords={(topic, tab) => {
+                  setWordsFocus({ topic, tab, at: Date.now() });
+                  setSection('words');
+                }}
+                onPlacement={() => {
+                  // Микрофон занят беседой — тест подождёт её конца.
+                  if (!conversation.sessionActive) setPlacementOpen(true);
+                }}
+              />
+            ))}
 
           {section === 'listen' && (
             <ListeningScreen

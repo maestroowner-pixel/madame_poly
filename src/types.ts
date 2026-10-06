@@ -225,6 +225,19 @@ export interface Message {
   audioUri?: string;
 }
 
+// --- Тест уровня ---
+
+/** Итог теста уровня: что показал разговор и когда. */
+export interface PlacementResult {
+  language: LanguageCode;
+  level: Level;
+  /** Две-три фразы на языке интерфейса: что человек уже умеет. */
+  summary: string;
+  strengths: string[];
+  improve: string[];
+  at: number;
+}
+
 // --- Экзамен ---
 
 /** Три части устного экзамена: знакомство, монолог, обсуждение. */

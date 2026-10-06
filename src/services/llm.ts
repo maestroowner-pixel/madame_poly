@@ -19,6 +19,10 @@ import {
   buildListeningPrompt,
   buildTranscriptionPrompt,
   buildDrillCheckPrompt,
+  buildPlacementPrompt,
+  buildPlacementReviewPrompt,
+  formatPlacementTranscript,
+  placementNote,
   buildMistakeSortPrompt,
   drillCatalog,
   buildVocabularyPrompt,
@@ -50,6 +54,7 @@ import {
   type ListeningVerdict,
   type Message,
   type PhrasalDrill,
+  type PlacementResult,
   type Vocabulary,
   type WritingReview,
   type WritingTask,
@@ -847,6 +852,98 @@ export async function examinerTurn(params: {
   const reply = spoken(await ask()) || spoken(await ask());
   if (!reply) throw new Error(t.badTurn);
   return reply;
+}
+
+/**
+ * Реплика ведущей теста уровня. Та же схема, что у экзаменатора: одна реплика,
+ * она же уходит в озвучку; пометка в скобках говорит, какой это ответ по счёту.
+ */
+export async function placementTurn(params: {
+  history: Message[];
+  /** Ответ человека; null — тест только начинается. */
+  answer: string | null;
+  answerIndex: number;
+  language: LanguageCode;
+  name?: string;
+}): Promise<string> {
+  const { history, answer, answerIndex, language, name } = params;
+  const context: Anthropic.MessageParam[] = history.map((turn) => ({ role: turn.role, content: turn.text }));
+  const last: Anthropic.MessageParam = {
+    role: 'user',
+    content: [
+      ...(answer === null ? [] : [{ type: 'text' as const, text: answer }]),
+      { type: 'text', text: placementNote(answer === null ? null : answerIndex) },
+    ],
+  };
+  const ask = async () => {
+    const response = await metered(() =>
+      client.messages.parse({
+        model: CLAUDE_MODEL,
+        max_tokens: CLAUDE_MAX_TOKENS,
+        system: [{ type: 'text', text: buildPlacementPrompt(language, name), cache_control: { type: 'ephemeral' } }],
+        thinking: { type: 'disabled' },
+        messages: [...context, last],
+        output_config: { format: zodOutputFormat(ExaminerSchema) },
+      }),
+    );
+    return response.parsed_output?.reply.trim() ?? '';
+  };
+  const spoken = (text: string) => (/\p{L}{2}/u.test(text) ? text.replace(/^[^\p{L}\p{N}«"(¿¡]+/u, '') : '');
+  const reply = spoken(await ask()) || spoken(await ask());
+  if (!reply) throw new Error(t.badTurn);
+  return reply;
+}
+
+const PlacementSchema = z.object({
+  level: z.enum(['A1', 'A2', 'B1', 'B2', 'C1', 'C2']),
+  summary: z.string(),
+  strengths: z.array(z.string()),
+  improve: z.array(z.string()),
+  errors: z.array(z.object({ original: z.string(), corrected: z.string(), explanation: z.string() })),
+});
+
+/**
+ * Итог теста: уровень и разбор по всей стенограмме. Ошибки — с проверкой, что
+ * цитата взята из ответов человека, и сразу к тренажёрам, как ошибки бесед.
+ */
+export async function assessPlacement(params: {
+  turns: Message[];
+  language: LanguageCode;
+}): Promise<{ result: PlacementResult; errors: Correction[] }> {
+  const { turns, language } = params;
+  const answers = turns.filter((turn) => turn.role === 'user');
+  if (answers.length === 0) throw new Error(t.placementNoAnswers);
+
+  const response = await metered(() =>
+    client.messages.parse({
+      model: CLAUDE_MODEL,
+      max_tokens: 4096,
+      system: buildPlacementReviewPrompt(language),
+      // Уровень ставится один раз и решает всё остальное — пусть модель подумает.
+      thinking: { type: 'adaptive' },
+      messages: [{ role: 'user', content: `Transcript:\n${formatPlacementTranscript(turns)}` }],
+      output_config: { effort: 'low', format: zodOutputFormat(PlacementSchema) },
+    }),
+  );
+  const parsed = response.parsed_output;
+  if (!parsed) throw new Error(t.placementFailed);
+
+  const said = answers.map((turn) => normalise(turn.text));
+  const errors = parsed.errors.filter((error) => {
+    const quote = normalise(error.original);
+    return quote !== '' && said.some((text) => text.includes(quote));
+  });
+  return {
+    result: {
+      language,
+      level: parsed.level,
+      summary: parsed.summary.trim(),
+      strengths: parsed.strengths.map((line) => line.trim()).filter(Boolean),
+      improve: parsed.improve.map((line) => line.trim()).filter(Boolean),
+      at: Date.now(),
+    },
+    errors,
+  };
 }
 
 /**

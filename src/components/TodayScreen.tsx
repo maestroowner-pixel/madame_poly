@@ -19,10 +19,10 @@ import { VOCABULARY_LANGUAGES } from '../config';
 import { locale, t } from '../i18n';
 import { CONTENT_MAX_WIDTH } from '../layout';
 import { dueCards } from '../review';
-import { loadActivity, loadReviewCards, loadWeakSpots } from '../storage';
+import { loadActivity, loadPlacement, loadReviewCards, loadWeakSpots } from '../storage';
 import { useStyles, useTheme, type Theme } from '../theme';
 import { DRILL_TOPICS, findTopic } from '../topics';
-import type { LanguageCode, WeakSpot } from '../types';
+import type { LanguageCode, PlacementResult, WeakSpot } from '../types';
 
 interface Props {
   menu: ReactNode;
@@ -31,6 +31,8 @@ interface Props {
   onTalk: () => void;
   /** В «Слова»: повторение или пропуски тренажёра. */
   onWords: (topic: string | null, tab: WordsTab) => void;
+  /** Открыть тест уровня. */
+  onPlacement: () => void;
 }
 
 /** Слабое место считается свежим две недели: старые ошибки, возможно, уже ушли. */
@@ -71,7 +73,7 @@ function weekday(date: Date): string {
  * под ним. Вместо меню из восьми разделов: открыл и сразу знаешь, что делать.
  * Задачи отмечаются сами, по учёту занятий (activity.ts).
  */
-export function TodayScreen({ menu, language, onTalk, onWords }: Props) {
+export function TodayScreen({ menu, language, onTalk, onWords, onPlacement }: Props) {
   const { theme } = useTheme();
   const styles = useStyles(createStyles);
   const [log, setLog] = useState<ActivityLog>({});
@@ -79,6 +81,8 @@ export function TodayScreen({ menu, language, onTalk, onWords }: Props) {
   /** Карточек в очереди всего — пустая очередь не значит «всё повторено». */
   const [queued, setQueued] = useState(0);
   const [spots, setSpots] = useState<Record<string, WeakSpot>>({});
+  /** Итог теста уровня; undefined — ещё читаем, null — теста не было. */
+  const [placement, setPlacement] = useState<PlacementResult | null | undefined>(undefined);
 
   useEffect(() => {
     void loadActivity(language).then(setLog);
@@ -87,6 +91,7 @@ export function TodayScreen({ menu, language, onTalk, onWords }: Props) {
       setQueued(cards.length);
     });
     void loadWeakSpots(language).then(setSpots);
+    void loadPlacement(language).then(setPlacement);
   }, [language]);
 
   const now = Date.now();
@@ -122,6 +127,18 @@ export function TodayScreen({ menu, language, onTalk, onWords }: Props) {
 
       <ScrollView contentContainerStyle={styles.body}>
         <Text style={styles.streak}>{series > 0 ? t.todayStreak(series) : t.todayStreakStart}</Text>
+
+        {/* Уровня по тесту ещё нет — первым делом предлагаем его узнать. */}
+        {placement === null && (
+          <Task title={t.placementCardTitle} detail={t.placementCardHint} done={false} onPress={onPlacement} />
+        )}
+        {placement && (
+          <Pressable onPress={onPlacement} style={styles.placementLine}>
+            <Text style={styles.placementText}>
+              {t.placementResultLine(placement.level)} · <Text style={styles.placementAgain}>{t.placementAgain}</Text>
+            </Text>
+          </Pressable>
+        )}
 
         <Task
           title={t.todayTalk}
@@ -244,6 +261,9 @@ const createStyles = (theme: Theme) =>
       alignSelf: 'center',
     },
     body: { width: '100%', maxWidth: CONTENT_MAX_WIDTH, alignSelf: 'center', paddingHorizontal: 16, paddingBottom: 32, gap: 10 },
+    placementLine: { marginTop: -4, marginBottom: 4 },
+    placementText: { color: theme.textMuted, fontSize: 13 },
+    placementAgain: { color: theme.neon, fontWeight: '600' },
     streak: { color: theme.neon, fontSize: 16, fontWeight: '700', marginTop: 4, marginBottom: 4 },
     task: {
       flexDirection: 'row',

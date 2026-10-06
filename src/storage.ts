@@ -29,6 +29,7 @@ import type {
   TurnMode,
   WeakSpot,
   WeakSpotMistake,
+  PlacementResult,
 } from './types';
 
 const KEY_LEVELS = 'polyglotta:levels';
@@ -60,6 +61,7 @@ const keyVocabKnown = (language: LanguageCode) => `polyglotta:vocabKnown:${langu
 const keyVocabReview = (language: LanguageCode) => `polyglotta:vocabReview:${language}`;
 const keyWeakSpots = (language: LanguageCode) => `polyglotta:weakSpots:${language}`;
 const keyActivity = (language: LanguageCode) => `polyglotta:activity:${language}`;
+const keyPlacement = (language: LanguageCode) => `polyglotta:placement:${language}`;
 const KEY_CARD_DIRECTION = 'polyglotta:cardDirection';
 const KEY_REMINDERS = 'polyglotta:reminders';
 const keyExamLevel = (language: LanguageCode) => `polyglotta:examLevel:${language}`;
@@ -629,6 +631,15 @@ export async function loadReviewCards(language: LanguageCode): Promise<ReviewCar
 
 export async function saveReviewCards(language: LanguageCode, cards: ReviewCard[]): Promise<void> {
   await write(keyVocabReview(language), JSON.stringify(cards));
+}
+
+/** Итог теста уровня по языку; null — тест не проходили. */
+export async function loadPlacement(language: LanguageCode): Promise<PlacementResult | null> {
+  return parse(await AsyncStorage.getItem(keyPlacement(language)), null as PlacementResult | null);
+}
+
+export async function savePlacement(result: PlacementResult): Promise<void> {
+  await write(keyPlacement(result.language), JSON.stringify(result));
 }
 
 /** Занятия по дням для экрана «Сегодня» — по языку: план дня у каждого свой. */

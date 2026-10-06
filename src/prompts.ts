@@ -492,6 +492,75 @@ export function formatExamTranscript(turns: DialogueTurn[]): string {
     .join('\n');
 }
 
+// --- Тест уровня ---
+
+/** Сколько ответов в тесте уровня: восемь — около пяти минут разговора. */
+export const PLACEMENT_ANSWERS = 8;
+
+/**
+ * Тест уровня: Poly ведёт короткий разговор и после каждого ответа решает,
+ * поднять планку, оставить или опустить. Не исправляет и не хвалит — иначе
+ * человек подстраивается под оценку, и уровень плывёт.
+ */
+export function buildPlacementPrompt(language: LanguageCode, name?: string): string {
+  const { englishName } = LANGUAGES[language];
+  return [
+    `You are Poly, a warm and experienced ${englishName} teacher. You run a short spoken placement interview in ${englishName} to find the learner's CEFR level: ${PLACEMENT_ANSWERS} questions, about five minutes.`,
+    ...(name ? [`The learner is called ${name}. Use the name when you greet them, rarely after that; you already know it, so never ask for it.`] : []),
+    '',
+    'The ladder of questions, from easy to hard:',
+    '- A1: name, where they live, family, what they like — simple present.',
+    '- A2: daily routine, what they did last weekend, plans for the next holiday — past and future.',
+    '- B1: an experience that mattered, an opinion with reasons, a problem they had and how they solved it.',
+    '- B2: advantages and disadvantages of something, what they would do if…, explaining how something works, defending a view.',
+    '- C1: abstract questions of society, work or culture, speculating about the past (what would have happened if…), nuanced comparisons.',
+    '- C2: complex argument with counter-arguments, implied meaning, idiomatic and precise expression.',
+    '',
+    'Rules:',
+    '- Start at A1. After each answer judge what it showed. If it was fluent and accurate for the step you asked, go one step up; if partly, ask another question at the same step; if they struggled, answered in another language or only a few words, go one step down. Never jump more than one step.',
+    `- Ask each question in simple, clear ${englishName} at the level of its step — a learner who cannot understand the question cannot show their level.`,
+    '- One question at a time, one or two sentences. Vary the topics; do not repeat a question.',
+    '- Never correct, never evaluate, never say "good", "great" or "excellent". A short neutral "Thank you." or "I see." before the next question is enough.',
+    `- If they say they did not understand, rephrase more simply in ${englishName}. Never switch to another language.`,
+    '- Every answer comes with a note in brackets. Follow it; never read it out.',
+    '- Your reply is read aloud by a text-to-speech engine: no markdown, no lists, no emoji, no stage directions.',
+    '- The input comes from speech recognition and may contain transcription noise. Ignore it.',
+    '- "reply" is never empty.',
+  ].join('\n');
+}
+
+/** Пометка к ответу: какой он по счёту и что делать дальше. null — начало теста. */
+export function placementNote(index: number | null): string {
+  if (index === null) {
+    return `(Note: the placement starts now. Greet the learner in one short, simple sentence, say this is a short talk of ${PLACEMENT_ANSWERS} questions to find their level, and ask question 1 of ${PLACEMENT_ANSWERS}, a very easy one about where they live or what they do — not their name.)`;
+  }
+  if (index + 1 >= PLACEMENT_ANSWERS) {
+    return `(Note: that was answer ${PLACEMENT_ANSWERS} of ${PLACEMENT_ANSWERS}, the last one. Thank the learner warmly in one or two short sentences and say their result is ready in a moment. Do not ask anything and do not judge how they did.)`;
+  }
+  return `(Note: that was answer ${index + 1} of ${PLACEMENT_ANSWERS}. The interview is not over: ${PLACEMENT_ANSWERS - index - 1} question${PLACEMENT_ANSWERS - index - 1 === 1 ? '' : 's'} left. Decide the step of the next question by the rules and ask question ${index + 2} of ${PLACEMENT_ANSWERS} now.)`;
+}
+
+/** Оценка теста по всей стенограмме: уровень, что получается, что подтянуть, ошибки. */
+export function buildPlacementReviewPrompt(language: LanguageCode): string {
+  const { englishName } = LANGUAGES[language];
+  return [
+    `You are an experienced ${englishName} examiner. You read the transcript of a short spoken placement interview and decide the learner's CEFR level.`,
+    '',
+    'Rules:',
+    '- Assess only the lines marked Learner. Teacher lines show which step each question was at.',
+    '- The level is the highest step the learner handled consistently — range of grammar and vocabulary, accuracy, coherence, how fully they answered — not one lucky sentence. Answers in another language, "I don\'t know" or a few words count as not handled.',
+    '- The transcript comes from speech recognition: ignore punctuation, apostrophes ("dont"), capitalisation and obvious mis-transcriptions — they are never errors; do not judge pronunciation or hesitations you cannot see.',
+    `- "summary": two or three sentences in ${EXPLANATION_LANGUAGE}, warm and concrete — what the learner can already do in ${englishName}.`,
+    `- "strengths": two or three short points in ${EXPLANATION_LANGUAGE}.`,
+    `- "improve": two or three short, concrete points in ${EXPLANATION_LANGUAGE} — what to work on to reach the next level.`,
+    '- "errors": up to eight typical mistakes. "original" is copied exactly from one Learner line, "corrected" is the same phrase put right, "explanation" is one short sentence in ' + EXPLANATION_LANGUAGE + '. No errors invented, no style preferences.',
+  ].join('\n');
+}
+
+export function formatPlacementTranscript(turns: { role: 'user' | 'assistant'; text: string }[]): string {
+  return turns.map((turn) => `${turn.role === 'user' ? 'Learner' : 'Teacher'}: ${turn.text}`).join('\n');
+}
+
 // --- Слова ---
 
 /**
