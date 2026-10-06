@@ -1,9 +1,19 @@
 import { module, type Syllabus } from './types';
 
 /**
- * Французский — по схеме «Grammaire progressive du français» (CLE):
- * débutant и intermédiaire для A1–B2, avancé и perfectionnement для C1–C2,
- * со ступенями по référentiels du CECRL. Названия и группировка свои.
+ * Французский — по «Grammaire progressive du français» (CLE International):
+ * débutant (A1) и intermédiaire (A2–B1, 4-е изд., 52 главы) для ступеней A и
+ * B, avancé (B1–B2, 3-е изд., 27 глав) для B; C1–C2 — по схеме тома
+ * perfectionnement (B2–C2). Названия и группировка свои.
+ *
+ * Сверено с оглавлениями débutant, intermédiaire и avancé 2026-10-06:
+ * каждая грамматическая глава книг есть в программе своим юнитом или внутри
+ * соседнего; недостававшие темы добавлены, прежние названия не тронуты — от
+ * них зависят ключи сохранённых уроков. Passé simple и style indirect libre
+ * в книге идут на B1–B2, здесь оставлены на C: в речи они не нужны, а в
+ * письме их спрашивают с DALF. Ступень C сверена только по семи разделам
+ * тома perfectionnement (lieu, moment, nom, pronom, temps, modes, discours):
+ * его оглавление по главам доступно лишь сканом.
  */
 export const FRENCH: Syllabus = {
   A: [
@@ -14,6 +24,7 @@ export const FRENCH: Syllabus = {
       ['Les articles contractés', 'au, aux, du, des'],
       ['Les articles partitifs', 'du, de la, de l\'; pas de'],
       ['L\'expression de la quantité', 'beaucoup de, un peu de, trop de, un kilo de'],
+      ['La comparaison de quantités', 'plus de, moins de, autant de … que'],
     ]),
     module('A', 'L\'adjectif', [
       ['Le féminin des adjectifs', 'petit / petite, beau / belle, heureux / heureuse'],
@@ -28,24 +39,30 @@ export const FRENCH: Syllabus = {
       ['Être et avoir', 'je suis, j\'ai; âge, nationalité, profession'],
       ['C\'est / il est', 'C\'est un ami. Il est médecin.'],
       ['Il y a', 'Il y a un parc. Il n\'y a pas de …'],
+      ['Qui est-ce ? Qu\'est-ce que c\'est ?', 'identifier une personne ou une chose; ce n\'est pas'],
+      ['Les expressions avec avoir', 'avoir faim, froid, mal à la tête; avoir les yeux bleus; avoir besoin de, envie de'],
       ['La négation', 'ne … pas; ne … jamais, rien, personne, plus'],
       ['Les questions', 'intonation, est-ce que, inversion'],
       ['Les mots interrogatifs', 'où, quand, comment, combien, pourquoi, qui, que'],
       ['L\'adjectif interrogatif quel', 'quel, quelle, quels, quelles'],
+      ['L\'exclamation', 'Quel beau temps ! Comme c\'est beau ! Qu\'est-ce que c\'est cher !'],
     ]),
     module('A', 'Le présent', [
       ['Le présent des verbes en -er', 'parler, manger, appeler, acheter'],
       ['Le présent des verbes en -ir', 'finir, choisir; partir, dormir'],
       ['Le présent: aller, faire, venir', 'verbes irréguliers fréquents'],
       ['Le présent: prendre, mettre, dire, lire', 'verbes irréguliers fréquents'],
+      ['Le présent des verbes en -re et -oir', 'écrire, attendre; boire, recevoir; savoir / connaître, croire, voir'],
       ['Pouvoir, vouloir, devoir, savoir', '+ infinitif'],
       ['Les verbes pronominaux', 'se lever, s\'appeler, se promener'],
       ['L\'impératif', 'Viens! Allons-y! Ne pars pas! Lève-toi!'],
       ['Il faut', 'il faut + infinitif / + nom'],
+      ['Les verbes de déplacement', 'aller, venir, revenir, rentrer, retourner; aller voir / visiter; en train, à pied'],
     ]),
     module('A', 'Le passé et le futur', [
       ['Le futur proche', 'aller + infinitif'],
       ['Le passé récent', 'venir de + infinitif'],
+      ['Être en train de, être sur le point de', 'action en cours, action imminente'],
       ['Le passé composé avec avoir', 'j\'ai parlé; participes réguliers'],
       ['Les participes passés irréguliers', 'fait, pris, vu, eu, été, mis'],
       ['Le passé composé avec être', 'aller, venir, naître, verbes pronominaux; accord'],
@@ -74,6 +91,7 @@ export const FRENCH: Syllabus = {
     module('A', 'Les nombres et le temps', [
       ['Les nombres', 'de 0 à 1 000 000; soixante-dix, quatre-vingts'],
       ['L\'heure et la date', 'Il est trois heures et quart; le 14 juillet'],
+      ['Le temps qu\'il fait, les mois et les saisons', 'il fait froid, il pleut, il neige; en hiver, au printemps, en juillet'],
       ['Les nombres ordinaux', 'premier, deuxième, dernier'],
     ]),
   ],
@@ -89,6 +107,7 @@ export const FRENCH: Syllabus = {
       ['Le futur antérieur', 'j\'aurai fini; quand j\'aurai fini'],
       ['Le conditionnel présent', 'formation; souhait, conseil, suggestion'],
       ['Le conditionnel passé', 'j\'aurais fait; regret, reproche'],
+      ['Le conditionnel: information incertaine', 'Le ministre serait malade; selon la presse, il y aurait …'],
       ['L\'hypothèse avec si', 'si + présent / imparfait / plus-que-parfait'],
       ['Le futur dans le passé', 'il a dit qu\'il viendrait'],
     ]),
@@ -117,6 +136,9 @@ export const FRENCH: Syllabus = {
       ['Le faire causatif', 'faire réparer, se faire couper les cheveux'],
       ['Les verbes + à / de + infinitif', 'commencer à, décider de, réussir à'],
       ['L\'infinitif passé', 'après avoir mangé, après être parti'],
+      ['L\'adjectif verbal', 'fatigant / fatiguant, différent / différant, convaincant / convainquant; accord'],
+      ['La forme pronominale: sens', 'réfléchi, réciproque, passif: ça se mange froid, ça ne se dit pas'],
+      ['La forme impersonnelle', 'il est arrivé un accident, il reste, il manque, il suffit de, il s\'agit de'],
     ]),
     module('B', 'Le discours rapporté', [
       ['Le discours indirect au présent', 'il dit que, il demande si, il veut savoir ce que'],
@@ -128,6 +150,8 @@ export const FRENCH: Syllabus = {
       ['La négation complexe', 'ne … que, ni … ni, ne … aucun, sans'],
       ['Les adverbes: place et formation', 'place au passé composé; -amment, -emment'],
       ['Les prépositions avec les noms géographiques', 'en Provence, dans le Midi, au Québec'],
+      ['Les prépositions à, de, en, par, pour', 'une tasse à café / de café; en bois, en deux heures; par jour; pour deux jours'],
+      ['L\'absence d\'article', 'sans sucre, avec plaisir; un verre de vin; il est médecin; énumérations, titres'],
     ]),
     module('B', 'Les relations logiques', [
       ['L\'expression du temps', 'depuis, il y a, pendant, en, dans; quand, lorsque, pendant que'],
