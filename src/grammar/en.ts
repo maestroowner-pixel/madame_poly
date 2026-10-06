@@ -1,9 +1,17 @@
 import { module, type Syllabus } from './types';
 
 /**
- * Английский — по схеме Murphy: «Essential Grammar in Use» для A1–A2 и
- * «English Grammar in Use» для B1–B2; C1–C2 — по Hewings, «Advanced Grammar
- * in Use». Названия и группировка свои, темы и их ступени — как в книгах.
+ * Английский — по Murphy: «Essential Grammar in Use» (4-е изд., 115 юнитов)
+ * для A1–A2 и «English Grammar in Use» (5-е изд., 145 юнитов) для B1–B2;
+ * C1–C2 — по Hewings, «Advanced Grammar in Use» (3-е изд., 100 юнитов).
+ * Названия и группировка свои, темы и их ступени — как в книгах.
+ *
+ * Сверено с оглавлениями этих изданий 2026-10-06: каждая тема книги есть в
+ * программе своим юнитом или внутри соседнего (у Murphy тема часто идёт
+ * двумя-тремя юнитами подряд — здесь это один). Недостававшие темы добавлены;
+ * прежние названия не тронуты — от них зависят ключи сохранённых уроков.
+ * Сверх книг на ступени C оставлены hedging, emphatic do и переносные значения
+ * фразовых глаголов: их спрашивают на CAE и CPE.
  */
 export const ENGLISH: Syllabus = {
   A: [
@@ -38,6 +46,10 @@ export const ENGLISH: Syllabus = {
       ['Passive: present and past', 'is made, was built; by'],
       ['Passive: continuous and perfect', 'is being done, has been done'],
     ]),
+    module('A', 'Verb forms', [
+      ['be, have, do as auxiliaries', 'am doing, was done, have gone, do you …? did she …?'],
+      ['Regular and irregular verbs', 'cleaned / cleaned; go / went / gone; past simple and past participle'],
+    ]),
     module('A', 'Future', [
       ['Present continuous for the future', "What are you doing tomorrow?"],
       ['going to', "I'm going to …; it's going to rain"],
@@ -63,6 +75,7 @@ export const ENGLISH: Syllabus = {
       ['Reply questions', 'Have you? Are you? Did she?'],
       ['too and either', "I am too. I don't either."],
       ['so and neither', 'So am I. Neither do I.'],
+      ['Negatives', "isn't, haven't, don't, didn't; negative of do and have"],
     ]),
     module('A', 'Questions', [
       ['Word order in questions', 'Is it …? Do they …?'],
@@ -79,6 +92,7 @@ export const ENGLISH: Syllabus = {
       ['work / working / worked', 'forms after auxiliaries'],
       ['Verb + to', 'I want to go; I decided to …'],
       ['Verb + -ing', 'I enjoy swimming; I finished reading'],
+      ['I want you to …', 'want / tell / ask somebody to …; make and let somebody do'],
       ['to … for purpose', 'I went to the shop to buy …'],
       ['go to, go on, go for, go -ing', 'go shopping, go on holiday'],
       ['get', 'get a job, get tired, get home'],
@@ -89,6 +103,7 @@ export const ENGLISH: Syllabus = {
       ['I / me, he / him', 'subject and object pronouns'],
       ['my / his / their', 'possessive adjectives'],
       ['mine / yours', "Whose is this? It's mine."],
+      ['I / me / my / mine', 'all four forms together: he / him / his / his'],
       ['myself / yourself', 'reflexive pronouns; by myself'],
       ["-'s", "Kate's camera; my parents' house"],
     ]),
@@ -96,6 +111,7 @@ export const ENGLISH: Syllabus = {
       ['a / an', 'a book, an umbrella; jobs'],
       ['Singular and plural', 'flowers, children, people, scissors'],
       ['Countable and uncountable', 'a bottle / some water'],
+      ['a cake / some cake / some cakes', 'nouns that can be both; a piece of, a glass of; advice, weather'],
       ['a / an or the', 'first mention, the only one'],
       ['the', 'the sun, the cinema, play the piano'],
       ['No article', 'go to work, go home, at school'],
@@ -107,6 +123,7 @@ export const ENGLISH: Syllabus = {
       ['one and ones', 'this one, the red ones'],
       ['some and any', 'questions, negatives, offers'],
       ['no, none, not any', "There's no …; none of them"],
+      ['not anybody / nobody', "I didn't see anybody = I saw nobody; no double negative"],
       ['somebody, anything, nowhere', 'some-, any-, no-, every- words'],
       ['every and all', 'every day / all day'],
       ['all, most, some, none', 'all of them, most people'],
@@ -142,11 +159,12 @@ export const ENGLISH: Syllabus = {
       ['from, until, since, for', 'time periods'],
       ['before, after, during, while', 'before lunch, while I was …'],
       ['in, at, on: place', 'in the room, at the station, on the wall'],
+      ['in, at, on: place (2)', 'in bed, in hospital; at home, at work; on a bus, on the first floor'],
       ['to, in, at', 'go to, arrive in, be at'],
       ['next to, between, under', 'position'],
       ['up, over, through', 'movement'],
       ['on, at, by, with, about', 'on holiday, by car, a book about …'],
-      ['Adjective + preposition', 'afraid of, good at, interested in'],
+      ['Adjective + preposition', 'afraid of, good at, interested in; preposition + -ing: good at cooking'],
       ['Verb + preposition', 'listen to, look at, wait for'],
     ]),
     module('A', 'Phrasal verbs', [
@@ -165,10 +183,12 @@ export const ENGLISH: Syllabus = {
       ['Present perfect or past simple?', 'unfinished and finished time'],
       ['Past perfect', 'I had done'],
       ['Past perfect continuous', 'I had been doing'],
+      ['have and have got', "I have / I've got; have breakfast, have a look; did you have …?"],
       ['used to and would', 'past habits and states'],
     ]),
     module('B', 'Future', [
       ['Present tenses for the future', 'arrangements and timetables'],
+      ['will and shall', "offers, promises, decisions made now; Shall I …? I'll probably …"],
       ['going to and will', 'plans, decisions, predictions'],
       ['Future continuous and future perfect', 'will be doing, will have done'],
       ['when I do / when I have done', 'time clauses about the future'],
@@ -215,6 +235,7 @@ export const ENGLISH: Syllabus = {
       ['Verb + to', 'decide, hope, manage, refuse'],
       ['Verb + object + to', 'I want you to …; make and let'],
       ['-ing or to: change of meaning', 'remember, stop, try, regret'],
+      ['try, need, help', 'try to do / try doing; needs cleaning; help somebody (to) do'],
       ['like, love, prefer, would rather', 'I prefer … to …; I\'d rather …'],
       ['Preposition + -ing', 'good at swimming; instead of going'],
       ['be used to and get used to', "I'm used to getting up early"],
@@ -230,6 +251,7 @@ export const ENGLISH: Syllabus = {
       ['a / an, some and the', 'first and second mention'],
       ['the: general and specific', 'children / the children'],
       ['the with institutions', 'school / the school, hospital, prison'],
+      ['the giraffe, the telephone, the old', 'the + singular for a type; the + adjective; the French'],
       ['Names with and without the', 'streets, buildings, countries'],
       ['Singular and plural', 'the police are; a pair of'],
       ['Noun + noun', 'a tennis ball, a two-hour journey'],
@@ -264,6 +286,7 @@ export const ENGLISH: Syllabus = {
       ['as … as', 'as soon as possible, twice as much'],
       ['Superlatives', 'the best I have ever …'],
       ['Adverbs and word order', 'place and time; frequency; still, yet, even'],
+      ['even', 'even bigger, not even, even if / even though'],
     ]),
     module('B', 'Linking words', [
       ['although, in spite of, despite', 'contrast'],
@@ -277,15 +300,19 @@ export const ENGLISH: Syllabus = {
       ['at, on, in: time', 'on time / in time; at the end / in the end'],
       ['in, at, on: position', 'in the picture, at the party, on the bus'],
       ['to, at, in, into', 'arrive in / at, get into'],
+      ['in, on, at: other uses', 'in the rain, in my opinion; on TV, on holiday; at the age of'],
       ['by', 'by car, by mistake, a book by …'],
       ['Noun + preposition', 'reason for, cause of, increase in'],
       ['Adjective + preposition', 'nice of you, angry with, proud of'],
       ['Verb + preposition', 'depend on, apologise for, accuse of'],
     ]),
     module('B', 'Phrasal verbs', [
+      ['Phrasal verbs: introduction', 'verb + in / out / up …; position of the object: turn it off'],
       ['Phrasal verbs: in and out', 'fill in, drop out, find out'],
+      ['Phrasal verbs: out', 'work out, run out, carry out, turn out, point out'],
       ['Phrasal verbs: on and off', 'carry on, put off, turn down'],
       ['Phrasal verbs: up and down', 'give up, turn up, break down'],
+      ['Phrasal verbs: up', 'catch up, set up, bring up, make up, end up, show up'],
       ['Phrasal verbs: away and back', 'give away, call back'],
     ]),
   ],
@@ -313,8 +340,16 @@ export const ENGLISH: Syllabus = {
       ['Reporting verb patterns', 'advise, insist, deny, accuse, admit'],
       ['Reported speech: no tense change', 'current truths, reporting now'],
       ['Reporting with modals', 'could, should, might in reported speech'],
+      ['Reporting with nouns and adjectives', 'the claim that …; her refusal to …; I am certain that'],
+    ]),
+    module('C', 'Questions', [
+      ['Wh-questions: who, whom, which, how, whose', 'Who did you give it to? / To whom …?; which of; how come'],
+      ['Negative, echo and that-clause questions', "Haven't you finished? You did what? Who do you think (that) …?"],
     ]),
     module('C', 'Verb patterns', [
+      ['Linking verbs', 'be, appear, seem; become, get, go, turn, come: go bad, turn red, come true'],
+      ['Verbs, objects and complements', 'transitive and intransitive; object + complement: they elected her chair'],
+      ['Verb + two objects', 'give / buy somebody something; to or for; explain something to somebody'],
       ['Verb + -ing or infinitive: meaning', 'go on, mean, need, regret, try'],
       ['Verb + object + -ing or infinitive', 'I heard him leave / leaving'],
       ['Verbs + wh-clause', 'I wonder whether …; explain how'],
@@ -332,6 +367,7 @@ export const ENGLISH: Syllabus = {
       ['Quantifiers: advanced', 'few / a few / quite a few; many a …; the majority of'],
       ['each, every, all, whole', 'contrasts and agreement'],
       ['one, ones, that of', 'the one I want; those who'],
+      ['Reflexive pronouns', 'herself, themselves; for emphasis; verbs with and without them'],
       ['Substitution: so, not, do so', 'I suppose so; if so; she did so'],
       ['Ellipsis', "I'd like to; she can, but I can't"],
     ]),
@@ -339,14 +375,17 @@ export const ENGLISH: Syllabus = {
       ['Prepositions in relative clauses', 'the person to whom …; which formal and informal'],
       ['whose, what, whatever', 'what I need is …; whoever, wherever'],
       ['Infinitive relative clauses', 'the first person to arrive; nothing to do'],
+      ['Adding information to noun phrases', 'apposition: my friend Jo; namely, that is; prepositional phrases'],
       ['Participle relative clauses', 'the man standing …, the report written …'],
     ]),
     module('C', 'Adjectives and adverbs', [
+      ['Position of adjectives', 'attributive only: the main reason; predicative only: afraid, alone; the people involved'],
       ['Gradable and non-gradable adjectives', 'very cold / absolutely freezing'],
       ['Adjective + that-clause or to-infinitive', "I'm sure that …; it's essential that"],
       ['Participle adjectives', 'well-known, long-lasting, broken-down'],
       ['Position of adverbs', 'focus adverbs: only, even, also'],
       ['Degree adverbs', 'quite, rather, fairly, somewhat, utterly'],
+      ['Comment and viewpoint adverbs', 'apparently, frankly, presumably; financially, politically speaking'],
       ['Comparison: advanced', 'the more … the more; far / by far; nowhere near as'],
     ]),
     module('C', 'Adverbial clauses', [
@@ -360,10 +399,14 @@ export const ENGLISH: Syllabus = {
       ['Mixed conditionals', 'If I had studied, I would be …'],
       ['if … will, if … should', 'If you\'ll wait; if you should see'],
       ['Alternatives to if', 'provided, supposing, otherwise, but for'],
+      ['if I were you, were to', 'If he were to win …; imagine, suppose, what if'],
+      ['unless and if … not; if and whether', 'where unless is impossible; whether … or not'],
       ['Inversion in conditionals', 'Had I known, Should you need, Were it not for'],
       ['wish, if only, would rather, it\'s time', 'unreal past forms'],
     ]),
     module('C', 'Emphasis and style', [
+      ['there is, there was', 'there seems to be, there being, there exist; formal and literary there'],
+      ['Introductory it', "It's a pity that …; I find it hard to …; it seems that; it + passive"],
       ['Cleft sentences', "It was … that; What I need is …; All I did was"],
       ['Inversion after negative adverbials', 'Never have I …; Not only …; Hardly … when'],
       ['Fronting', 'Strange as it may seem, …; Into the room came …'],
@@ -373,6 +416,8 @@ export const ENGLISH: Syllabus = {
       ['Hedging', 'it would seem, tend to, appear to, arguably'],
     ]),
     module('C', 'Prepositions and phrasal verbs', [
+      ['Prepositions of position, movement and time', 'across / over, along / through; during / throughout; by / until / up to'],
+      ['between and among; exceptions', 'between the three; except (for), besides, apart from, but for'],
       ['Prepositions after nouns, adjectives and verbs', 'advanced collocations'],
       ['Three-part phrasal verbs', 'come up with, put up with, get away with'],
       ['Phrasal verbs: figurative meanings', 'bring about, play down, brush up on'],
