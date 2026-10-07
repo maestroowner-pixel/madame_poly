@@ -36,7 +36,7 @@ Adults and older teenagers who already know some of a language (A2–C1) and nee
 
 **4. Beta testing**
 
-We tested through TestFlight with an internal group of two testers, the developer and a second, non-technical learner. Each used their own iPhone (iPhone 14 Pro and iPhone 14 Pro Max). Over 14 builds there were 62 sessions in total. Both testers used the app daily in real conversations and in several target languages. On Android, test builds were installed directly on devices. We are a small studio and did not run a public beta. Before resubmitting we will gladly open external TestFlight testing if you consider it necessary.
+We tested through TestFlight with an internal group of two testers, the developer and a second tester. Each used their own iPhone (iPhone 14 Pro and iPhone 14 Pro Max). Over 14 builds there were 62 sessions in total. On Android, test builds were installed directly on devices. We are a small studio and did not run a public beta. Before resubmitting we will gladly open external TestFlight testing if you consider it necessary.
 
 Problems found in testing and fixed before submission:
 
