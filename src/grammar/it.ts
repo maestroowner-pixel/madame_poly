@@ -1,10 +1,17 @@
 import { module, type Syllabus } from './types';
 
 /**
- * Итальянский — черновик, составленный Claude по памяти о том, как обычно
- * строятся курсы и что спрашивают на CILS и CELI. С официальными перечнями
- * не сверен: их надо заменить программой по Profilo della lingua italiana или
- * силлабусу CILS, когда они будут под рукой.
+ * Итальянский — составлен Claude по памяти о курсах и экзаменах CILS и CELI,
+ * затем сверен 2026-10-06 с официальным силлабусом CILS (Università per
+ * Stranieri di Siena, «Linee guida CILS»: «Sillabo delle strutture
+ * morfosintattiche» по уровням A1–C2). Каждая структура силлабуса есть в
+ * программе своим юнитом или внутри соседнего; недостававшие добавлены,
+ * прежние названия не тронуты — от них зависят ключи сохранённых уроков.
+ *
+ * Ступени здесь местами раньше, чем в CILS: пассив и congiuntivo passato
+ * стоят на B, хотя CILS требует их в речи только с C1, — на B их надо хотя
+ * бы узнавать. Названия юнитов и порядок свои: силлабус — перечень, а не
+ * учебник.
  */
 export const ITALIAN: Syllabus = {
   A: [
@@ -15,6 +22,7 @@ export const ITALIAN: Syllabus = {
       ['L\'articolo indeterminativo', 'un, uno, una, un\''],
       ['Le preposizioni articolate', 'del, nel, sul, al, dal'],
       ['Il partitivo', 'del pane, dei libri, un po\' di'],
+      ['Gli indefiniti di base', 'molto, tanto, poco, tutto, troppo; qualche, ogni; tutti i giorni'],
     ]),
     module('A', 'L\'aggettivo', [
       ['L\'accordo dell\'aggettivo', '-o / -a / -i / -e; -e / -i'],
@@ -31,6 +39,7 @@ export const ITALIAN: Syllabus = {
       ['La negazione', 'non; non … mai, niente, nessuno, più'],
       ['Le domande', 'intonazione; chi, che cosa, dove, quando, come, quanto, perché'],
       ['Quale e quanto', 'quale / quali; quanto, quanta, quanti, quante'],
+      ['Le esclamative', 'Che bello! Quanto costa! Come sei gentile! Che peccato!'],
     ]),
     module('A', 'Il presente', [
       ['Il presente dei verbi regolari', '-are, -ere, -ire; capire / capisco'],
@@ -65,7 +74,9 @@ export const ITALIAN: Syllabus = {
       ['Le preposizioni di tempo', 'alle otto, a maggio, il lunedì, da due anni, fra'],
       ['Gli avverbi in -mente', 'lentamente, facilmente, veramente'],
       ['Bene, male, molto, troppo', 'avverbi frequenti; molto come aggettivo'],
-      ['I connettivi semplici', 'e, ma, o, perché, allora, quindi, poi'],
+      ['I connettivi semplici', 'e, ma, o, perché, allora, quindi, poi; invece, infatti, non solo … ma anche'],
+      ['Le prime frasi subordinate', 'perché, quando, se + presente; per + infinito; dico che …; prima di + infinito'],
+      ['Il si impersonale', 'si dice, si mangia bene, non si fuma; si + verbo riflessivo: ci si alza'],
     ]),
     module('A', 'I numeri e il tempo', [
       ['I numeri', 'da 0 a 1.000.000; ventuno, ventotto'],
@@ -85,6 +96,7 @@ export const ITALIAN: Syllabus = {
       ['Il condizionale presente', 'desiderio, consiglio, ipotesi'],
       ['Il condizionale passato', 'avrei voluto; futuro nel passato'],
       ['Il condizionale di notizia non confermata', 'Secondo i giornali, il ministro sarebbe …'],
+      ['Gli avverbi di giudizio e di dubbio', 'forse, probabilmente, certamente, sicuramente, magari, davvero'],
     ]),
     module('B', 'Il congiuntivo', [
       ['Il congiuntivo presente', 'formazione; verbi irregolari'],
@@ -95,6 +107,7 @@ export const ITALIAN: Syllabus = {
       ['Il congiuntivo imperfetto', 'Pensavo che fosse …; se fossi'],
       ['Congiunzioni con il congiuntivo', 'benché, affinché, prima che, a meno che'],
       ['Congiuntivo o indicativo?', 'so che / penso che; espressioni di certezza'],
+      ['Frase esplicita o implicita?', 'penso che tu abbia ragione / penso di avere ragione; spero di, ho deciso di'],
     ]),
     module('B', 'Il periodo ipotetico', [
       ['Il periodo ipotetico della realtà', 'Se piove, resto a casa.'],
@@ -107,6 +120,7 @@ export const ITALIAN: Syllabus = {
       ['I pronomi relativi', 'cui, il quale; in cui, con cui, il cui'],
       ['Chi e quello che', 'Chi cerca trova; quello che dici'],
       ['I pronomi e gli aggettivi indefiniti', 'qualcuno, nessuno, ognuno, qualche, alcuni'],
+      ['Tu, Lei, voi: i pronomi allocutivi', 'dare del tu, dare del Lei; Le / La di cortesia; accordo: Lei è stato / stata'],
       ['I pronomi con i verbi modali e l\'imperativo', 'Devo dirglielo / Glielo devo dire; Dimmelo!'],
     ]),
     module('B', 'Forme del verbo', [
@@ -116,6 +130,7 @@ export const ITALIAN: Syllabus = {
       ['L\'infinito', 'dopo preposizioni: prima di partire, senza dire'],
       ['I verbi pronominali', 'andarsene, farcela, cavarsela, metterci'],
       ['Fare + infinito', 'Ho fatto riparare la macchina.'],
+      ['I verbi impersonali', 'piove, nevica; bisogna, occorre, basta, conviene, sembra, capita'],
     ]),
     module('B', 'Il discorso indiretto', [
       ['Il discorso indiretto', 'dire che, chiedere se; cambi di tempo e persona'],
@@ -125,6 +140,9 @@ export const ITALIAN: Syllabus = {
       ['I connettivi di causa e conseguenza', 'poiché, siccome, dato che; perciò, quindi'],
       ['I connettivi di opposizione e concessione', 'invece, mentre, però, tuttavia, anche se'],
       ['I connettivi di tempo', 'mentre, appena, dopo che, finché'],
+      ['Le coordinate correlative e conclusive', 'sia … sia, né … né, o … o, non solo … ma; dunque, perciò, quindi'],
+      ['Le comparative', 'più di quanto pensassi, meno di quello che, meglio di come; tanto … quanto'],
+      ['Le consecutive', 'così … che, tanto … che, talmente … che, a tal punto che'],
       ['Preposizioni dopo verbi e aggettivi', 'pensare a, parlare di, capace di, interessato a'],
     ]),
   ],
@@ -137,6 +155,7 @@ export const ITALIAN: Syllabus = {
       ['Il passato remoto e il trapassato remoto', 'nella narrazione letteraria'],
       ['Il participio presente e passato con valore verbale', 'Finita la cena, …; gli studenti partecipanti'],
       ['Il gerundio composto', 'Avendo finito, …'],
+      ['I verbi fraseologici e difettivi', 'stare per, cominciare a, smettere di, continuare a, finire di; vertere, solere, urgere'],
       ['L\'infinito passato e sostantivato', 'dopo aver mangiato; il mangiare'],
     ]),
     module('C', 'La frase complessa', [
@@ -145,6 +164,8 @@ export const ITALIAN: Syllabus = {
       ['Le subordinate temporali', 'non appena, finché non, prima che, dopo che'],
       ['Le subordinate condizionali', 'purché, a patto che, nel caso che, qualora'],
       ['Le relative con il congiuntivo', 'Cerco qualcuno che sappia …'],
+      ['Avversative, esclusive e limitative', 'invece di, anziché; senza che, tranne che, fuorché; per quanto ne so, a quanto pare'],
+      ['Le incidentali e le modali', 'frasi incidentali: come dicevo, a dire il vero; modo: rispondendo con calma, come se'],
       ['Le costruzioni implicite', 'infinito, gerundio e participio al posto della subordinata'],
     ]),
     module('C', 'Stile e registro', [
