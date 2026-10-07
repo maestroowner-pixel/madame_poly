@@ -2,7 +2,7 @@
 
 Черновик ответа в Resolution Center. Сборку повторно **не отправлять**: Apple просит либо существенно изменить приложение, либо ответить на вопросы.
 
-Места `[ЗАПОЛНИТЬ: …]` знает только пользователь. Выдумывать их нельзя: Apple сверяет ответы с аккаунтом и с TestFlight.
+Заполнено 2026-10-07 по данным пользователя: на аккаунте ещё Conquistador A2, Conquistador B1–B2 и Wortkraft A2; в TestFlight внутренняя группа из двух человек (14 сборок; 46 и 16 сеансов). Примеры в п. 4 взяты из истории исправлений по итогам проверки на iPhone. Перед отправкой проверьте, что каждый пример действительно был, и при желании пометьте, какие заметила Варвара.
 
 ---
 
@@ -36,21 +36,26 @@ Adults and older teenagers who already know some of a language (A2–C1) and nee
 
 **4. Beta testing**
 
-[ЗАПОЛНИТЬ: кто тестировал (сколько человек, какие языки и платформы), как долго (TestFlight / Google Play internal testing / APK) и 2–3 реальных отзыва с тем, что после них изменилось.]
+We tested through TestFlight with an internal group of two testers, the developer and a second, non-technical learner. Each used their own iPhone (iPhone 14 Pro and iPhone 14 Pro Max). Over 14 builds there were 62 sessions in total. Both testers used the app daily in real conversations and in several target languages. On Android, test builds were installed directly on devices. We are a small studio and did not run a public beta. Before resubmitting we will gladly open external TestFlight testing if you consider it necessary.
 
-Candidate changes we believe came from testing. Keep only the ones that really followed feedback:
-- the conversation was stopping on short pauses → a manual "I'm done speaking" mode was added next to automatic end-of-turn detection;
-- corrections were attached to older sentences → corrections are now shown only for errors in the learner's latest sentence;
-- the pause before Poly answered → Poly now starts speaking as soon as her reply is ready, and corrections appear while she talks;
-- testers asked to practise their recurring mistakes → personal drills built from their own errors.
+Problems found in testing and fixed before submission:
+
+- **Poly did not hear the learner on iPhone.** Automatic end-of-turn detection used fixed volume thresholds that worked on one microphone and failed on another. Turn detection now adapts to each voice and room, room noise is no longer mistaken for speech, and a manual mode was added: the learner taps when finished, so the microphone opens only when they are ready.
+- **Replies were sometimes lost silently.** When the device reported no input level, or the model returned an empty reply, the turn disappeared without a message. Now the learner is told that Poly did not hear them and the conversation continues.
+- **Corrections pointed at old sentences.** Testers saw corrections for mistakes made several turns earlier under their newest sentence. Corrections are now shown only for errors in the learner's latest sentence.
+- **The pause before Poly answered was too long,** especially after sentences with many mistakes. Poly now starts speaking as soon as her reply is ready, and the corrections appear while she is talking.
+- **The writing field was hidden by the keyboard** on smaller screens. Fixed.
+- **The learner wanted to practise their recurring mistakes.** This led to personal drills built from their own errors and to the "Today" plan that suggests them.
 
 **5. Standalone or part of a suite**
 
-Madame Poly is a standalone product. [ЗАПОЛНИТЬ: перечислить другие приложения аккаунта.] Our account also publishes [ЗАПОЛНИТЬ: например «Conquistador» (испанская грамматика, офлайн-курс) и «Wortkraft» (немецкая грамматика A2)]. Those apps are fixed, hand-written grammar courses for one language and level. They work offline, without speech or AI conversation. Madame Poly has no fixed course content: its core is live spoken conversation and feedback generated per learner, across twelve languages. The audiences overlap only in that both learn languages; what each app does is different. [Убрать абзац, если в аккаунте нет других языковых приложений.]
+Madame Poly is a standalone product. Our account also publishes three grammar textbook apps: **Conquistador A2** and **Conquistador B1–B2** (Spanish grammar) and **Wortkraft A2** (German grammar). Each is a fixed, hand-written grammar course with exam preparation for one language at one level. They are digital workbooks: authored rules and exercises, used offline. They have no conversation, no speech, no AI, and no analysis of the learner's own mistakes.
+
+Madame Poly has no fixed course content. Its core is live spoken conversation with a voice tutor across twelve languages, with feedback, lessons, drills and exam rehearsals generated for each learner from what they actually say. A learner can use a grammar workbook and Madame Poly side by side: one teaches the rules of one language, the other makes them speak.
 
 **6. Could it be an in-app purchase in another app?**
 
-No. [ЗАПОЛНИТЬ при наличии других приложений:] Those apps are small offline grammar workbooks with a one-time purchase. Madame Poly needs a microphone, speech recognition, server-side AI, an account and a subscription. Adding these to an offline workbook would change that product completely, and Madame Poly's grammar is only one of eight sections.
+No. Conquistador and Wortkraft are offline workbooks for a single language and level. Madame Poly needs a microphone, speech recognition and synthesis, server-side AI, a user account and a subscription with a monthly usage budget, and covers twelve languages. Adding it to a Spanish or German workbook would turn that workbook into a different product and confine a multilingual tutor to one language. The reverse does not work either: the workbooks are complete, authored courses, which Madame Poly deliberately does not contain.
 
 **7. Code or assets shared with other apps on the account**
 
@@ -65,4 +70,4 @@ No. Beyond standard frameworks and services (Expo/React Native, Firebase, Revenu
 No. Kuka Lab conceived, designed, wrote and owns Madame Poly. No template, app builder or app-generation service was used. The content (syllabi, scenarios, exam formats, persona) is ours. The app is published under the developer account of its owner.
 
 Kind regards,
-[ЗАПОЛНИТЬ: имя], Kuka Lab
+Mykhaylo Osypov, Kuka Lab
