@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { ActivityIndicator, FlatList, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { MessageBubble } from './MessageBubble';
@@ -7,6 +7,7 @@ import { ScreenTitle } from './ScreenMenu';
 import { WideButton } from './WideButton';
 import type { SpeechMode } from '../config';
 import { usePlacement } from '../hooks/usePlacement';
+import { useSwipeBack } from '../hooks/useSectionSwipe';
 import { t } from '../i18n';
 import { LANGUAGES } from '../languages';
 import { CONTENT_MAX_WIDTH } from '../layout';
@@ -39,7 +40,9 @@ export function PlacementScreen({ language, level, profile, turnMode, onToggleMo
     listRef.current?.scrollToEnd({ animated: true });
   }, [test.turns.length]);
 
-  const close = () => void test.close().then(onClose);
+  const close = useCallback(() => void test.close().then(onClose), [test.close, onClose]);
+  // Тест открыт поверх «Сегодня»: свайп вправо закрывает его, пока не идёт разговор.
+  useSwipeBack(test.sessionActive ? 'lock' : close);
 
   const header = (
     <View style={styles.header}>

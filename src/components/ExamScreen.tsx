@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { ExamDialogue } from './ExamDialogue';
@@ -17,6 +17,7 @@ import {
 } from '../exam';
 import { formatDate } from '../format';
 import { useExamSession } from '../hooks/useExamSession';
+import { useSwipeBack } from '../hooks/useSectionSwipe';
 import { loadExamLevel, saveExamLevel } from '../storage';
 import { t } from '../i18n';
 import { CONTENT_MAX_WIDTH } from '../layout';
@@ -90,6 +91,10 @@ export function ExamScreen({
     if (talkBusy || !(await onBeforeStart())) return;
     await exam.start(topicId);
   };
+
+  // Беседа или разбор — свайп вправо к списку тем; посреди ответа листать нельзя.
+  const leave = useCallback(() => void exam.back(), [exam.back]);
+  useSwipeBack(exam.stage === 'pick' ? null : exam.sessionActive ? 'lock' : leave);
 
   if (exam.stage === 'talk' && exam.session) {
     return (

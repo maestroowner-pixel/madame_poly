@@ -24,6 +24,9 @@ export const SCREEN_ICONS = {
   settings: HomeIcon,
 };
 
+/** Порядок разделов — в меню и для свайпа между ними. */
+export const SCREENS = Object.keys(SCREEN_ICONS) as Screen[];
+
 export function screenLabels(): Record<Screen, string> {
   return {
     today: t.tabToday,
@@ -202,7 +205,7 @@ export function ScreenMenu({ current, hidden = [], badges = {}, anchor, onSelect
         ]}
       >
         <GlassPanel style={[styles.glass, WEB && styles.glassWeb]}>
-        {(Object.keys(SCREEN_ICONS) as Screen[])
+        {SCREENS
           .filter((screen) => !hidden.includes(screen))
           .map((screen) => {
           const Icon = SCREEN_ICONS[screen];

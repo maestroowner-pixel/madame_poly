@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
-import { Animated, Easing, Modal, StyleSheet, useWindowDimensions } from 'react-native';
+import { Animated, Easing, Modal, PanResponder, Platform, StyleSheet, useWindowDimensions } from 'react-native';
 
 import type { Anchor } from '../anchor';
 import { useTheme } from '../theme';
@@ -39,6 +39,38 @@ export function ZoomModal({ visible, anchor, onRequestClose, children }: Props) 
     if (visible) setMounted(true);
   }, [visible]);
 
+  /**
+   * Свайп вправо — выход назад, как из урока или разбора внутри раздела:
+   * экран идёт за пальцем, отпустили дальше четверти ширины — закрывается
+   * обычным схлопыванием в значок.
+   */
+  const drag = useRef(new Animated.Value(0)).current;
+  const closeRef = useRef(onRequestClose);
+  closeRef.current = onRequestClose;
+  const widthRef = useRef(width);
+  widthRef.current = width;
+  const swipe = useMemo(
+    () =>
+      PanResponder.create({
+        // В браузере мышью выделяют текст — там жест не берём.
+        onMoveShouldSetPanResponder: (_, gesture) =>
+          Platform.OS !== 'web' &&
+          gesture.dx > 14 && gesture.dx > Math.abs(gesture.dy) * 2,
+        onPanResponderTerminationRequest: () => false,
+        onPanResponderMove: (_, gesture) => drag.setValue(Math.max(0, gesture.dx)),
+        onPanResponderRelease: (_, gesture) => {
+          if (gesture.dx > widthRef.current * 0.25 || gesture.vx > 0.5) {
+            closeRef.current();
+            return;
+          }
+          Animated.spring(drag, { toValue: 0, bounciness: 4, useNativeDriver: true }).start();
+        },
+        onPanResponderTerminate: () =>
+          Animated.spring(drag, { toValue: 0, bounciness: 4, useNativeDriver: true }).start(),
+      }),
+    [drag],
+  );
+
   // Анимация запускается только после того, как вид смонтирован: нативный
   // драйвер цепляется к живому узлу, а запущенный до монтирования застревает
   // на полпути.
@@ -53,9 +85,12 @@ export function ZoomModal({ visible, anchor, onRequestClose, children }: Props) 
     }).start(() => {
       // Признак finished намеренно не проверяем: прерванная анимация оставляла
       // бы невидимую модалку поверх экрана, и она съедала бы все касания.
-      if (!visibleRef.current) setMounted(false);
+      if (!visibleRef.current) {
+        setMounted(false);
+        drag.setValue(0);
+      }
     });
-  }, [mounted, visible, progress]);
+  }, [mounted, visible, progress, drag]);
 
   // Сдвиг считается до масштаба, поэтому это смещение центра экрана к значку.
   const originX = anchor ? anchor.x - width / 2 : 0;
@@ -82,9 +117,14 @@ export function ZoomModal({ visible, anchor, onRequestClose, children }: Props) 
   return (
     <Modal visible transparent animationType="none" onRequestClose={onRequestClose}>
       <Animated.View
-        style={[StyleSheet.absoluteFill, { backgroundColor: theme.bg }, animation]}
+        style={[StyleSheet.absoluteFill, { transform: [{ translateX: drag }] }]}
+        {...swipe.panHandlers}
       >
-        {children}
+        <Animated.View
+          style={[StyleSheet.absoluteFill, { backgroundColor: theme.bg }, animation]}
+        >
+          {children}
+        </Animated.View>
       </Animated.View>
     </Modal>
   );

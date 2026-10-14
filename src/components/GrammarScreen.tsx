@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { LevelSwitch } from './LevelSwitch';
@@ -7,6 +7,7 @@ import { ExerciseCard } from './HomeworkScreen';
 import { CheckIcon, ChevronIcon } from './icons';
 import { ScreenTitle } from './ScreenMenu';
 import { errorText } from '../errors';
+import { useSwipeBack } from '../hooks/useSectionSwipe';
 import { bandOf, findUnit, isSingleCourse, syllabus, type Band, type GrammarUnit } from '../grammar';
 import { t } from '../i18n';
 import { CONTENT_MAX_WIDTH } from '../layout';
@@ -136,6 +137,10 @@ export function GrammarScreen({ menu, language, level, onSelectLevel }: Props) {
     (sum, module) => sum + module.units.filter((item) => progress.done.includes(item.id)).length,
     0,
   );
+
+  // Открыт урок — свайп вправо возвращает к программе.
+  const closeUnit = useCallback(() => setUnit(null), []);
+  useSwipeBack(unit ? closeUnit : null);
 
   if (unit) {
     const done = progress.done.includes(unit.id);

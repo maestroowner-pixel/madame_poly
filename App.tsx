@@ -3,6 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Animated,
   FlatList,
   Platform,
   Pressable,
@@ -30,6 +31,7 @@ import {
   MenuButton,
   ScreenMenu,
   ScreenTitle,
+  SCREENS,
   type Screen as Section,
 } from './src/components/ScreenMenu';
 import { measureAnchor, type Anchor } from './src/anchor';
@@ -43,6 +45,7 @@ import { VocabularyScreen, type Tab as WordsTab } from './src/components/Vocabul
 import { WritingScreen } from './src/components/WritingScreen';
 import { useAccount } from './src/hooks/useAccount';
 import { useConversation } from './src/hooks/useConversation';
+import { SwipeBackProvider, useSectionSwipe } from './src/hooks/useSectionSwipe';
 import { useZoomScreen } from './src/hooks/useZoomScreen';
 import { locale, t } from './src/i18n';
 import { LANGUAGES } from './src/languages';
@@ -134,6 +137,19 @@ function Screen() {
   const [menuAnchor, setMenuAnchor] = useState<Anchor | null>(null);
   /** Сколько слов ждут повторения — считаем при каждом открытии меню. */
   const [wordsDue, setWordsDue] = useState(0);
+
+  const wordsOpen = VOCABULARY_LANGUAGES.includes(conversation.language);
+  /**
+   * Свайп листает разделы в порядке меню. Во время беседы не листаем: случайный
+   * взмах увёл бы с экрана, где открыт микрофон. В браузере мышью выделяют
+   * текст — там разделы по-прежнему через домик.
+   */
+  const swipe = useSectionSwipe({
+    order: useMemo(() => SCREENS.filter((item) => item !== 'words' || wordsOpen), [wordsOpen]),
+    current: section,
+    onChange: setSection,
+    enabled: Platform.OS !== 'web' && !conversation.sessionActive && !menuOpen && !paywallOpen,
+  });
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -280,6 +296,8 @@ function Screen() {
           Шапка беседы — над колонкой: на планшете портрет и кнопки крупные, им
           нужна вся ширина экрана. На телефоне шапка сама держит ширину колонки.
         */}
+        <SwipeBackProvider value={swipe.register}>
+        <Animated.View style={[styles.pager, swipe.style]} {...swipe.panHandlers}>
         {section === 'talk' && (
           <TalkHeader
             menu={menu}
@@ -532,12 +550,14 @@ function Screen() {
             />
           </View>
         )}
+        </Animated.View>
+        </SwipeBackProvider>
 
         {menuOpen && (
           <ScreenMenu
             current={section}
             // Слова открыты не для всех языков — закрытые из списка убираем.
-            hidden={VOCABULARY_LANGUAGES.includes(conversation.language) ? [] : ['words']}
+            hidden={wordsOpen ? [] : ['words']}
             badges={{ words: wordsDue }}
             anchor={menuAnchor}
             onSelect={setSection}
@@ -610,6 +630,8 @@ function Screen() {
 const createStyles = (theme: Theme) =>
   StyleSheet.create({
     screen: { flex: 1, backgroundColor: theme.bg },
+    /** Всё, что листается свайпом: шапка беседы, раздел и кнопка под ним. */
+    pager: { flex: 1 },
     column: { flex: 1, width: '100%', maxWidth: CONTENT_MAX_WIDTH, alignSelf: 'center' },
     recordRow: { width: '100%', maxWidth: CONTENT_MAX_WIDTH, alignSelf: 'center' },
 

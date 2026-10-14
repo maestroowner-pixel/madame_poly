@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { useAudioPlayer, setAudioModeAsync } from 'expo-audio';
 import {
   ActivityIndicator,
@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 
 import { LevelSwitch } from './LevelSwitch';
+import { useSwipeBack } from '../hooks/useSectionSwipe';
 import { WideButton } from './WideButton';
 import { DirectionToggle } from './FlipCard';
 import { PhrasalGaps } from './PhrasalGaps';
@@ -400,6 +401,10 @@ export function VocabularyScreen({ menu, language, level, onSelectLevel, topicId
       ? (weakSpots[topic]?.mistakes.filter((mistake) => mistake.at > vocabulary.createdAt).length ?? 0)
       : 0;
   const mistakeCounts = Object.fromEntries(Object.values(weakSpots).map((spot) => [spot.drillId, spot.count]));
+  // Карточки, повторение, тест — уровень глубже списка: свайп вправо ведёт к нему.
+  const toList = useCallback(() => setTab('list'), []);
+  useSwipeBack(tab === 'list' ? null : toList);
+
   /** Стрелки листают по кругу: с последнего раздела — на первый. */
   const shiftTab = (step: number) => setTab(tabs[(tabIndex + step + tabs.length) % tabs.length].key);
 
