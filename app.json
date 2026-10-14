@@ -112,7 +112,8 @@
           "color": "#17769F"
         }
       ],
-      "./plugins/withReleaseSigning"
+      "./plugins/withReleaseSigning",
+      "./plugins/withPlainKeyboard"
     ],
     "backgroundColor": "#EFF6FD",
     "locales": {
