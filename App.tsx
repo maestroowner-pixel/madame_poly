@@ -50,7 +50,7 @@ import { useZoomScreen } from './src/hooks/useZoomScreen';
 import { locale, t } from './src/i18n';
 import { LANGUAGES } from './src/languages';
 import { BUTTON_SCALE, CONTENT_MAX_WIDTH, IS_TABLET, UI_SCALE } from './src/layout';
-import { FREE_TURNS_PER_TALK, UNLIMITED_TALKS, VOCABULARY_LANGUAGES } from './src/config';
+import { FREE_PHRASES_PER_TALK, UNLIMITED_TALKS, VOCABULARY_LANGUAGES } from './src/config';
 import { dueCards } from './src/review';
 import { ensureMicrophone } from './src/services/microphone';
 import { syncReminders } from './src/services/reminders';
@@ -89,9 +89,10 @@ function Screen() {
   const recordRef = useRef<View>(null);
 
   /**
-   * Лимит сторожит только начало беседы: остановить её нужно уметь всегда, а
-   * счётчик растёт в момент запуска, а не по завершении — иначе беседу можно
-   * было бы вести бесконечно, ни разу её не закрыв.
+   * Лимит сторожит только начало беседы: остановить её нужно уметь всегда.
+   * Счётчик растёт на первом ответе Poly, а не по завершении — иначе беседу
+   * можно было бы вести бесконечно, ни разу её не закрыв, — и не на нажатии:
+   * обрыв на старте (сеть, микрофон) не должен съедать дневную беседу.
    */
   const toggleSession = useCallback(async () => {
     if (conversation.sessionActive) {
@@ -107,7 +108,6 @@ function Screen() {
       return;
     }
 
-    await subscription.useTalk();
     await conversation.toggleSession();
     // Беседа кончилась — счётчик объёма ушёл вперёд, экрану пора его перечитать.
     await subscription.refresh();
@@ -126,12 +126,18 @@ function Screen() {
     return true;
   }, [subscription]);
 
-  // Бесплатная беседа короткая: лимит реплик у бесплатного тарифа, у подписки — нет.
+  // Бесплатная беседа пробная: лимит фраз у бесплатного тарифа, у подписки — нет.
   useEffect(() => {
     conversation.setTurnLimit(
-      subscription.pro === false && !UNLIMITED_TALKS ? FREE_TURNS_PER_TALK : null,
+      subscription.pro === false && !UNLIMITED_TALKS ? FREE_PHRASES_PER_TALK : null,
     );
   }, [conversation.setTurnLimit, subscription.pro]);
+
+  // Беседа состоялась — Poly ответила человеку: теперь она идёт в дневной счёт.
+  const { useTalk } = subscription;
+  useEffect(() => {
+    if (conversation.sessionAnswered) void useTalk();
+  }, [conversation.sessionAnswered, useTalk]);
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuAnchor, setMenuAnchor] = useState<Anchor | null>(null);
@@ -360,7 +366,7 @@ function Screen() {
               {/* Бесплатная беседа кончилась по лимиту реплик — говорим, что дальше. */}
               {!conversation.sessionActive && conversation.turnLimitHit && (
                 <View style={styles.remind}>
-                  <Text style={styles.remindText}>{t.freeTalkEnded(FREE_TURNS_PER_TALK)}</Text>
+                  <Text style={styles.remindText}>{t.freeTalkEnded(FREE_PHRASES_PER_TALK)}</Text>
                   <View style={styles.remindRow}>
                     <Pressable
                       onPress={() => {

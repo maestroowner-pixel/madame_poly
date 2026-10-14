@@ -76,12 +76,17 @@ export function useConversation() {
 
   // Актуальные значения для колбэков конвейера — состояние обновляется асинхронно.
   const messagesRef = useRef<Message[]>([]);
-  /** Лимит реплик в беседе: у бесплатного тарифа, иначе null. Ставит App. */
+  /** Лимит фраз обеих сторон в беседе: у бесплатного тарифа, иначе null. Ставит App. */
   const turnLimitRef = useRef<number | null>(null);
-  /** Сколько реплик человек сказал с начала этой беседы. */
-  const sessionTurnsRef = useRef(0);
-  /** Беседа закончилась, потому что кончились бесплатные реплики. */
+  /** Сколько фраз — человека и Poly — прозвучало с начала этой беседы. */
+  const sessionPhrasesRef = useRef(0);
+  /** Беседа закончилась, потому что кончились бесплатные фразы. */
   const [turnLimitHit, setTurnLimitHit] = useState(false);
+  /**
+   * Poly ответила человеку хотя бы раз за эту беседу. Только тогда беседа
+   * считается состоявшейся: обрыв на старте не должен съедать дневную.
+   */
+  const [sessionAnswered, setSessionAnswered] = useState(false);
   messagesRef.current = messages;
   const languageRef = useRef<LanguageCode>(language);
   languageRef.current = language;
@@ -215,6 +220,7 @@ export function useConversation() {
         createdAt: Date.now(),
       };
       persist((previous) => [...previous, assistantMessage]);
+      sessionPhrasesRef.current += 1;
 
       return {
         text,
@@ -248,9 +254,10 @@ export function useConversation() {
       const history = messagesRef.current;
       persist((previous) => [...previous, userMessage]);
 
-      sessionTurnsRef.current += 1;
+      sessionPhrasesRef.current += 1;
       const limit = turnLimitRef.current;
-      const wrapUp = limit !== null && sessionTurnsRef.current >= limit;
+      // Прощается Poly: её ответ на эту фразу — последний, если он упирается в лимит.
+      const wrapUp = limit !== null && sessionPhrasesRef.current + 1 >= limit;
       if (wrapUp) setTurnLimitHit(true);
 
       /**
@@ -273,6 +280,7 @@ export function useConversation() {
           wrapUp,
           onReply: (reply, farewell) => {
             early = true;
+            setSessionAnswered(true);
             resolve(addReply(reply, farewell));
           },
         })
@@ -282,7 +290,10 @@ export function useConversation() {
                 message.id === userMessage.id ? { ...message, corrections: turn.corrections } : message,
               ),
             );
-            if (!early) resolve(addReply(turn.reply, turn.farewell));
+            if (!early) {
+              setSessionAnswered(true);
+              resolve(addReply(turn.reply, turn.farewell));
+            }
           })
           // Связь оборвалась на разборе: реплика уже звучит, беседу не рвём.
           .catch((e: unknown) => {
@@ -326,8 +337,9 @@ export function useConversation() {
       return;
     }
 
-    sessionTurnsRef.current = 0;
+    sessionPhrasesRef.current = 0;
     setTurnLimitHit(false);
+    setSessionAnswered(false);
 
     // С выбранной темой первым говорит партнёр — иначе непонятно, с чего начать.
     await voice.start(async () => {
@@ -531,5 +543,6 @@ export function useConversation() {
     dismissError: () => setError(null),
     setTurnLimit,
     turnLimitHit,
+    sessionAnswered,
   };
 }
