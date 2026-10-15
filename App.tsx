@@ -303,7 +303,12 @@ function Screen() {
           нужна вся ширина экрана. На телефоне шапка сама держит ширину колонки.
         */}
         <SwipeBackProvider value={swipe.register}>
-        <Animated.View style={[styles.pager, swipe.style]} {...swipe.panHandlers}>
+        {/*
+          collapsable={false}: слой без фона и с нулевым сдвигом новая архитектура
+          React Native выбрасывает из нативного дерева — двигать было бы нечего,
+          и свайп менял разделы без анимации.
+        */}
+        <Animated.View style={[styles.pager, swipe.style]} collapsable={false} {...swipe.panHandlers}>
         {section === 'talk' && (
           <TalkHeader
             menu={menu}

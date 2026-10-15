@@ -118,6 +118,8 @@ export function ZoomModal({ visible, anchor, onRequestClose, children }: Props) 
     <Modal visible transparent animationType="none" onRequestClose={onRequestClose}>
       <Animated.View
         style={[StyleSheet.absoluteFill, { transform: [{ translateX: drag }] }]}
+        // Без фона и со сдвигом 0 слой выпал бы из нативного дерева — см. App.tsx.
+        collapsable={false}
         {...swipe.panHandlers}
       >
         <Animated.View
