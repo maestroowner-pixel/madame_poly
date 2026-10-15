@@ -113,7 +113,16 @@
         }
       ],
       "./plugins/withReleaseSigning",
-      "./plugins/withPlainKeyboard"
+      "./plugins/withPlainKeyboard",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "enableMinifyInReleaseBuilds": true,
+            "enableShrinkResourcesInReleaseBuilds": true
+          }
+        }
+      ]
     ],
     "backgroundColor": "#EFF6FD",
     "locales": {
