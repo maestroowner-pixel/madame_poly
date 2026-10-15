@@ -63,7 +63,7 @@ export function Splash({ onDone }: Props) {
         </View>
 
         <View style={styles.footer}>
-          <Text style={styles.footerText}>Kuka Lab</Text>
+          <Text style={styles.footerText}>Kuka Soft</Text>
           <Text style={styles.footerText}>Mykhaylo Osypov</Text>
           <Text style={styles.footerVersion}>{Constants.expoConfig?.version ?? ''}</Text>
         </View>

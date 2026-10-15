@@ -61,8 +61,8 @@ Gratuit : une courte conversation (8 répliques) ou un examen par jour, plus un 
 Pro : sans limite quotidienne, un volume mensuel d'environ 20 à 30 conversations.
 Max : environ 35 à 45 conversations par mois et quatre voix naturelles au choix.
 L'abonnement se renouvelle chaque mois jusqu'à résiliation. Gérez-le ou résiliez-le à tout moment dans les réglages du compte de votre store.
-Conditions : https://madamepoly.kuka-lab.com/#terms
-Confidentialité : https://madamepoly.kuka-lab.com/#privacy
+Conditions : https://madamepoly.kuka-soft.com/#terms
+Confidentialité : https://madamepoly.kuka-soft.com/#privacy
 
 Madame Poly est une partenaire d'entraînement, pas un remplacement d'un professeur. Elle a besoin d'Internet : votre voix part chez OpenAI pour la reconnaissance, le texte chez Anthropic pour la réponse. Sa voix est générée par IA. Ni publicité, ni pistage.
 

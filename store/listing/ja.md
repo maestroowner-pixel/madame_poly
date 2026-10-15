@@ -61,8 +61,8 @@ AI 講師と声に出して会話。間違いはすべて解説され、練習�
 Pro：1 日の制限なし。月間枠は会話約 20〜30 回分。
 Max：月に約 35〜45 回の会話と、4 つの自然な声から選択。
 サブスクリプションは解約するまで毎月自動更新されます。ストアのアカウント設定からいつでも管理・解約できます。
-利用規約：https://madamepoly.kuka-lab.com/#terms
-プライバシー：https://madamepoly.kuka-lab.com/#privacy
+利用規約：https://madamepoly.kuka-soft.com/#terms
+プライバシー：https://madamepoly.kuka-soft.com/#privacy
 
 マダム・ポリーは練習相手であり、教師の代わりではありません。インターネット接続が必要です：音声は認識のため OpenAI に、テキストは返答のため Anthropic に送られます。彼女の声は AI で生成されています。広告もトラッキングもありません。
 

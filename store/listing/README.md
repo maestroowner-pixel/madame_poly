@@ -37,12 +37,12 @@
 
 ## Общее для всех языков
 
-- Support URL / сайт: https://madamepoly.kuka-lab.com
-- Marketing URL: https://madamepoly.kuka-lab.com
-- Privacy Policy URL: https://madamepoly.kuka-lab.com/#privacy
-- Условия (EULA): https://madamepoly.kuka-lab.com/#terms
+- Support URL / сайт: https://madamepoly.kuka-soft.com
+- Marketing URL: https://madamepoly.kuka-soft.com
+- Privacy Policy URL: https://madamepoly.kuka-soft.com/#privacy
+- Условия (EULA): https://madamepoly.kuka-soft.com/#terms
 - Категория: Education (Образование); вторая в App Store — Reference.
-- Copyright: 2026 Kuka Lab, Mykhaylo Osypov
+- Copyright: 2026 Kuka Soft, Mykhaylo Osypov
 - Возраст: App Store 4+; Google Play — анкета IARC: без насилия, без
   общения между пользователями, без рекламы, покупки внутри приложения есть.
-- Контакт: kukalab@icloud.com
+- Контакт: mail@kuka-soft.com

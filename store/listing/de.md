@@ -61,8 +61,8 @@ Kostenlos: ein kurzes Gespräch (8 Antworten) oder eine Prüfung pro Tag, dazu e
 Pro: kein Tageslimit, ein Monatsvolumen von etwa 20–30 Gesprächen.
 Max: etwa 35–45 Gespräche im Monat und vier natürliche Stimmen zur Wahl.
 Das Abo verlängert sich monatlich, bis du es kündigst. Verwalten oder kündigen kannst du es jederzeit in den Kontoeinstellungen deines Stores.
-Bedingungen: https://madamepoly.kuka-lab.com/#terms
-Datenschutz: https://madamepoly.kuka-lab.com/#privacy
+Bedingungen: https://madamepoly.kuka-soft.com/#terms
+Datenschutz: https://madamepoly.kuka-soft.com/#privacy
 
 Madame Poly ist eine Übungspartnerin, kein Ersatz für eine Lehrkraft. Sie braucht eine Internetverbindung: Deine Stimme geht zur Erkennung an OpenAI, der Text für die Antwort an Anthropic. Ihre Stimme ist KI-generiert. Keine Werbung, kein Tracking.
 

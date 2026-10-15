@@ -25,8 +25,8 @@
    (выше), **Pro — уровень 2**: тогда переход Pro → Max считается апгрейдом.
 4. Для каждой: цена, названия и описания (ниже), скриншот пейвола для ревью.
 5. В описании приложения — ссылка на условия (EULA):
-   https://madamepoly.kuka-lab.com/#terms и политику:
-   https://madamepoly.kuka-lab.com/#privacy.
+   https://madamepoly.kuka-soft.com/#terms и политику:
+   https://madamepoly.kuka-soft.com/#privacy.
 
 ### Google Play Console
 

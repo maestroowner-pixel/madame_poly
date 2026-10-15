@@ -61,8 +61,8 @@ B1 或 B2 口语部分，采用各语言常见考试的形式：个人问答、�
 Pro：没有每日限制，每月额度约 20–30 次对话。
 Max：每月约 35–45 次对话，并可从四种自然声音中选择。
 订阅按月自动续订，直至取消。你可以随时在商店账户设置中管理或取消订阅。
-条款：https://madamepoly.kuka-lab.com/#terms
-隐私：https://madamepoly.kuka-lab.com/#privacy
+条款：https://madamepoly.kuka-soft.com/#terms
+隐私：https://madamepoly.kuka-soft.com/#privacy
 
 波莉夫人是练习伙伴，不能代替老师。使用时需要联网：你的语音发送给 OpenAI 进行识别，文字发送给 Anthropic 生成回答。她的声音由 AI 生成。无广告，无追踪。
 

@@ -77,13 +77,13 @@ export const HISTORY_STEP = 20;
  * Сайт приложения. Разделы правовой информации живут на нём вкладками, поэтому
  * ссылки идут якорями — страница открывает нужную вкладку по якорю сама.
  */
-export const SITE_URL = 'https://madamepoly.kuka-lab.com';
+export const SITE_URL = 'https://madamepoly.kuka-soft.com';
 /** Адрес, показанный человеку: со схемой он выглядит как строка из браузера. */
-export const SITE_LABEL = 'madamepoly.kuka-lab.com';
+export const SITE_LABEL = 'madamepoly.kuka-soft.com';
 export const PRIVACY_URL = `${SITE_URL}/#privacy`;
 export const TERMS_URL = `${SITE_URL}/#terms`;
-export const CONTACT_EMAIL = 'kukalab@icloud.com';
-export const COPYRIGHT = 'Mykhaylo Osypov · Kuka Lab · 2026';
+export const CONTACT_EMAIL = 'mail@kuka-soft.com';
+export const COPYRIGHT = 'Mykhaylo Osypov · Kuka Soft · 2026';
 
 // --- Подписка ---
 

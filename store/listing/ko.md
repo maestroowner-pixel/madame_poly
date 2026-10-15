@@ -61,8 +61,8 @@ AI 선생님과 소리 내어 대화하세요. 모든 실수를 설명하고 연
 Pro: 하루 제한 없음, 월 사용량은 대화 약 20~30회.
 Max: 월 약 35~45회 대화와 네 가지 자연스러운 목소리 선택.
 구독은 해지할 때까지 매월 자동 갱신돼요. 스토어 계정 설정에서 언제든 관리하거나 해지할 수 있어요.
-이용약관: https://madamepoly.kuka-lab.com/#terms
-개인정보: https://madamepoly.kuka-lab.com/#privacy
+이용약관: https://madamepoly.kuka-soft.com/#terms
+개인정보: https://madamepoly.kuka-soft.com/#privacy
 
 폴리 선생님은 연습 상대이며, 교사를 대신하지는 않아요. 인터넷 연결이 필요해요: 음성은 인식을 위해 OpenAI로, 텍스트는 답변을 위해 Anthropic으로 전송돼요. 선생님의 목소리는 AI로 생성돼요. 광고도 추적도 없어요.
 
