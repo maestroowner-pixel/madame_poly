@@ -44,6 +44,8 @@ export function ZoomModal({ visible, anchor, onRequestClose, children }: Props) 
    * экран идёт за пальцем, отпустили дальше четверти ширины — закрывается
    * обычным схлопыванием в значок.
    */
+  // Сдвиг пальцем — на JS, как свайп разделов (см. useSectionSwipe): значение,
+  // ставшее нативным, перестаёт слушаться setValue из жеста.
   const drag = useRef(new Animated.Value(0)).current;
   const closeRef = useRef(onRequestClose);
   closeRef.current = onRequestClose;
@@ -63,10 +65,10 @@ export function ZoomModal({ visible, anchor, onRequestClose, children }: Props) 
             closeRef.current();
             return;
           }
-          Animated.spring(drag, { toValue: 0, bounciness: 4, useNativeDriver: true }).start();
+          Animated.spring(drag, { toValue: 0, bounciness: 4, useNativeDriver: false }).start();
         },
         onPanResponderTerminate: () =>
-          Animated.spring(drag, { toValue: 0, bounciness: 4, useNativeDriver: true }).start(),
+          Animated.spring(drag, { toValue: 0, bounciness: 4, useNativeDriver: false }).start(),
       }),
     [drag],
   );
@@ -91,6 +93,15 @@ export function ZoomModal({ visible, anchor, onRequestClose, children }: Props) 
       }
     });
   }, [mounted, visible, progress, drag]);
+
+  // Окно, которое тянут вправо, мутнеет — как страница при свайпе разделов.
+  const dragStyle = useMemo(
+    () => ({
+      opacity: drag.interpolate({ inputRange: [0, width], outputRange: [1, 0.3], extrapolate: 'clamp' }),
+      transform: [{ translateX: drag }],
+    }),
+    [drag, width],
+  );
 
   // Сдвиг считается до масштаба, поэтому это смещение центра экрана к значку.
   const originX = anchor ? anchor.x - width / 2 : 0;
@@ -117,7 +128,7 @@ export function ZoomModal({ visible, anchor, onRequestClose, children }: Props) 
   return (
     <Modal visible transparent animationType="none" onRequestClose={onRequestClose}>
       <Animated.View
-        style={[StyleSheet.absoluteFill, { transform: [{ translateX: drag }] }]}
+        style={[StyleSheet.absoluteFill, dragStyle]}
         // Без фона и со сдвигом 0 слой выпал бы из нативного дерева — см. App.tsx.
         collapsable={false}
         {...swipe.panHandlers}

@@ -7,8 +7,21 @@ const DISTANCE = 0.25;
 const FLICK = 0.5;
 /** Дальше листать некуда — экран тянется туго и возвращается. */
 const EDGE_DRAG = 0.3;
-const OUT_MS = 160;
-const IN_MS = 220;
+const OUT_MS = 240;
+const IN_MS = 320;
+/**
+ * Страница, уходящая за край, мутнеет и чуть отступает вглубь; въезжающая —
+ * проясняется. Без этого при одинаковом фоне разделов сдвиг читался как
+ * простое перелистывание.
+ */
+const FADED = 0.3;
+const SHRUNK = 0.92;
+/**
+ * Анимация свайпа — на JS, не на нативном драйвере: с нативным на iPhone
+ * разделы менялись без движения, а путь на JS проверен (кадры из браузера,
+ * 2026-10-15). Анимация короткая — JS её тянет без рывков.
+ */
+const NATIVE = false;
 
 /**
  * Что раздел говорит свайпу о себе: функция — он открыт вглубь (урок, разбор,
@@ -66,7 +79,7 @@ export function useSectionSwipe<S extends string>({ order, current, onChange, en
       toValue: 0,
       duration: IN_MS,
       easing: Easing.out(Easing.cubic),
-      useNativeDriver: true,
+      useNativeDriver: NATIVE,
     }).start();
   };
 
@@ -81,7 +94,7 @@ export function useSectionSwipe<S extends string>({ order, current, onChange, en
 
   const responder = useMemo(() => {
     const settle = () =>
-      Animated.spring(offset, { toValue: 0, bounciness: 4, useNativeDriver: true }).start();
+      Animated.spring(offset, { toValue: 0, bounciness: 4, useNativeDriver: NATIVE }).start();
 
     /** Куда ведёт свайп: выход из глубины, соседний раздел или никуда. */
     const target = (dx: number): { back: () => void } | { section: S } | null => {
@@ -117,7 +130,7 @@ export function useSectionSwipe<S extends string>({ order, current, onChange, en
           toValue: direction * width,
           duration: OUT_MS,
           easing: Easing.in(Easing.quad),
-          useNativeDriver: true,
+          useNativeDriver: NATIVE,
         }).start(() => {
           if ('back' in next) {
             // Раздел тот же — верхний уровень въезжает сразу, без смены раздела.
@@ -134,6 +147,21 @@ export function useSectionSwipe<S extends string>({ order, current, onChange, en
     });
   }, [offset]);
 
+  /**
+   * Стиль один на всё время жизни экрана: пересобранный на перерисовке узел
+   * Animated теряет связь с идущей нативной анимацией, и экран замирает.
+   */
+  const style = useMemo(() => {
+    const edges = { inputRange: [-width, 0, width], extrapolate: 'clamp' as const };
+    return {
+      opacity: offset.interpolate({ ...edges, outputRange: [FADED, 1, FADED] }),
+      transform: [
+        { translateX: offset },
+        { scale: offset.interpolate({ ...edges, outputRange: [SHRUNK, 1, SHRUNK] }) },
+      ],
+    };
+  }, [offset, width]);
+
   /** Отдаётся разделам через SwipeBackProvider. */
   const register = useMemo(() => (next: SwipeBack) => {
     back.current = next;
@@ -141,7 +169,7 @@ export function useSectionSwipe<S extends string>({ order, current, onChange, en
 
   return {
     panHandlers: responder.panHandlers,
-    style: { transform: [{ translateX: offset }] },
+    style,
     register,
   };
 }
