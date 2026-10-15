@@ -13,7 +13,7 @@
       "infoPlist": {
         "CFBundleAllowMixedLocalizations": true
       },
-      "buildNumber": "10323"
+      "buildNumber": "20261015.1"
     },
     "android": {
       "adaptiveIcon": {
@@ -27,7 +27,7 @@
       "permissions": [
         "CAMERA"
       ],
-      "versionCode": 10323
+      "versionCode": 26101501
     },
     "web": {
       "name": "Madame Poly",
