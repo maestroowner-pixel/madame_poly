@@ -31,6 +31,15 @@ export function Splash({ onDone }: Props) {
   const opacity = useRef(new Animated.Value(1)).current;
   const dismissed = useRef(false);
 
+  /**
+   * onDone приходит из App новой стрелкой на каждой перерисовке. Будь он в
+   * зависимостях, эффект ниже перезапускался бы, пока App грузится: ролик
+   * менялся на второй посреди показа (мигание и смена платья), а таймер
+   * начинался заново. Поэтому — через ref, и эффект идёт один раз.
+   */
+  const onDoneRef = useRef(onDone);
+  onDoneRef.current = onDone;
+
   const dismiss = useCallback(() => {
     if (dismissed.current) return;
     dismissed.current = true;
@@ -39,8 +48,8 @@ export function Splash({ onDone }: Props) {
       toValue: 0,
       duration: 350,
       useNativeDriver: true,
-    }).start(() => onDone());
-  }, [onDone, opacity, player]);
+    }).start(() => onDoneRef.current());
+  }, [opacity, player]);
 
   useEffect(() => {
     // Ролик должен звучать и при выключенном звонке — это не уведомление.

@@ -58,16 +58,26 @@ export function Paywall({ visible, anchor, left, used, block, tier, onClose, onB
   const [items, setItems] = useState<PurchasesPackage[] | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /**
+   * Магазин не ответил: на телефоне не вошли в Google Play (App Store) или нет
+   * сети. Пустой экран с «подписок нет» тут сбивал с толку — подсказываем, что делать.
+   */
+  const [storeDown, setStoreDown] = useState(false);
 
   useEffect(() => {
     if (!visible) return;
 
     let alive = true;
     setError(null);
+    setStoreDown(false);
     void loadPackages()
       // Pro выше Max: сначала дешёвый, дорогой — следом, как ступенька.
       .then((list) => alive && setItems([...list].sort((a, b) => Number(packageTier(a) === 'max') - Number(packageTier(b) === 'max'))))
-      .catch(() => alive && setItems([]));
+      .catch(() => {
+        if (!alive) return;
+        setStoreDown(true);
+        setItems([]);
+      });
     return () => {
       alive = false;
     };
@@ -139,7 +149,7 @@ export function Paywall({ visible, anchor, left, used, block, tier, onClose, onB
             {items === null ? (
               <ActivityIndicator color={theme.neon} style={styles.wait} />
             ) : items.length === 0 ? (
-              <Text style={styles.empty}>{WEB ? t.paywallWeb : t.paywallNone}</Text>
+              <Text style={styles.empty}>{WEB ? t.paywallWeb : storeDown ? t.paywallNoStore(STORE) : t.paywallNone}</Text>
             ) : (
               items.map((item) => {
                 const period = periodLabel(item);
