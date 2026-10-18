@@ -76,7 +76,7 @@ None. Beyond standard frameworks and services (Expo / React Native, Firebase, Re
 
 9. MADE FOR A CLIENT, OR FROM A TEMPLATE?
 
-No. Kuka Lab designed, built and owns Madame Poly. We used no template, app builder or app generation service. The syllabi, conversation topics, exam formats and the Poly character are our own content. The app is published under the developer account of its owner.
+No. Kuka Soft designed, built and owns Madame Poly. We used no template, app builder or app generation service. The syllabi, conversation topics, exam formats and the Poly character are our own content. The app is published under the developer account of its owner.
 
 If it would help, we are happy to set up a call, provide a demo video, or open external TestFlight testing.
 
