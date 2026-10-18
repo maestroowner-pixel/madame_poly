@@ -1,0 +1,85 @@
+Hello,
+
+Thank you for your message. Our first reply was shortened, so below are full answers to all nine questions. We believe Madame Poly meets guidelines 4.3(a), 4.3(b) and 4.2.6, so we are replying here rather than resubmitting.
+
+1. WHAT THE APP DOES AND THE PROBLEM IT SOLVES
+
+Madame Poly is a speaking tutor. The learner talks out loud with a tutor character, Poly, in the language they are learning. Poly replies by voice and keeps the conversation at the learner's CEFR level (A1–C2). After each sentence she shows the learner's mistakes in that sentence. Every correction names the grammar rule, and the learner can open a full explanation of it.
+
+The problem it solves: many learners can read and do exercises, but they freeze when they have to speak. They have nobody patient to talk to, at any hour, who will correct them without stopping the conversation. Madame Poly gives them that practice. It then turns their own mistakes into study material:
+
+- Their mistakes become drills. Mistakes from conversations, writing tasks and exam rehearsals are sorted by type (prepositions, verbs with prepositions, tenses, accents and so on). Each type becomes a personal drill.
+- A grammar course for each language. There is a unit-by-unit syllabus for each language, checked against standard textbooks and official exam syllabi. Each unit opens a lesson with the rule, a table, common traps and ten exercises.
+- Exam rehearsal. The app simulates the spoken part of each language's real B1/B2 exam, for example Goethe, DELE, DELF, Celpe-Bras or the Czech CCE. Poly takes the examiner's turns, and the learner gets a written report.
+- Placement by conversation. A five-minute talk with Poly sets the learner's level, in place of a multiple-choice test.
+- A daily plan. The "Today" screen shows what to do today: talk, review words, a drill or a grammar unit. It also shows the week's progress.
+- Also included: listening tasks, writing tasks with corrections, vocabulary lists with flashcards and spaced review, homework built from the day's mistakes, and a notebook that exports to PDF.
+
+2. INTENDED USERS
+
+Adults and older teenagers who already know some of a language (A2–C1) and now need to speak it:
+- people moving abroad for work or family;
+- migrants preparing for residency or citizenship language exams, for example the Czech A2 exam for permanent residence;
+- students who need a B1/B2 certificate for university;
+- professionals who need to hold a conversation at work.
+
+The interface is available in 13 languages. A learner can study, for example, Dutch with explanations in Ukrainian.
+
+3. THE GAP IT FILLS
+
+- Languages that speaking apps rarely cover. The app teaches 12 languages, each with its own syllabus and exam: English, German, French, Spanish, Italian, European Portuguese, Brazilian Portuguese (a separate norm), Ukrainian, Dutch, Polish, Romanian and Czech. AI speaking tutors mostly focus on English. Course apps for Czech, Romanian, Polish or Ukrainian rarely let the learner speak and get corrections.
+- Speaking connected to a grammar course. Conversation apps rarely link their corrections to a structured grammar course, and grammar apps rarely let the learner speak. In Madame Poly, a mistake made while talking leads to the matching rule, a lesson and a drill.
+- Practice for real exams. The spoken practice follows the certificates people need for residency, study and work, not general chat.
+- No games or streaks. Practice is open conversation, not tapping prepared answers.
+
+4. BETA TESTING
+
+We tested on iPhone through TestFlight, with an internal group of two testers: the developer and one other person. Each used their own iPhone (iPhone 14 Pro and iPhone 14 Pro Max). By 7 October there had been 14 builds and 62 sessions, and we have shipped more test builds since. On Android, the app is in closed testing on Google Play. We are a small studio and have not run a public beta.
+
+Feedback from testing that changed the app:
+
+- Poly did not hear the learner on one of the iPhones. End-of-turn detection used fixed volume levels that worked with one microphone and failed with another. It now adapts to each voice and room and no longer mistakes room noise for speech. We also added a manual mode: the learner taps when they have finished speaking.
+- Some turns were lost without any message. If the microphone reported no sound, or the model returned an empty reply, the turn simply disappeared. Now the learner is told that Poly did not hear them, and the conversation continues.
+- Corrections appeared under the wrong sentence. Testers saw corrections of mistakes from several turns earlier under their newest sentence. Now only mistakes in the latest sentence are shown.
+- Poly took too long to answer, especially after sentences with many mistakes. Her voice now starts as soon as her reply is ready, and the corrections appear while she speaks.
+- A tester's free conversation for the day was used up when the conversation broke off at the start. The daily conversation is now counted only after Poly first answers.
+- The keyboard helped with the answers. In writing and listening tasks, iOS predictive text and autocorrect suggested and fixed the words the learner was being tested on. These suggestions are now turned off in answer fields.
+- Testers asked to move between sections without the menu, so we added swipe navigation.
+- Testers wanted to practise the mistakes they kept repeating. This led to the personal drills built from their own errors, and to the "Today" plan that suggests them.
+
+5. STANDALONE OR PART OF A SUITE
+
+Madame Poly is a standalone product. Our account also publishes three grammar workbook apps: Conquistador A2 and Conquistador B1–B2 (Spanish grammar), and Wortkraft A2 (German grammar).
+
+Each workbook is a fixed, hand-written grammar course for one language at one level, with exam practice. They work offline, with written rules and exercises. They have no conversation, no speech, no AI, and do not look at the learner's own mistakes.
+
+Madame Poly has no fixed course content. Its core is live spoken conversation with a voice tutor in 12 languages. Lessons, drills, feedback and exam rehearsals are generated for each learner from what that learner actually says. The apps can be used side by side: a workbook teaches the rules of one language, and Madame Poly gets the learner speaking.
+
+6. COULD THIS BE AN IN-APP PURCHASE IN ANOTHER OF OUR APPS?
+
+No. Conquistador and Wortkraft are offline workbooks for one language and one level. Madame Poly needs things those apps do not have:
+- a microphone, speech recognition and speech synthesis;
+- AI running on a server;
+- a user account;
+- a subscription with a monthly usage limit;
+- coverage of 12 languages.
+
+Putting it inside a Spanish or German workbook would turn that workbook into a different product and limit a 12-language tutor to one language. The reverse does not work either: the workbooks are complete written courses, and Madame Poly deliberately contains none.
+
+7. CODE OR ASSETS SHARED WITH OUR OTHER APPS
+
+None. Madame Poly has its own codebase (React Native / Expo) and its own server (Firebase Cloud Functions), and shares no code, frameworks or binary assets with our other apps. The one overlap: the grammar topic titles for Spanish and for German A1–A2 follow the same textbook contents as our workbooks. Madame Poly stores only those titles. All lessons and exercises are generated for each learner.
+
+8. CODE SHARED WITH THIRD-PARTY APPS
+
+None. Beyond standard frameworks and services (Expo / React Native, Firebase, RevenueCat, and the Anthropic and OpenAI APIs for language and speech), the code, prompts, syllabi, exam formats and interface are our own work.
+
+9. MADE FOR A CLIENT, OR FROM A TEMPLATE?
+
+No. Kuka Lab designed, built and owns Madame Poly. We used no template, app builder or app generation service. The syllabi, conversation topics, exam formats and the Poly character are our own content. The app is published under the developer account of its owner.
+
+If it would help, we are happy to set up a call, provide a demo video, or open external TestFlight testing.
+
+Kind regards,
+Mykhaylo Osypov
+Kuka Lab
