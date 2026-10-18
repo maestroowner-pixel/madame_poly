@@ -1,0 +1,44 @@
+Hello,
+
+Our first reply was shortened, so here are full answers to all nine questions.
+
+1. WHAT IT DOES
+Madame Poly is a voice tutor. The learner speaks aloud with the tutor, Poly, in the language they are learning. Poly answers by voice, adapts to the learner's level (A1–C2) and corrects each sentence, naming the grammar rule. Many learners can read but freeze when speaking and have nobody patient to practise with. The app also turns the learner's own mistakes into personal drills, and adds a grammar course per language, spoken B1/B2 exam rehearsals (Goethe, DELE, DELF, Celpe-Bras, Czech CCE), a level test by conversation, a daily plan, writing and listening tasks, and vocabulary review.
+
+2. USERS
+Adults and teens at A2–C1 who need to speak: people moving abroad, migrants preparing for residency exams (e.g. Czech A2 for permanent residence), students needing B1/B2 certificates, professionals. The interface is in 13 languages.
+
+3. GAP
+12 target languages, each with its own syllabus and exam, including Czech, Romanian, Polish, Ukrainian, Dutch and both Portuguese norms. AI speaking tutors mostly focus on English, and course apps for these languages rarely offer spoken practice with corrections. A mistake made while speaking leads to the matching rule, lesson and drill. No games or streaks.
+
+4. BETA TESTING
+Internal TestFlight group of two (the developer and one other person; iPhone 14 Pro and 14 Pro Max): 14 builds and 62 sessions by 7 October, more builds since. Android is in closed testing on Google Play. Changes made from feedback:
+- Poly did not hear the learner on one iPhone: turn detection now adapts to voice and room noise; a manual tap mode was added.
+- Lost turns now show a message instead of disappearing.
+- Corrections now refer only to the latest sentence, not earlier ones.
+- Poly starts speaking as soon as her reply is ready; corrections follow.
+- A conversation that broke off at the start no longer uses up the free daily talk.
+- iOS predictive text gave away answers in tasks; it is now off in answer fields.
+- Swipe navigation between sections.
+- Personal drills from recurring mistakes and the "Today" plan.
+
+5. STANDALONE OR SUITE
+Standalone. Our account also has three grammar workbooks: Conquistador A2 and B1–B2 (Spanish) and Wortkraft A2 (German). They are fixed, hand-written offline courses for one language and level, with no speech, no AI and no conversation. Madame Poly has no fixed course: it is live spoken conversation in 12 languages, with feedback and exercises generated from what each learner says.
+
+6. IN-APP PURCHASE IN ANOTHER APP?
+No. Madame Poly needs a microphone, speech recognition and synthesis, server AI, accounts, a subscription with a usage limit, and 12 languages. Adding this to an offline Spanish or German workbook would make it a different product and confine a multilingual tutor to one language.
+
+7. CODE SHARED WITH OUR APPS
+None. Separate codebase (React Native / Expo) and its own server (Firebase Cloud Functions). Only the grammar topic titles for Spanish and German A1–A2 follow the same textbook contents; lessons are generated per learner.
+
+8. CODE SHARED WITH THIRD PARTIES
+None beyond standard frameworks and services (Expo, Firebase, RevenueCat, Anthropic and OpenAI APIs). Code, prompts, syllabi, exam formats and interface are our own.
+
+9. CLIENT OR TEMPLATE?
+No. Kuka Soft designed, built and owns the app; no template, app builder or app generation service was used. It is published under its owner's account.
+
+We are happy to arrange a call, send a demo video or open external TestFlight.
+
+Kind regards,
+Mykhaylo Osypov
+Kuka Soft
