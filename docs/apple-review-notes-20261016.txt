@@ -1,0 +1,23 @@
+This build (1.3, 20261016.1) replaces build 10321, which was rejected under 4.3 / 4.2.6. Our answers to the nine questions are in the Resolution Center thread of the 27 September submission. Since build 10321 we have made these substantial changes:
+
+NEW FEATURES
+- "Today": the app now opens on a daily plan. It shows what to do today (a conversation, words due for review, a drill from the learner's own mistakes, the next grammar unit) and the week's progress.
+- Placement by conversation: a five-minute spoken talk with Poly sets the learner's CEFR level, in place of a multiple-choice test.
+- Drills from the learner's own mistakes: errors from conversations are sorted by type (prepositions, verbs with prepositions, tenses, accents) and become personal drills. Preposition and verb drills now cover all 12 languages.
+- Swipe navigation between sections and back.
+- Free trial conversation: 13 phrases. It counts only after Poly first answers, so a conversation that breaks off at the start is not lost.
+
+CONTENT
+- Grammar syllabi checked against official exam syllabi and standard textbooks, with new units added: English (+33 units), French (+13), Italian (+15, CILS syllabus), Polish (+28, Polish state exam standards), Czech (+16, the official A1–A2 exam for permanent residence).
+- 600 phrasal verbs for English (300 common, 300 for C1–C2).
+
+IMPROVEMENTS
+- Poly starts speaking as soon as her reply is ready; corrections appear while she talks.
+- Corrections refer only to the learner's latest sentence.
+- No predictive text, autocorrect or Writing Tools in answer fields, so the keyboard cannot give away answers.
+
+DEMO ACCOUNT
+Sign in under Settings → Account with the account given in Sign-in Information. It has the Max plan, so all features are available without a purchase.
+
+HOW TO TRY THE CORE FEATURE
+Open "Talk", choose a language and a topic, and speak. Poly answers by voice, and corrections appear under your sentence. Tap a correction to open the rule.
