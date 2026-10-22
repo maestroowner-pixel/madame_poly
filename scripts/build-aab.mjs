@@ -30,7 +30,9 @@ const date = `20${code.slice(0, 2)}-${code.slice(2, 4)}-${code.slice(4, 6)}`;
 const count = Number(code.slice(6));
 const label = `${expo.version} (${date} #${count})`;
 
-execFileSync('./gradlew', ['bundleRelease', '-q'], { cwd: android, stdio: 'inherit' });
+// Без ANDROID_HOME (новая оболочка, не из профиля) gradle не находит SDK.
+const env = { ...process.env, ANDROID_HOME: process.env.ANDROID_HOME ?? join(homedir(), 'Library/Android/sdk') };
+execFileSync('./gradlew', ['bundleRelease', '-q'], { cwd: android, stdio: 'inherit', env });
 
 const desktop = join(homedir(), 'Desktop');
 const aab = join(desktop, `MadamePoly ${label}.aab`);
