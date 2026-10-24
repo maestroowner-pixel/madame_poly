@@ -31,7 +31,7 @@ const LEMON_SIGNING_SECRET = defineSecret('LEMON_SIGNING_SECRET');
 const LEMON_PRO_VARIANT = defineString('LEMON_PRO_VARIANT', { default: '' });
 const LEMON_MAX_VARIANT = defineString('LEMON_MAX_VARIANT', { default: '' });
 /** Куда Lemon возвращает после оплаты; метка в адресе — подождать вебхук. */
-const WEB_APP_URL = 'https://app.madamepoly.kuka-lab.com';
+const WEB_APP_URL = 'https://app.madamepoly.kuka-soft.com';
 
 /** Что разрешено просить. Прокси не должен стать бесплатным входом в любые модели. */
 const CLAUDE_MODEL = 'claude-sonnet-5';
