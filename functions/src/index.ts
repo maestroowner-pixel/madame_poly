@@ -607,7 +607,7 @@ export const api = onRequest(
     // разработка. Приложениям заголовок не нужен — они Origin не шлют.
     cors: [
       /^https:\/\/madame-poly\.(web\.app|firebaseapp\.com)$/,
-      /^https:\/\/([a-z0-9-]+\.)*kuka-lab\.com$/,
+      /^https:\/\/([a-z0-9-]+\.)*kuka-(lab|soft)\.com$/,
       /^http:\/\/localhost(:\d+)?$/,
     ],
     secrets: [ANTHROPIC_API_KEY, OPENAI_API_KEY, REVENUECAT_SECRET_KEY, LEMON_API_KEY, LEMON_SIGNING_SECRET],

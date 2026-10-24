@@ -26,7 +26,10 @@ const OFFLINE = [
 function isOffline(e: unknown): boolean {
   if (!e) return false;
   const name = e instanceof Error ? e.name : '';
-  if (name === 'APIConnectionError' || name === 'APIConnectionTimeoutError') return true;
+  if (name === 'APIConnectionTimeoutError') return true;
+  // SDK заворачивает в APIConnectionError всё, что бросил fetch, — и сбой
+  // анонимного входа в proxiedFetch тоже. Судим по причине, если она есть.
+  if (name === 'APIConnectionError') return !(e instanceof Error && e.cause) || isOffline(e.cause);
   const text = e instanceof Error ? `${e.message} ${String((e as { code?: unknown }).code ?? '')}` : String(e);
   if (OFFLINE.some((pattern) => pattern.test(text))) return true;
   return e instanceof Error && e.cause !== undefined && isOffline(e.cause);
@@ -70,6 +73,7 @@ function authText(e: unknown): string | null {
 /** Текст ошибки для человека: сетевые сбои и ошибки входа — понятной фразой. */
 export function errorText(e: unknown): string {
   if (isOffline(e)) return t.offline;
+  if (e instanceof Error && e.name === 'APIConnectionError' && e.cause) return errorText(e.cause);
   const auth = authText(e);
   if (auth) return auth;
   return e instanceof Error ? e.message : String(e);
