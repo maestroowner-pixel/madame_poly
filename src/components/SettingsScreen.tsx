@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { setAudioModeAsync, useAudioPlayer } from 'expo-audio';
 import type { ReactNode } from 'react';
-import { ActivityIndicator, LayoutAnimation, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, LayoutAnimation, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { ChevronIcon, CrownIcon, MoonIcon, SunIcon } from './icons';
 import { NeonButton } from './NeonButton';
@@ -121,6 +121,7 @@ export function SettingsScreen({
   const [carouselWidth, setCarouselWidth] = useState(0);
   const [framesReady, setFramesReady] = useState(0);
   const [contentWidth, setContentWidth] = useState(0);
+  const wrapLanguages = Platform.OS === 'web' && carouselWidth >= 600;
   /** Первый раз ставим на место без анимации, дальше — плавно. */
   const placed = useRef(false);
 
@@ -228,15 +229,16 @@ export function SettingsScreen({
       <ScrollView contentContainerStyle={styles.panel}>
       {/*
         Языки — каруселью в одну строку: сеткой одиннадцать плиток заняли бы
-        треть экрана. Выбранный язык прокручивается к середине.
+        треть экрана. Выбранный язык прокручивается к середине. В браузере на
+        широком экране карусель мышью не пролистать — там плитки переносятся.
       */}
       <ScrollView
         ref={carouselRef}
-        horizontal
+        horizontal={!wrapLanguages}
         showsHorizontalScrollIndicator={false}
         decelerationRate="fast"
         style={styles.carousel}
-        contentContainerStyle={styles.languages}
+        contentContainerStyle={[styles.languages, wrapLanguages && styles.languagesWrap]}
         onLayout={(event) => setCarouselWidth(event.nativeEvent.layout.width)}
         onContentSizeChange={(width) => setContentWidth(width)}
       >
@@ -552,6 +554,7 @@ const createStyles = (theme: Theme) =>
     /** Карусель — во всю ширину, за поля панели: плитки уезжают за край экрана, а не обрываются. */
     carousel: { marginHorizontal: -16, flexGrow: 0 },
     languages: { flexDirection: 'row', gap: 10, paddingHorizontal: 16 },
+    languagesWrap: { flexWrap: 'wrap', justifyContent: 'center' },
 
     drawer: {
       width: '100%',
